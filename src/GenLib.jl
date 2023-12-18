@@ -27,7 +27,7 @@ export genealogy,
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))/data/genea140.asc"
-const genJi = "$(chop(pathof(GenLib), tail=13))/data/geneaJi.asc"
+const geneaJi = "$(chop(pathof(GenLib), tail=13))/data/geneaJi.asc"
 const pop140 = "$(chop(pathof(GenLib), tail=13))/data/pop140.asc"
 
 export genea140,
