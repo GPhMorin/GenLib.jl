@@ -62,22 +62,21 @@ Computes the kinship coefficient between two individuals using pointers.
 """
 function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
     # Ported from GENLIB's Kinship
-    # Remove comments if a child can have an unknown father but a known mother
     value = 0.
     if individual₁ == individual₂
         value += 1/2
         if !isnothing(individual₁.father)
-            value += phi(individual₁.father, individual₁.mother) / 2
+            value += ϕ(individual₁.father, individual₁.mother) / 2
         end
     elseif individual₂.index > individual₁.index
         if !isnothing(individual₂.father)
-            value += phi(individual₂.father, individual₁) / 2
-            value += phi(individual₂.mother, individual₁) / 2
+            value += ϕ(individual₂.father, individual₁) / 2
+            value += ϕ(individual₂.mother, individual₁) / 2
         end
     else
         if !isnothing(individual₁.father)
-            value += phi(individual₁.father, individual₂) / 2
-            value += phi(individual₁.mother, individual₂) / 2
+            value += ϕ(individual₁.father, individual₂) / 2
+            value += ϕ(individual₁.mother, individual₂) / 2
         end
     end
     value
