@@ -31,7 +31,7 @@ const geneaJi = "$(chop(pathof(GenLib), tail=13))/data/geneaJi.asc"
 const pop140 = "$(chop(pathof(GenLib), tail=13))/data/pop140.asc"
 
 export genea140,
-       genJi,
+       geneaJi,
        pop140
 
 include("genealogy.jl")
