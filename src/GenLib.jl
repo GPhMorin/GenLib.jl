@@ -1,5 +1,3 @@
-@doc read(joinpath(dirname(@__DIR__), "README.md"), String)
-
 module GenLib
 
 using CSV
@@ -29,10 +27,8 @@ export genealogy,
        rec,
        distance_matrix,
        population,
-       remove_relatives!,
-       remove_cousins!,
-       remove_cousins_from_matrix!
-
+       remove_relatives!
+       
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
 const geneaJi = "$(chop(pathof(GenLib), tail=13))data/geneaJi.asc"
