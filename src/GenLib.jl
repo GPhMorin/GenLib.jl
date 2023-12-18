@@ -45,6 +45,6 @@ include("kinship.jl")
 include("mrca.jl")
 include("meioses.jl")
 include("population.jl")
-include("cousins.jl")
+include("remove_relatives.jl")
 
 end
