@@ -11,6 +11,7 @@ export Individual
 
 # GENLIB functions
 export genealogy,
+       isolate_genealogy,
        gc,
        phi,
        ϕ,
@@ -25,6 +26,7 @@ export genealogy,
        children,
        descendant,
        rec,
+       distance_matrix,
        population,
        remove_related!,
        remove_cousins!

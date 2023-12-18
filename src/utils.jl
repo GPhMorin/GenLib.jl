@@ -87,3 +87,21 @@ function rec(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro
     end
     coverage
 end
+
+"""
+distance_matrix(similarity_matrix::Matrix{Float64})::Matrix{Float64}
+
+Converts a similarity matrix into a distance matrix normalized with values [0, 1].
+"""
+function distance_matrix(similarity_matrix::Matrix{Float64})::Matrix{Float64}
+    max_value = maximum(similarity_matrix)
+    max_matrix = ones(size(similarity_matrix)) .* max_value
+    min_value = minimum(similarity_matrix)
+    min_matrix = ones(size(similarity_matrix)) .* min_value
+    if max_value - min_value == 0
+        distance_matrix = similarity_matrix
+    else
+        distance_matrix = (max_matrix - (similarity_matrix + min_matrix)) / (max_matrix - min_matrix)
+    end
+    distance_matrix
+end
