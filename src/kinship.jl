@@ -68,7 +68,7 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
             value += ϕ(individual₂.father, individual₁) / 2
             value += ϕ(individual₂.mother, individual₁) / 2
         end
-    elseif individual₁ == individual₂
+    elseif individual₁.ID == individual₂.ID
         value += 1/2
         if !isnothing(individual₁.father)
             value += ϕ(individual₁.father, individual₁.mother) / 2
