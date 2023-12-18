@@ -77,6 +77,25 @@ which corresponds to genealogical first cousins or more related.
 """
 function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
     remove_relatives!(probandIDs, genealogy)
+    pointer = point(genealogy)
+    preserved_probands = Vector{Int64}()
+    for pro₁ in probandIDs
+        ptr₁ = pointer[pro₁]
+        for pro₂ in preserved_probands
+            ptr₂ = pointer[pro₂]
+            kinship = ϕ(ptr₁, ptr₂)
+            if kinship ≥ 1/16
+                break
+            end
+        end
+        push!(preserved_probands, pro₁)
+    end
+    probandIDs = preserved_probands
+end
+
+"""
+function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
+    remove_relatives!(probandIDs, genealogy)
     kinship_matrix = phi(genealogy, probandIDs)
     preserved_probands = Vector{Int64}()
     for (index₁, pro₁) in enumerate(probandIDs)
@@ -91,3 +110,4 @@ function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Indiv
     end
     probandIDs = preserved_probands
 end
+"""
