@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/GPhMorin/GenLib.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/GPhMorin/GenLib.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-A pure Julia port of R's GENLIB genetics and genealogical library.
+A pure unofficial Julia port of R's GENLIB genetics and genealogical library.
 
 To install, using REPL: `using Pkg; Pkg.add(url="https://github.com/GPhMorin/GenLib.jl")` or `add https://github.com/GPhMorin/GenLib.jl` in the Pkg REPL mode.
 
