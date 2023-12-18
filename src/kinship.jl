@@ -16,9 +16,6 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
     if individual₂.index > individual₁.index
         individual₁, individual₂ = individual₂, individual₁
     end
-    if isnothing(individual₁.father) & isnothing(individual₁.mother)
-        return 0.
-    end
     mother_value = 0.
     father_value = 0.
     if !isnothing(individual₁.father)
