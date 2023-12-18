@@ -7,7 +7,6 @@ version = "1.6.5-DEV"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-ProgressBars = "49802e3a-d2f1-5c88-81d8-b72133a6f568"
 
 [compat]
 julia = "1"
