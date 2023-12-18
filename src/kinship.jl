@@ -14,17 +14,24 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
             end
         end
         return value
+    elseif individual₂.index > individual₁.index
+        if !isnothing(individual₂.father)
+            value += phi(individual₂.father, individual₁) / 2
+        end
+        if !isnothing(individual₂.mother)
+            value += phi(individual₂.mother, individual₁) / 2
+        end
+        return value
+    else
+        if !isnothing(individual₁.father)
+            value += phi(individual₁.father, individual₂) / 2
+        end
+        if !isnothing(individual₁.mother)
+            value += phi(individual₁.mother, individual₂) / 2
+        end
+        return value
     end
-    if individual₂.index > individual₁.index
-        individual₁, individual₂ = individual₂, individual₁
-    end
-    if !isnothing(individual₁.father)
-        value += phi(individual₁.father, individual₂) / 2
-    end
-    if !isnothing(individual₁.mother)
-        value += phi(individual₁.mother, individual₂) / 2
-    end
-    return value
+    
 end
 
 """
