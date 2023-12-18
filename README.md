@@ -4,7 +4,7 @@
 
 A pure Julia port of R's GENLIB genetics and genealogical library.
 
-If you use this project, please cite the original R package:
+If you use this project in a publication, please cite the original R package:
 
 ```bibtex
 @article{gauvin2015genlib,
