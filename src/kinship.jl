@@ -11,7 +11,6 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
         if !isnothing(individual₁.father) & !isnothing(individual₁.mother)
             value += phi(individual₁.father, individual₁.mother) / 2
         end
-        return value
     elseif individual₂.index > individual₁.index
         if !isnothing(individual₂.father)
             value += phi(individual₂.father, individual₁) / 2
@@ -19,7 +18,6 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
         if !isnothing(individual₂.mother)
             value += phi(individual₂.mother, individual₁) / 2
         end
-        return value
     else
         if !isnothing(individual₁.father)
             value += phi(individual₁.father, individual₂) / 2
@@ -27,9 +25,8 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
         if !isnothing(individual₁.mother)
             value += phi(individual₁.mother, individual₂) / 2
         end
-        return value
     end
-    
+    value
 end
 
 """
@@ -72,21 +69,18 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
         if !isnothing(individual₁.father)
             value += phi(individual₁.father, individual₁.mother) / 2
         end
-        return value
     elseif individual₂.index > individual₁.index
         if !isnothing(individual₂.father)
             value += phi(individual₂.father, individual₁) / 2
             value += phi(individual₂.mother, individual₁) / 2
         end
-        return value
     else
         if !isnothing(individual₁.father)
             value += phi(individual₁.father, individual₂) / 2
             value += phi(individual₁.mother, individual₂) / 2
         end
-        return value
     end
-    
+    value
 end
 
 """
