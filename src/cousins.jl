@@ -1,3 +1,9 @@
+"""
+remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
+
+Takes a list of `probandIDs` and, according to a given `genealogy`,
+removes IDs of individuals who are first cousins or closer in the genealogy.
+"""
 function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
     pointer = point(genealogy)
     preserved_probands = Vector{Int64}()
@@ -62,6 +68,13 @@ function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Ind
     probandIDs = preserved_probands
 end
 
+"""
+remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
+
+Takes a list of `probandIDs` and, given a `genealogy`,
+removes IDs of individuals with a coefficient of kinship ≥ 1/16
+which corresponds to genealogical first cousins or more related.
+"""
 function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
     remove_relatives!(probandIDs, genealogy)
     kinship_matrix = phi(genealogy, probandIDs)
