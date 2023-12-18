@@ -4,7 +4,7 @@ remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})
 Takes a list of `probandIDs` and, according to a given `genealogy`,
 removes IDs of individuals who are first cousins or closer in the genealogy.
 """
-function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
+function remove_relatives(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64})::Vector{Int64}
     pointer = point(genealogy)
     preserved_probands = Vector{Int64}()
     for probandID in probandIDs
@@ -65,5 +65,5 @@ function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Ind
             push!(preserved_probands, proband.ID)
         end
     end
-    probandIDs = preserved_probands
+    preserved_probands
 end
