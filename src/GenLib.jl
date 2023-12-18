@@ -3,7 +3,6 @@ module GenLib
 using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack
-using ProgressBars
 
 # For creating new genealogies manually
 export Individual
@@ -28,7 +27,7 @@ export genealogy,
        distance_matrix,
        population,
        remove_relatives!
-       
+
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
 const geneaJi = "$(chop(pathof(GenLib), tail=13))data/geneaJi.asc"

@@ -13,7 +13,7 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
         if !isnothing(individual₂.mother)
             value += phi(individual₂.mother, individual₁) / 2
         end
-    elseif individual₁.ID == individual₂.ID
+    elseif individual₁.index == individual₂.index
         value += 1/2
         if !isnothing(individual₁.father) & !isnothing(individual₁.mother)
             value += phi(individual₁.father, individual₁.mother) / 2
@@ -41,7 +41,7 @@ function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(geneal
     matrix = zeros(length(IDs), length(IDs))
     pointer = point(genealogy)
     individuals = [pointer[ID] for ID in IDs]
-    Threads.@threads for j in ProgressBar(eachindex(individuals), printing_delay=1)
+    Threads.@threads for j in eachindex(individuals)
         Threads.@threads for i in eachindex(individuals)
             individual₁ = individuals[i]
             individual₂ = individuals[j]
@@ -68,7 +68,7 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
             value += ϕ(individual₂.father, individual₁) / 2
             value += ϕ(individual₂.mother, individual₁) / 2
         end
-    elseif individual₁.ID == individual₂.ID
+    elseif individual₁.index == individual₂.index
         value += 1/2
         if !isnothing(individual₁.father)
             value += ϕ(individual₁.father, individual₁.mother) / 2
@@ -94,7 +94,7 @@ function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealo
     matrix = zeros(length(IDs), length(IDs))
     pointer = point(genealogy)
     individuals = [pointer[ID] for ID in IDs]
-    Threads.@threads for j in ProgressBar(eachindex(individuals), printing_delay=1)
+    Threads.@threads for j in eachindex(individuals)
         Threads.@threads for i in eachindex(individuals)
             individual₁ = individuals[i]
             individual₂ = individuals[j]
