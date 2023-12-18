@@ -106,9 +106,9 @@ function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealo
             individual₁ = individuals[i]
             individual₂ = individuals[j]
             if individual₂.ID > individual₁.ID
-                matrix[i, j] = matrix[j, i] = phi(individual₁, individual₂)
+                matrix[i, j] = matrix[j, i] = ϕ(individual₁, individual₂)
             elseif individual₁.ID == individual₂.ID
-                matrix[i, j] = phi(individual₁, individual₁)
+                matrix[i, j] = ϕ(individual₁, individual₁)
             end
         end
     end
