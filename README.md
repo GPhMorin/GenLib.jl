@@ -4,6 +4,8 @@
 
 A pure Julia port of R's GENLIB genetics and genealogical library.
 
+To install, using REPL: `using Pkg; Pkg.add(url="https://github.com/GPhMorin/GenLib.jl")` or `add https://github.com/GPhMorin/GenLib.jl` in the Pkg REPL mode
+
 If you use this project in a publication, please cite the original R package:
 
 > Gauvin, H., Lefebvre, JF., Moreau, C. *et al.* GENLIB: an R package for the analysis of genealogical data. *BMC Bioinformatics* **16**, 160 (2015). https://doi.org/10.1186/s12859-015-0581-5
