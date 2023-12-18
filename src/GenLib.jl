@@ -25,7 +25,9 @@ export genealogy,
        children,
        descendant,
        rec,
-       population
+       population,
+       remove_related!,
+       remove_cousins!
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
@@ -43,5 +45,7 @@ include("utils.jl")
 include("kinship.jl")
 include("mrca.jl")
 include("meioses.jl")
+include("population.jl")
+include("cousins.jl")
 
 end
