@@ -93,8 +93,7 @@ function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Indiv
     probandIDs = preserved_probands
 end
 
-"""
-function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
+function remove_cousins_from_matrix!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
     remove_relatives!(probandIDs, genealogy)
     kinship_matrix = ϕ(genealogy, probandIDs)
     preserved_probands = Vector{Int64}()
@@ -110,4 +109,3 @@ function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Indiv
     end
     probandIDs = preserved_probands
 end
-"""

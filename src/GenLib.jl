@@ -30,7 +30,8 @@ export genealogy,
        distance_matrix,
        population,
        remove_relatives!,
-       remove_cousins!
+       remove_cousins!,
+       remove_cousins_from_matrix!
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
