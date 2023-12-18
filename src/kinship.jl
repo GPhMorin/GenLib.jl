@@ -3,7 +3,7 @@ phi(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
 
 Computes the kinship coefficient between two individuals using pointers.
 """
-function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
     # Ported from GENLIB's Kinship
     if individual₁ == individual₂
         value = 0.
