@@ -5,6 +5,7 @@ module GenLib
 using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack
+using ProgressBars
 
 # For creating new genealogies manually
 export Individual

@@ -79,7 +79,7 @@ function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Indiv
     remove_relatives!(probandIDs, genealogy)
     pointer = point(genealogy)
     preserved_probands = Vector{Int64}()
-    for pro₁ in probandIDs
+    for pro₁ in ProgressBar(probandIDs, printing_delay=1)
         ptr₁ = pointer[pro₁]
         for pro₂ in preserved_probands
             ptr₂ = pointer[pro₂]
@@ -96,7 +96,7 @@ end
 """
 function remove_cousins!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
     remove_relatives!(probandIDs, genealogy)
-    kinship_matrix = phi(genealogy, probandIDs)
+    kinship_matrix = ϕ(genealogy, probandIDs)
     preserved_probands = Vector{Int64}()
     for (index₁, pro₁) in enumerate(probandIDs)
         for pro₂ in preserved_probands

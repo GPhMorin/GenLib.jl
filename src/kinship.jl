@@ -41,7 +41,7 @@ function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(geneal
     matrix = zeros(length(IDs), length(IDs))
     pointer = point(genealogy)
     individuals = [pointer[ID] for ID in IDs]
-    Threads.@threads for j in eachindex(individuals)
+    Threads.@threads for j in ProgressBar(eachindex(individuals), printing_delay=1)
         Threads.@threads for i in eachindex(individuals)
             individual₁ = individuals[i]
             individual₂ = individuals[j]
@@ -94,7 +94,7 @@ function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealo
     matrix = zeros(length(IDs), length(IDs))
     pointer = point(genealogy)
     individuals = [pointer[ID] for ID in IDs]
-    Threads.@threads for j in eachindex(individuals)
+    Threads.@threads for j in ProgressBar(eachindex(individuals), printing_delay=1)
         Threads.@threads for i in eachindex(individuals)
             individual₁ = individuals[i]
             individual₂ = individuals[j]
