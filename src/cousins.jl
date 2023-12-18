@@ -61,7 +61,7 @@ function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Ind
                 end
             end
         end
-        if !isnothing(relatives ∩ preserved_probands)
+        if !isempty(relatives ∩ preserved_probands)
             push!(preserved_probands, proband.ID)
         end
     end
