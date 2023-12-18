@@ -32,6 +32,8 @@ function get_paths(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Vector
             push!(path, ID)
         end
         append!(paths, fathers_paths)
+    end
+    if individual.mother != 0
         mothers_paths = get_paths(genealogy, individual.mother)
         for path in mothers_paths
             push!(path, ID)

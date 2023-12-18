@@ -13,6 +13,8 @@ function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Set{Int64}
         if individual.father != 0
             push!(stack, individual.father)
             push!(ancestors, individual.father)
+        end
+        if individual.mother != 0
             push!(stack, individual.mother)
             push!(ancestors, individual.mother)
         end
