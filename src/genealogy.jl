@@ -28,6 +28,8 @@ function genealogy(filename::String)::Dict{Int64, Individual}
         individual = genealogy[row.ind]
         if individual.father != 0
             push!(genealogy[individual.father].children, row.ind)
+        end
+        if individual.mother != 0
             push!(genealogy[individual.mother].children, row.ind)
         end
     end
