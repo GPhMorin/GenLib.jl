@@ -1,8 +1,3 @@
-@enum STATE begin
-    UNEXPLORED
-    PROBAND
-end
-
 """
 gc(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))::Matrix{Float64}
 

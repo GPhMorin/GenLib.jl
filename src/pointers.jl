@@ -1,3 +1,8 @@
+@enum STATE begin
+    UNEXPLORED
+    PROBAND
+end
+
 mutable struct PointerIndividual
     ID::Int64
     father::Union{Nothing, PointerIndividual}
