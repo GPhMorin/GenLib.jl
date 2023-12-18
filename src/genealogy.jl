@@ -35,3 +35,21 @@ function genealogy(filename::String)::Dict{Int64, Individual}
     end
     genealogy
 end
+
+"""
+isolate_genealogy(genealogy::Dict{Int64, Individual}, ancestor::Int64)::Dict{Int64, Individual}
+
+Takes a `genealogy` and ablates parents from individuals who do not descend from the `ancestor`.
+"""
+function isolate_genealogy(genealogy::Dict{Int64, Individual}, ancestor::Int64)::Dict{Int64, Individual}
+    descendants = descendant(genealogy, ancestor)
+    isolated_genealogy = Dict{Int64, Individual}()
+    for (ID, individual) in genealogy
+        if ID ∈ descendants
+            isolated_genealogy[ID] = individual
+        else
+            isolated_genealogy[ID] = Individual(0, 0, individual.index, individual.children, individual.sex)
+        end
+    end
+    isolated_genealogy
+end
