@@ -8,10 +8,8 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
     value = 0.
     if individual₁ == individual₂
         value += 1/2
-        if !isnothing(individual₁.father)
-            if !isnothing(individual₁.mother)
-                value += phi(individual₁.father, individual₁.mother) / 2
-            end
+        if !isnothing(individual₁.father) & !isnothing(individual₁.mother)
+            value += phi(individual₁.father, individual₁.mother) / 2
         end
         return value
     elseif individual₂.index > individual₁.index
