@@ -24,7 +24,8 @@ export genealogy,
        get_paths,
        children,
        descendant,
-       rec
+       rec,
+       population
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
