@@ -1,5 +1,5 @@
 function occ(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64}; type::Symbol = :ind)::Matrix{Int64}
-    occurence_matrix = Matrix{Int64}(undef, length(probandIDs), length(ancestorIDs))
+    occurrence_matrix = Matrix{Int64}(undef, length(probandIDs), length(ancestorIDs))
     pointer = point(genealogy)
     for ancestorID in ancestorIDs
         pointer[ancestorID].state = ANCESTOR
