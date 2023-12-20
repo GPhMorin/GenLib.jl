@@ -27,6 +27,7 @@ export genealogy,
        distance_matrix,
        population,
        remove_relatives!,
+       remove_relatives,
        occ
 
 # GENLIB datasets

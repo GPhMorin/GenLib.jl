@@ -4,7 +4,7 @@ remove_relativeIDs!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual
 Takes a list of `probandIDs` and, according to a given `genealogy`,
 removes IDs of individuals who are first cousins or closer in the genealogy.
 """
-function remove_relativeIDs!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
+function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})::Vector{Int64}
     pointer = point(genealogy)
     candidateIDs = copy(probandIDs)
     empty!(probandIDs)
@@ -69,7 +69,7 @@ function remove_relativeIDs!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, I
     probandIDs
 end
 
-function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual}, threshold::Float64 = 1/16)::Vector{Int64}
+function remove_relatives(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual}, threshold::Float64 = 1/16)::Vector{Int64}
     indices = ones(length(probandIDs)) .> 0
     pointer = point(genealogy)
     Threads.@threads for j in eachindex(probandIDs)
