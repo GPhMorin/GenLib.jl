@@ -15,7 +15,7 @@ struct Individual
     mother::Int64
     index::Int64
     children::Vector{Int64}
-    sex::Int8
+    sex::SEX
 end
 
 """
