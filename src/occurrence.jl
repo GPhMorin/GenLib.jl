@@ -9,12 +9,12 @@ function occ(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ance
         occur!(proband)
         for (j, ancestorID) in enumerate(ancestorIDs)
             ancestor = pointer[ancestorID]
-            occurence_matrix[i, j] = ancestor.occurrence
+            occurrence_matrix[i, j] = ancestor.occurrence
             ancestor.occurrence = 0
         end
     end
     if type == :ind
-        return occurence_matrix
+        return occurrence_matrix
     elseif type == :total
         return sum(occurrence_matrix, dims=2)
     end
