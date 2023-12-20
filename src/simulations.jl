@@ -8,6 +8,7 @@ function simulate_allele(genealogy::Dict{Int64, Individual}, ancestorID::Int64, 
         affected = [probandID for probandID in probandIDs if :m ∈ pointer[probandID].genotype]
         current_frequency = length(affected) / length(probandIDs)
     end
+    affected
 end
 
 function transmit!(individual::PointerIndividual)::Nothing
