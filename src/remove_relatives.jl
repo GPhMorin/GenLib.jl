@@ -75,14 +75,10 @@ function remove_relatives(genealogy::Dict{Int64, Individual}, probandIDs::Vector
     Threads.@threads for j in eachindex(probandIDs)
         Threads.@threads for i in eachindex(probandIDs)
             if i < j
-                if indices[j]
-                    if indices[i]
-                        proband₁ = pointer[probandIDs[i]]
-                        proband₂ = pointer[probandIDs[j]]
-                        if ϕ(proband₁, proband₂) > threshold
-                            indices[j] = false
-                        end
-                    end
+                proband₁ = pointer[probandIDs[i]]
+                proband₂ = pointer[probandIDs[j]]
+                if ϕ(proband₁, proband₂) > threshold
+                    indices[j] = false
                 end
             end
         end
