@@ -28,6 +28,7 @@ export genealogy,
        population,
        remove_relatives!,
        remove_relatives,
+       remove_relatives2,
        occ
 
 # GENLIB datasets
