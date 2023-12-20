@@ -77,7 +77,9 @@ function remove_relatives(genealogy::Dict{Int64, Individual}, probandIDs::Vector
             if i < j
                 if indices[j]
                     if indices[i]
-                        if ϕ(pointer[i], pointer[j]) > threshold
+                        proband₁ = pointer[probandIDs[i]]
+                        proband₂ = pointer[probandIDs[j]]
+                        if ϕ(proband₁, proband₂) > threshold
                             indices[j] = false
                         end
                     end
