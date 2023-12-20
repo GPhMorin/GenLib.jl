@@ -17,7 +17,7 @@ function simulate_allele(genealogy::Dict{Int64, Individual}, ancestorID::Int64, 
     while (current_frequency < 0.9 * frequency) | (current_frequency > 1.1 * frequency) & (number_of_simulations ≤ patience)
         transmit!(ancestor)
         carriers = [probandID for probandID in probandIDs if :m ∈ pointer[probandID].genotype]
-        current_frequency = length(affected) / length(probandIDs)
+        current_frequency = length(carriers) / length(probandIDs)
         number_of_simulations += 1
     end
     carriers
