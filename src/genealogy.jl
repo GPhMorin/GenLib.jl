@@ -27,7 +27,7 @@ function genealogy(filename::String)::Dict{Int64, Individual}
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     genealogy::Dict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataset))
-        genealogy[row.ind] = Individual(row.father, row.mother, index, [], row.sex)
+        genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
     end
     for row in eachrow(dataset)
         individual = genealogy[row.ind]
