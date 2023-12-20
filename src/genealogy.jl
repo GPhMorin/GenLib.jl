@@ -1,3 +1,8 @@
+@enum SEX begin
+    MALE = 1
+    FEMALE = 2
+end
+
 """
 An `Individual` is an immutable object containing
 the ID to their `father` and `mother` (0 if unknown),
@@ -19,7 +24,7 @@ genealogy(filename::String)::Dict{Int64, Individual}
 Reads a file with `filename` and returns a dictionary of individuals.
 """
 function genealogy(filename::String)::Dict{Int64, Individual}
-    dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int8))
+    dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => SEX))
     genealogy::Dict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataset))
         genealogy[row.ind] = Individual(row.father, row.mother, index, [], row.sex)
