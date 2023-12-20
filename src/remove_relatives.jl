@@ -102,7 +102,7 @@ function remove_relatives2(genealogy::Dict{Int64, Individual}, probandIDs::Vecto
             end
         end
     end
-    matrix = matrix .> threshold
+    matrix = matrix .≥ threshold
     indices = [!any(row[:]) for row in eachrow(matrix)]
     probandIDs[indices]
 end
