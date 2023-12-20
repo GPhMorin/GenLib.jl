@@ -26,7 +26,8 @@ export genealogy,
        rec,
        distance_matrix,
        population,
-       remove_relatives!
+       remove_relatives!,
+       occ
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
@@ -46,5 +47,6 @@ include("mrca.jl")
 include("meioses.jl")
 include("population.jl")
 include("remove_relatives.jl")
+include("occurrence.jl")
 
 end
