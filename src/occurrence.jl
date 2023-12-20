@@ -13,11 +13,11 @@ function occ(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ance
             ancestor.occurrence = 0
         end
     end
-
     if type == :ind
         return occurence_matrix
     elseif type == :total
         return sum(occurrence_matrix, dims=2)
+    end
 end
 
 function occur!(individual::PointerIndividual)::Nothing
