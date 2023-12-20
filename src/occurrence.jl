@@ -16,7 +16,7 @@ function occ(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ance
     if type == :ind
         return occurrence_matrix
     elseif type == :total
-        return sum(occurrence_matrix, dims=2)
+        return vec(sum(occurrence_matrix, dims=1))
     end
 end
 
