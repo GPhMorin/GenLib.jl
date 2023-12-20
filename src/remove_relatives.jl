@@ -73,7 +73,7 @@ function remove_relatives(genealogy::Dict{Int64, Individual}, probandIDs::Vector
     indices = ones(length(probandIDs)) .> 0
     pointer = point(genealogy)
     Threads.@threads for j in eachindex(probandIDs)
-        for i in eachindex(probandIDs)
+        Threads.@threads for i in eachindex(probandIDs)
             if i < j
                 if indices[j]
                     if indices[i]
@@ -83,8 +83,6 @@ function remove_relatives(genealogy::Dict{Int64, Individual}, probandIDs::Vector
                             indices[j] = false
                         end
                     end
-                else
-                    break
                 end
             end
         end
