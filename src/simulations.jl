@@ -1,13 +1,15 @@
-function simulate_allele(genealogy::Dict{Int64, Individual}, ancestorID::Int64, probandIDs::Vector{Int64}, frequency::Float64)::Vector{Int64}
+function simulate_allele(genealogy::Dict{Int64, Individual}, ancestorID::Int64, probandIDs::Vector{Int64}, frequency::Float64, max_simulations::Int64)::Vector{Int64}
+    number_of_simulations = 1
     current_frequency = 0
     affected = Vector{Int64}()
-    while (current_frequency < 0.9 * frequency) | (current_frequency > 1.1 * frequency)
+    while (current_frequency < 0.9 * frequency) | (current_frequency > 1.1 * frequency) & (number_of_simulations ≤ max_simulations)
         pointer = point(genealogy)
         ancestor = pointer[ancestorID]
         ancestor.genotype = [:m, :M]
         transmit!(ancestor)
         affected = [probandID for probandID in probandIDs if :m ∈ pointer[probandID].genotype]
         current_frequency = length(affected) / length(probandIDs)
+        number_of_simulations += 1
     end
     affected
 end
