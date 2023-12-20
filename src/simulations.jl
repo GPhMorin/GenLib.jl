@@ -1,6 +1,7 @@
 function simulate_allele(genealogy::Dict{Int64, Individual}, ancestorID::Int64, probandIDs::Vector{Int64}, frequency::Float64)::Vector{Int64}
     current_frequency = 0
-    while 0.9 * frequency < current_frequency < 1.1 * frequency
+    affected = Vector{Int64}()
+    while (current_frequency < 0.9 * frequency) | (current_frequency > 1.1 * frequency)
         pointer = point(genealogy)
         ancestor = pointer[ancestorID]
         ancestor.genotype = [:m, :M]
