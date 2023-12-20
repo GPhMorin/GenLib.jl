@@ -91,7 +91,7 @@ function remove_relatives(genealogy::Dict{Int64, Individual}, probandIDs::Vector
 end
 
 function remove_relatives2(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, threshold::Float64 = 1/16)::Vector{Int64}
-    matrix = ones(length(probandIDs), length(probandIDs)) .== 0
+    matrix = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
     pointer = point(genealogy)
     for i in eachindex(probandIDs)
         proband₁ = pointer[probandIDs[i]]
