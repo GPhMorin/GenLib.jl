@@ -68,3 +68,24 @@ function remove_relativeIDs!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, I
     end
     probandIDs
 end
+
+function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual}, threshold::Float64 = 1/16)::Vector{Int64}
+    indices = ones(length(probandIDs)) .> 0
+    pointer = point(genealogy)
+    Threads.@threads for j in eachindex(probandIDs)
+        for i in eachindex(probandIDs)
+            if i < j
+                if indices[j]
+                    if indices[i]
+                        if ϕ(pointer[i], pointer[j]) > threshold
+                            indices[j] = false
+                        end
+                    end
+                else
+                    break
+                end
+            end
+        end
+    end
+    probandIDs[indices]
+end
