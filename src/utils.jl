@@ -101,7 +101,7 @@ function distance_matrix(similarity_matrix::Matrix{Float64})::Matrix{Float64}
     if max_value - min_value == 0
         distance_matrix = similarity_matrix
     else
-        distance_matrix = (max_matrix - (similarity_matrix + min_matrix)) ./ (max_matrix - min_matrix)
+        distance_matrix = (max_matrix - (similarity_matrix ./ min_matrix)) ./ max_matrix
     end
     distance_matrix
 end
