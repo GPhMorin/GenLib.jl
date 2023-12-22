@@ -1,7 +1,7 @@
 """
 ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Set{Int64}
 
-Takes a `genealogy` dictionary and an `ID` and returns a set of ancestors.
+Takes a `genealogy` dictionary and an `ID` and returns a vector of all of their ancestors.
 """
 function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
     ancestors = Set{Int64}()
@@ -26,7 +26,7 @@ end
 """
 ancestor(genealogy::Dict{Int64, Individual}, IDs::Set{Int64})::Set{Int64}
 
-Takes a `genealogy` dictionary and a set of `IDs` and returns a set of ancestors.
+Takes a `genealogy` dictionary and a set of `IDs` and returns a vector of all of their ancestors.
 """
 function ancestor(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vector{Int64}
     ancestors = ∪([ancestor(genealogy, ID) for ID in IDs]...)
@@ -36,7 +36,7 @@ end
 """
 findMRCA(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vector{Int64}
 
-Takes a `genealogy` dictionary and two IDs and returns a vector of most recent common ancestors.
+Takes a `genealogy` dictionary and a vector of `IDs` and returns a vector of most recent common ancestors.
 """
 function findMRCA(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vector{Int64}
     ancestors = [ancestor(genealogy, ID) for ID in IDs]
