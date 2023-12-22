@@ -100,3 +100,16 @@ function distance_matrix(matrix::Matrix{Float64})::Matrix{Float64}
         distance_matrix = (maximum(matrix .- minimum(matrix)) .- (matrix .- minimum(matrix)))/maximum(matrix .- minimum(matrix))
     end
 end
+
+"""
+findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})::Vector{Int64}
+
+Takes a `genealogy` and returns a vector of founders from whom the `IDs` descend.
+"""
+function findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})::Vector{Int64}
+    ancestorIDs = [ancestor(genealogy, ID) for ID in IDs]
+    common_ancestorIDs = ∩(ancestorIDs...)
+    founderIDs = [ancestorID for ancestorID in common_ancestorIDs
+                  if (genealogy[ancestorID].father == 0) & (genealogy[ancestorID].mother == 0)]
+    founderIDs
+end
