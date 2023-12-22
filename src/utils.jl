@@ -93,15 +93,10 @@ distance_matrix(similarity_matrix::Matrix{Float64})::Matrix{Float64}
 
 Converts a similarity matrix into a distance matrix normalized with values [0, 1].
 """
-function distance_matrix(similarity_matrix::Matrix{Float64})::Matrix{Float64}
-    max_value = maximum(similarity_matrix)
-    max_matrix = ones(size(similarity_matrix)) .* max_value
-    min_value = minimum(similarity_matrix)
-    min_matrix = ones(size(similarity_matrix)) .* min_value
-    if max_value - min_value == 0
-        distance_matrix = similarity_matrix
+function distance_matrix(matrix::Matrix{Float64})::Matrix{Float64}
+    if maximum(matrix) - minimum(matrix) == 0
+        distance_matrix = zeros(size(matrix))
     else
-        distance_matrix = (max_matrix - (similarity_matrix ./ min_matrix)) ./ max_matrix
+        distance_matrix = (maximum(matrix .- minimum(matrix)) .- (matrix .- minimum(matrix)))/maximum(matrix .- minimum(matrix))
     end
-    distance_matrix
 end
