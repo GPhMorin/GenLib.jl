@@ -91,7 +91,12 @@ rec(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealog
 
 Takes a `genealogy` dictionary, a vector of `probandIDs` and a vector of `ancestorIDs` and returns the number of descendants of each ancestor.
 """
-function rec(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))::Vector{Int64}
+function rec(
+    genealogy::Dict{Int64, Individual},
+    probandIDs::Vector{Int64} = pro(genealogy),
+    ancestorIDs::Vector{Int64} = founder(genealogy)
+    )::Vector{Int64}
+    
     coverage = Vector{Int64}()
     for ancestorID in ancestorIDs
         descendants = descendant(genealogy, ancestorID)

@@ -3,7 +3,12 @@ findDistances(genealogy::Dict{Int64, Individual}, descendantID::Int64, ancestorI
 
 Takes a `genealogy` dictionary, a `descendantID` and an `ancestorID` and returns a vector of distances between an individual and their ancestor.
 """
-function findDistances(genealogy::Dict{Int64, Individual}, descendantID::Int64, ancestorID::Int64)::Vector{Int8}
+function findDistances(
+    genealogy::Dict{Int64, Individual},
+    descendantID::Int64,
+    ancestorID::Int64
+    )::Vector{Int8}
+    
     paths = get_paths(genealogy, descendantID)
     lengths = Vector{Int8}()
     for path in paths

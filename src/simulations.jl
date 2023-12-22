@@ -31,3 +31,44 @@ function simulate(genealogy::Dict{Int64, Individual})::Dict{Int64, SimulationInd
     end
     simulation
 end
+
+"""
+"""
+function simuHaplo(
+    genealogy::Dict{Int64, Individual};
+    probands::Vector{Int64} = pro(genealogy),
+    ancestors::Vector{Int64} = founder(genealogy),
+    iterations::Int64 = 1,
+    model::Symbol = :poisson,
+    parameters::Vector{Float64} = [1, 1],
+    cM_length::Vector{Int64} = [100, 100],
+    BP_length::Vector{Int64} = 100000000,
+    physical_map_mother::Union{Nothing, DataFrame} = nothing,
+    physical_map_father::Union{Nothing, DataFrame} = nothing,
+    seed::Int64 = 42,
+    all_nodes::Bool = false,
+    output_directory::String = "."
+    )::Nothing
+
+
+end
+
+function simuHaplo_convert(directory::String = ".")::Nothing
+end
+
+function simuHaplo_IBD_compare(
+    probandID₁::Int64,
+    probandID₂::Int64,
+    BP_length::Int64,
+    proband_haplotypes_path::String
+    )::DataFrame
+end
+
+function simuHaplo_traceback(
+    genealogy::Dict{Int64, Individual},
+    probandID::Int64,
+    ancestorID::Int64,
+    all_nodes_path::String,
+    proband_haplotypes_path::String
+    )::DataFrame
+end

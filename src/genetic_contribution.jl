@@ -3,7 +3,12 @@ gc(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy
 
 Takes a `genealogy` dictionary, computes the genetic contribution of each ancestor to each proband using a vector of `probandIDs` and a vector of `ancestorIDs` and returns a matrix.
 """
-function gc(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))::Matrix{Float64}
+function gc(
+    genealogy::Dict{Int64, Individual};
+    probandIDs::Vector{Int64} = pro(genealogy),
+    ancestorIDs::Vector{Int64} = founder(genealogy)
+    )::Matrix{Float64}
+    
     # Ported from GENLIB's Congen
     matrix = zeros(length(probandIDs), length(ancestorIDs))
     pointer = point(genealogy)

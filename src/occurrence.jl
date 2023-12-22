@@ -6,7 +6,13 @@ and optionally a `type` (`:ind` or `:total`) and returns a matrix of occurrences
 If the type is `:ind` (default), then the matrix corresponds to *probandIDs* × *ancestorIDs*.
 If the type is `:total`, then the matrix corresponds to *ancestorIDs* × 1.
 """
-function occ(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64}; type::Symbol = :ind)::Matrix{Int64}
+function occ(
+    genealogy::Dict{Int64, Individual},
+    probandIDs::Vector{Int64},
+    ancestorIDs::Vector{Int64};
+    type::Symbol = :ind
+    )::Matrix{Int64}
+    
     occurrence_matrix = Matrix{Int64}(undef, length(probandIDs), length(ancestorIDs))
     pointer = point(genealogy)
     for ancestorID in ancestorIDs
