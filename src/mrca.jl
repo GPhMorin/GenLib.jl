@@ -29,7 +29,7 @@ ancestor(genealogy::Dict{Int64, Individual}, IDs::Set{Int64})::Set{Int64}
 Takes a `genealogy` dictionary and a set of `IDs` and returns a set of ancestors.
 """
 function ancestor(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vector{Int64}
-    ancestors = ∪(ancestor(genealogy, ID) for ID in IDs)
+    ancestors = ∪([ancestor(genealogy, ID) for ID in IDs]...)
     sort!(ancestors)
 end
 
