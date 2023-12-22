@@ -19,6 +19,7 @@ function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
             push!(ancestors, individual.mother)
         end
     end
+    ancestors = collect(ancestors)
     sort!(ancestors)
 end
 
