@@ -34,15 +34,14 @@ function ancestor(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vecto
 end
 
 """
-findMRCA(genealogy::Dict{Int64, Individual}, ID₁::Int64, ID₂::Int64)::Vector{Int64}
+findMRCA(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vector{Int64}
 
 Takes a `genealogy` dictionary and two IDs and returns a vector of most recent common ancestors.
 """
-function findMRCA(genealogy::Dict{Int64, Individual}, ID₁::Int64, ID₂::Int64)::Vector{Int64}
-    ancestors₁ = ancestor(genealogy, ID₁)
-    ancestors₂ = ancestor(genealogy, ID₂)
-    common_ancestors = ancestors₁ ∩ ancestors₂
+function findMRCA(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64})::Vector{Int64}
+    ancestors = [ancestor(genealogy, ID) for ID in IDs]
+    common_ancestors = ∩(ancestors...)
     older_common_ancestors = ancestor(genealogy, common_ancestors)
     most_recent_commmon_ancestors = setdiff(common_ancestors, older_common_ancestors)
-    sort(collect(most_recent_commmon_ancestors))
+    most_recent_commmon_ancestors
 end
