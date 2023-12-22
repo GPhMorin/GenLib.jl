@@ -3,7 +3,7 @@ ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Set{Int64}
 
 Takes a `genealogy` dictionary and an `ID` and returns a set of ancestors.
 """
-function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Set{Int64}
+function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
     ancestors = Set{Int64}()
     stack = Stack{Int64}()
     push!(stack, ID)
@@ -19,7 +19,7 @@ function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)::Set{Int64}
             push!(ancestors, individual.mother)
         end
     end
-    ancestors
+    sort!(ancestors)
 end
 
 """
@@ -27,12 +27,9 @@ ancestor(genealogy::Dict{Int64, Individual}, IDs::Set{Int64})::Set{Int64}
 
 Takes a `genealogy` dictionary and a set of `IDs` and returns a set of ancestors.
 """
-function ancestor(genealogy::Dict{Int64, Individual}, IDs::Set{Int64})::Set{Int64}
-    ancestors = Set{Int64}()
-    for ID in IDs
-        ancestors = ancestors ∪ ancestor(genealogy, ID)
-    end
-    ancestors
+function ancestor(genealogy::Dict{Int64, Individual}, IDs::Set{Int64})::Vector{Int64}
+    ancestors = ∪(ancestor(genealogy, ID) for ID in IDs)
+    sort!(ancestors)
 end
 
 """
