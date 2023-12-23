@@ -29,8 +29,7 @@ export genealogy,
        distance_matrix,
        population,
        remove_relatives!,
-       occ,
-       simulate
+       occ
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
