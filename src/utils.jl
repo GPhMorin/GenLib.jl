@@ -166,21 +166,21 @@ prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
 
 Initializes the value of the individuals' `sort` value.
 """
-function prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
+function prepare_priority_sort(nodes::Vector{PointerIndividual})::Nothing
     # Ported from GENLIB's PrepareSortPrioriteArbre
-    for (_, individual) in pointer
-        if isnothing(individual.father)
-            individual.sort = -1
-        elseif individual.father.state == UNEXPLORED | individual.father.state == EXPLORED
-            individual.sort = -1
-        elseif isnothing(individual.mother)
-            individual.sort = -1
-        elseif individual.mother.state == UNEXPLORED | individual.mother.state == EXPLORED
-            individual.sort = -1
-        elseif individual.father.state == EXPLOREDPROBAND | individual.mother.state == EXPLOREDPROBAND
-            individual.sort = -1
+    for node in nodes
+        if isnothing(node.father)
+            node.sort = -1
+        elseif node.father.state == UNEXPLORED | node.father.state == EXPLORED
+            node.sort = -1
+        elseif isnothing(node.mother)
+            node.sort = -1
+        elseif node.mother.state == UNEXPLORED | node.mother.state == EXPLORED
+            node.sort = -1
+        elseif node.father.state == EXPLOREDPROBAND | node.mother.state == EXPLOREDPROBAND
+            node.sort = -1
         else
-            individual.sort = 0
+            node.sort = 0
         end
     end
 end

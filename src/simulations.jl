@@ -4,6 +4,41 @@ struct Haplotype
     fixed::Bool
 end
 
+function poisson_crossover(sex::SEX,
+                           parameters::Vector{Float64},
+                           cM_length::Vector{Float64},
+                           recombinations::Int64)::Vector{Int64}
+    crossovers = Int64[]
+
+    uniform_distribution = Uniform(0, 1)
+    poisson_distribution₁ = Poisson(parameters[1])
+    poisson_distribution₂ = Poisson(parameters[2])
+
+    if sex == MALE
+        recombinations = rand(poisson_distribution₁)
+        for _ in 1:recombinations
+            position = rand(uniform_distribution)
+            push!(crossovers, position)
+        end
+    end
+    if sex == FEMALE
+        recombinations = rand(poisson_distribution₂)
+        for _ in 1:recombinations
+            position = rand(uniform_distribution)
+            push!(crossovers, position)
+        end
+    end
+    sort!(crossovers)
+end
+
+function ztpoisson_crossover()
+
+end
+
+function gamma_crossover()
+
+end
+
 function simuHaplo(
     genealogy::Dict{Int64, Individual};
     probandIDs::Vector{Int64} = pro(genealogy),
@@ -11,7 +46,7 @@ function simuHaplo(
     iterations::Int64 = 1,
     model::Symbol = :poisson,
     parameters::Vector{Float64} = [1, 1],
-    cM_length::Vector{Int64} = [100, 100],
+    cM_length::Vector{Float64} = [100, 100],
     BP_length::Vector{Int64} = 100000000,
     physical_map_mother::Union{Nothing, DataFrame} = nothing,
     physical_map_father::Union{Nothing, DataFrame} = nothing,
@@ -52,9 +87,24 @@ function simuHaplo(
         explore_tree(ancestor)
     end
 
-    prepare_priority_sort(pointer)
+    nodes = sort(collect(keys(pointer)))
+    prepare_priority_sort(nodes)
 
-    
+    index = 1
+    order = Dict{Int64, PointerIndividual}()
+    jumps = Dict{Int64, Int64}()
+    for ID in ancestorIDs
+        ancestor = pointer(ID)
+        start_priority_sort(ancestor, order, index, jumps)
+    end
+
+    if model == :poisson
+        crossover = poisson_crossover
+    elseif model == :ztpoisson
+        crossover = zero_truncated_crossover
+    elseif model == :gamma
+        crossover = gamma_crossover
+    end
 end
 
 function simuHaplo_convert(directory::String = ".")::Nothing
