@@ -185,15 +185,78 @@ function prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
     end
 end
 
-function start_priority_sort(pointer::Dict{Int64, PointerIndividual})::Vector{PointerIndividual}
-    sorted_individuals = Vector{PointerIndividual}()
-    for (ID, individual) in pointer
+function start_priority_sort(
+    node::PointerIndividual,
+    order::Dict{Int64, Int64},
+    index::Int64,
+    jumps::Dict{Int64, Int64}
+    )::Nothing
 
+    node.sort = 5
+    nodelist = []
+
+    for child in node.children
+        if child.sort == -1
+            priority_sort!(child, order, index, jumps, nodelist)
+        end
     end
-    sorted_individuals
+    empty!(nodelist)
+
+    for child in node.children
+        if child.sort == -1
+        elseif child.sort == 0
+            child.sort = 1
+        elseif child.sort == 1
+            priority_sort!(child, order, index, jumps, nodelist)
+        end
+    end
+    empty!(nodelist)
 end
 
-function priority_sort()::Int64
+function priority_sort!(
+    node::PointerIndividual,
+    order::Dict{Int64, PointerIndividual},
+    index::Int64,
+    jumps::Dict{Int64, Int64},
+    nodelist::Vector{PointerIndividual}
+    )::Int64
+    
     jump = 0
+
+    if !isempty(nodelist)
+        return 0
+    end
+
+    if (node.state != PROBAND & node.state != NODE) | node.sort == 5
+        return 0
+    end
+
+    order[index] = node
+    index += 1
+
+    former_flag = copy(node.sort)
+    node.sort = 5
+
+    for child in node.children
+        if child.sort == -1
+            jump += priority_sort!(child, order, index, jumps, nodelist)
+        end
+    end
+
+    jumps[index] = jump
+
+    if former_flag == -1
+        jump += 1
+    end
+
+    for child in node.children
+        if child.sort == -1
+        elseif child.sort == 0
+            child.sort = 1
+        elseif child.sort == 1
+            push!(nodelist, child)
+        end
+    end
+
     jump
 end
