@@ -6,7 +6,9 @@ using DataStructures: Stack
 using Distributions
 
 # For evaluating the sex manually
-export SEX
+export SEX,
+       MALE,
+       FEMALE
 
 # For creating new genealogies manually
 export Individual
