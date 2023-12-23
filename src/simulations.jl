@@ -1,43 +1,13 @@
-mutable struct SimulationIndividual
-    ID::Int64
-    father::Union{Nothing, SimulationIndividual}
-    mother::Union{Nothing, SimulationIndividual}
-    children::Vector{SimulationIndividual}
-    sex::SEX
-    state::STATE
+struct Haplotype
+    haplotype::String
+    position::Int64
+    fixed::Bool
 end
 
-"""
-simulate(genealogy::Dict{Int64, Individual})::Dict{Int64, SimulationIndividual}
-
-Takes a `genealogy` dictionary and returns a dictionary of pointers to simulated individuals.
-In REPL: to avoid crash, end function call with `;`.
-"""
-function simulate(genealogy::Dict{Int64, Individual})::Dict{Int64, SimulationIndividual}
-    simulation::Dict{Int64, SimulationIndividual} = Dict()
-    for (ID, individual) in genealogy
-        simulation[ID] = SimulationIndividual(ID, nothing, nothing, [], individual.sex, UNEXPLORED)
-    end
-    for (ID, individual) in genealogy
-        simulation_individual = simulation[ID]
-        if individual.father != 0
-            simulation_individual.father = simulation[individual.father]
-            push!(simulation_individual.father.children, simulation_individual)
-        end
-        if individual.mother != 0
-            simulation_individual.mother = simulation[individual.mother]
-            push!(simulation_individual.mother.children, simulation_individual)
-        end
-    end
-    simulation
-end
-
-"""
-"""
 function simuHaplo(
     genealogy::Dict{Int64, Individual};
-    probands::Vector{Int64} = pro(genealogy),
-    ancestors::Vector{Int64} = founder(genealogy),
+    probandIDs::Vector{Int64} = pro(genealogy),
+    ancestorIDs::Vector{Int64} = founder(genealogy),
     iterations::Int64 = 1,
     model::Symbol = :poisson,
     parameters::Vector{Float64} = [1, 1],
@@ -50,7 +20,39 @@ function simuHaplo(
     output_directory::String = "."
     )::Nothing
 
+    # Ported from GENLIB's simuHaplo
 
+    # Initialize all the nodes
+    pointer = point(genealogy)
+    haplotype = Dict{Int64, Haplotype}()
+
+    # Label the nodes that are probands
+    for ID in probandIDs
+        pointer[ID].state = EXPLOREDPROBAND
+    end
+
+    # Label the starting points and ancestor haplotypes
+    key = 1
+    for ID in ancestorIDs
+        ancestor = pointer[ID]
+        ancestor.state = START
+        ancestor.haplotype₁ = key
+        haplotype₁ = Haplotype("$(ancestor.ID).1", -1, true)
+        haplotype[key] = haplotype₁
+        key += 1
+        ancestor.haplotype₂ = key
+        haplotype₂ = Haplotype("$(ancestor.ID).2", -1, true)
+        haplotype[key] = haplotype₂
+        key += 1
+    end
+
+    # Label the nodes' relevance
+    for ID in ancestorIDs
+        ancestor = pointer[ID]
+        explore_tree(ancestor)
+    end
+
+    
 end
 
 function simuHaplo_convert(directory::String = ".")::Nothing
@@ -62,6 +64,8 @@ function simuHaplo_IBD_compare(
     BP_length::Int64,
     proband_haplotypes_path::String
     )::DataFrame
+
+    # Ported from GENLIB's simuHaplo_IBD_compare
 end
 
 function simuHaplo_traceback(
@@ -71,4 +75,6 @@ function simuHaplo_traceback(
     all_nodes_path::String,
     proband_haplotypes_path::String
     )::DataFrame
+
+    # Ported from GENLIB's simuHaplo_traceback
 end

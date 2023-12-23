@@ -118,3 +118,45 @@ function distance_matrix(matrix::Matrix{Float64})::Matrix{Float64}
         distance_matrix = (maximum(matrix .- minimum(matrix)) .- (matrix .- minimum(matrix)))/maximum(matrix .- minimum(matrix))
     end
 end
+
+"""
+explore_tree(individual::PointerIndividual)::Int64
+
+A recursive function that labels `individual`s on whether
+they lead from relevant ancestors to relevant probands.
+"""
+function explore_tree(individual::PointerIndividual)::Int64
+    # Ported from GENLIB's ExploreArbre
+    state = individual.state
+    if state == EXPLORED
+        0
+    elseif state == NODE
+        1
+    elseif state == PROBAND
+        1
+    elseif state == START
+        for child in individual.children
+            explore_tree(child)
+        end
+        1
+    elseif state == EXPLOREDPROBAND
+        state = PROBAND
+        for child in individual.children
+            explore_tree(child)
+        end
+        1
+    elseif state == UNEXPLORED
+        useful = 0
+        for child in individual.children
+            useful += explore_tree(child)
+        end
+        if useful > 0
+            state = NODE
+            1
+        else
+            state = EXPLORED
+            0
+        end
+    end
+    99
+end
