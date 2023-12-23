@@ -185,12 +185,19 @@ function prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
     end
 end
 
-function start_priority_sort(
-    node::PointerIndividual,
-    order::Dict{Int64, Int64},
-    index::Int64,
-    jumps::Dict{Int64, Int64}
-    )::Nothing
+"""
+start_priority_sort(node::PointerIndividual,
+                    order::Dict{Int64, Int64},
+                    index::Int64,
+                    jumps::Dict{Int64, Int64})::Nothing
+"""
+function start_priority_sort(node::PointerIndividual,
+                             order::Dict{Int64, Int64},
+                             index::Int64,
+                             jumps::Dict{Int64, Int64})::Nothing
+
+
+    # Ported from GENLIB's StartSortPrioriteArbre
 
     node.sort = 5
     nodelist = []
@@ -213,14 +220,21 @@ function start_priority_sort(
     empty!(nodelist)
 end
 
-function priority_sort!(
-    node::PointerIndividual,
-    order::Dict{Int64, PointerIndividual},
-    index::Int64,
-    jumps::Dict{Int64, Int64},
-    nodelist::Vector{PointerIndividual}
-    )::Int64
-    
+"""
+priority_sort!(node::PointerIndividual, 
+               order::Dict{Int64, PointerIndividual},
+               index::Int64,
+               jumps::Dict{Int64, Int64},
+               nodelist::Vector{PointerIndividual})::Int64
+"""
+function priority_sort!(node::PointerIndividual, 
+                        order::Dict{Int64, PointerIndividual},
+                        index::Int64,
+                        jumps::Dict{Int64, Int64},
+                        nodelist::Vector{PointerIndividual})::Int64
+
+    # Ported from GENLIB's SortPrioriteArbre
+
     jump = 0
 
     if !isempty(nodelist)
