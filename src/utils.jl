@@ -160,3 +160,40 @@ function explore_tree(individual::PointerIndividual)::Int64
     end
     99
 end
+
+"""
+prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
+
+Initializes the value of the individuals' `sort` value.
+"""
+function prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
+    # Ported from GENLIB's PrepareSortPrioriteArbre
+    for (_, individual) in pointer
+        if isnothing(individual.father)
+            individual.sort = -1
+        elseif individual.father.state == UNEXPLORED | individual.father.state == EXPLORED
+            individual.sort = -1
+        elseif isnothing(individual.mother)
+            individual.sort = -1
+        elseif individual.mother.state == UNEXPLORED | individual.mother.state == EXPLORED
+            individual.sort = -1
+        elseif individual.father.state == EXPLOREDPROBAND | individual.mother.state == EXPLOREDPROBAND
+            individual.sort = -1
+        else
+            individual.sort = 0
+        end
+    end
+end
+
+function start_priority_sort(pointer::Dict{Int64, PointerIndividual})::Vector{PointerIndividual}
+    sorted_individuals = Vector{PointerIndividual}()
+    for (ID, individual) in pointer
+
+    end
+    sorted_individuals
+end
+
+function priority_sort()::Int64
+    jump = 0
+    jump
+end

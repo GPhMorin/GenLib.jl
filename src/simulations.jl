@@ -52,6 +52,8 @@ function simuHaplo(
         explore_tree(ancestor)
     end
 
+    prepare_priority_sort(pointer)
+
     
 end
 
