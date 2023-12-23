@@ -5,6 +5,9 @@ using DataFrames: DataFrame
 using DataStructures: Stack
 using Distributions
 
+# For evaluating the sex manually
+export SEX
+
 # For creating new genealogies manually
 export Individual
 
