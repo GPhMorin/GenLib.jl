@@ -130,3 +130,49 @@ function simuHaplo_traceback(
 
     # Ported from GENLIB's simuHaplo_traceback
 end
+
+function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64}
+    descent = Dict{Vector{Bool}}()
+    open(filename) do file
+        lines = readlines(file)
+        _, proband_indices = split(lines[1], ';')
+        for proband_index in proband_indices
+            line = lines[proband_index+1]
+            information, chromosome₁, chromosome₂ = split(line, ['{', '}'])
+            proband = split(information, ';')[2]
+            chromosome₁ = split(chromosome₁, ';')
+            chromosome₂ = split(chromosome₂, ';')
+            BP_length = chromosome₁[end]
+            chromosome = zeros(BP_length)
+            current_index = 2
+            while current_index < length(chromosome₁)
+                current_start = chromosome₁[current_index-1] + 1
+                current_haplotype = chromosome₁[current_index]
+                current_end = chromosome₁[current_index+1]
+                if current_haplotype == founder_haplotype
+                    for BP in current_start:current_end
+                        chromosome[BP] = true
+                    end
+                end
+                current_start = chromosome₂[current_index-1] + 1
+                current_haplotype = chromosome₂[current_index]
+                current_end = chromosome₂[current_index+1]
+                if current_haplotype == founder_haplotype
+                    for BP in current_start:current_end
+                        chromosome[BP] = true
+                    end
+                end
+                current_index += 2
+            end
+            descent[proband] = chromosome
+        end
+    end
+    probands = sort(collect(keys(descent)))
+    ibd = Matrix{Int64}(undef, length(probands), length(probands))
+    for (j, proband₁) in enumerate(probands)
+        for (i, proband₂) in enumerate(probands)
+            ibd[i, j] = ibd[j, i] = length(findall(descent[proband₁] .& descent[proband₂]))
+        end
+    end
+    ibd
+end
