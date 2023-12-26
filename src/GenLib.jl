@@ -35,7 +35,7 @@ export genealogy,
        population,
        remove_relatives!,
        occ,
-       parse_output
+       parse_simuHaplo
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"

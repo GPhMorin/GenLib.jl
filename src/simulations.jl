@@ -146,7 +146,7 @@ function overlap(haplotype₁::Vector{Tuple{Int64, Int64}}, haplotype₂::Vector
     overlap
 end
 
-function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64}
+function parse_simuHaplo(filename::String, founder_haplotype::String)::Tuple{Vector{Int64}, Matrix{Int64}}
     descent = DefaultDict{Int64, Vector{Tuple{Int64, Int64}}}([])
     file = open(filename)
     lines = readlines(file)
@@ -188,5 +188,5 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
             end
         end
     end
-    ibd
+    probands, ibd
 end
