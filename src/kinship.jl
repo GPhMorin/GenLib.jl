@@ -92,7 +92,7 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
     # Ported from GENLIB's Kinship
     value = 0.
     stack = Vector{Tuple{PointerIndividual, PointerIndividual, Int64}}()
-    push!((individual₁, individual₂, 1))
+    push!(stack, (individual₁, individual₂, 1))
     while !isempty(stack)
         individual₁, individual₂, depth = pop!(stack)
         if individual₂.index > individual₁
@@ -102,8 +102,8 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
             value += 0.5 ^ depth
         end
         if !isnothing(individual₁.father)
-            push!(stack, individual₁.father, individual₂, depth+1)
-            push!(stack, individual₁.mother, individual₂, depth+1)
+            push!(stack, (individual₁.father, individual₂, depth+1))
+            push!(stack, (individual₁.mother, individual₂, depth+1))
         end
     end
     value
