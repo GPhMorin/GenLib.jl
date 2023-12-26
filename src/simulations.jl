@@ -149,9 +149,9 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
             current_haplotype = chromosome₁[current_index]
             current_end = parse(Int64, chromosome₁[current_index+1])
             if current_haplotype == founder_haplotype
-                println("YES")
                 push!(descent[proband], (current_start, current_end))
             end
+            current_index += 2
         end
         current_index = 2
         while current_index < length(chromosome₂)
