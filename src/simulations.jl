@@ -136,7 +136,7 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
     open(filename) do file
         lines = readlines(file)
         proband_indices = parse(Int64, split(lines[1], ';')[2])
-        for proband_index in 1:proband_indices
+        Threads.@threads for proband_index in 1:proband_indices
             line = lines[proband_index+1]
             information, chromosome₁, chromosome₂ = filter(!isempty, split(line, ['{', '}']))
             proband = parse(Int64, split(information, ';')[2])
