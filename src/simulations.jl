@@ -131,6 +131,21 @@ function simuHaplo_traceback(
     # Ported from GENLIB's simuHaplo_traceback
 end
 
+function overlap(haplotype₁::Vector{Typle{Int64, Int64}}, haplotype₂::Vector{Tuple{Int64, Int64}})::Int64
+    overlap = 0
+    for (start₁, ending₁) in haplotype₁
+        for (start₂, ending₂) in haplotype₂
+            if ending₁ ≥ start₂ & ending₂ ≥ start₁
+                overlap_start = max(start₁, start₂)
+                overlap_end = min(ending₁, ending₂)
+                new_overlap = overlap_end - overlap_start + 1
+                overlap += new_overlap
+            end
+        end
+    end
+    overlap
+end
+
 function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64}
     descent = DefaultDict{Int64, Vector{Tuple{Int64, Int64}}}([])
     file = open(filename)
@@ -159,7 +174,6 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
             current_haplotype = chromosome₂[current_index]
             current_end = parse(Int64, chromosome₂[current_index+1])
             if current_haplotype == founder_haplotype
-                println("YA")
                 push!(descent[proband], (current_start, current_end))
             end
             current_index += 2
@@ -169,7 +183,9 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
     ibd = Matrix{Int64}(undef, length(probands), length(probands))
     for (j, proband₁) in enumerate(probands)
         for (i, proband₂) in enumerate(probands)
-            ibd[i, j] = ibd[j, i] = length(findall(descent[proband₁] .& descent[proband₂]))
+            if proband₁ ≤ proband₂
+                ibd[i, j] = ibd[j, i] = overlap(descent[proband₁], descent[proband₂])
+            end
         end
     end
     ibd
