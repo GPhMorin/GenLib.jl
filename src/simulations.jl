@@ -131,7 +131,7 @@ function simuHaplo_traceback(
     # Ported from GENLIB's simuHaplo_traceback
 end
 
-function overlap(haplotype₁::Vector{Typle{Int64, Int64}}, haplotype₂::Vector{Tuple{Int64, Int64}})::Int64
+function overlap(haplotype₁::Vector{Tuple{Int64, Int64}}, haplotype₂::Vector{Tuple{Int64, Int64}})::Int64
     overlap = 0
     for (start₁, ending₁) in haplotype₁
         for (start₂, ending₂) in haplotype₂
