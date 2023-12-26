@@ -142,7 +142,7 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
             proband = parse(Int64, split(information, ';')[2])
             chromosome₁ = split(chromosome₁, ';')
             chromosome₂ = split(chromosome₂, ';')
-            BP_length = chromosome₁[end]
+            BP_length = parse(Int64, chromosome₁[end])
             chromosome = zeros(BP_length)
             current_index = 2
             while current_index < length(chromosome₁)
