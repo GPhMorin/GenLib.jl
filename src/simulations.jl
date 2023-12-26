@@ -132,7 +132,7 @@ function simuHaplo_traceback(
 end
 
 function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64}
-    descent = Dict{Int64, Vector{Tuple{Int64, Int64}}}()
+    descent = DefaultDict{Int64, Vector{Tuple{Int64, Int64}}}([])
     file = open(filename)
     lines = readlines(file)
     close(file)

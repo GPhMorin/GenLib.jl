@@ -2,7 +2,7 @@ module GenLib
 
 using CSV
 using DataFrames: DataFrame
-using DataStructures: Stack
+using DataStructures: Stack, DefaultDict
 using Distributions
 
 # For evaluating the sex manually
