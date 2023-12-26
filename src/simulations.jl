@@ -143,17 +143,13 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
         proband = parse(Int64, split(information, ';')[2])
         chromosome₁ = split(chromosome₁, ';')
         chromosome₂ = split(chromosome₂, ';')
-        BP_length = parse(Int64, chromosome₁[end])
-        chromosome = zeros(BP_length)
         current_index = 2
         while current_index < length(chromosome₁)
             current_start = parse(Int64, chromosome₁[current_index-1]) + 1
             current_haplotype = chromosome₁[current_index]
             current_end = parse(Int64, chromosome₁[current_index+1])
             if current_haplotype == founder_haplotype
-                for BP in current_start:current_end
-                    chromosome[BP] = true
-                end
+                push!(descent[proband], (current_start, current_end))
             end
         end
         current_index = 2
