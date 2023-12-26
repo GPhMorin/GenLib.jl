@@ -135,7 +135,7 @@ function overlap(haplotype₁::Vector{Tuple{Int64, Int64}}, haplotype₂::Vector
     overlap = 0
     for (start₁, ending₁) in haplotype₁
         for (start₂, ending₂) in haplotype₂
-            if ending₁ ≥ start₂ & ending₂ ≥ start₁
+            if (ending₁ ≥ start₂) & (ending₂ ≥ start₁)
                 overlap_start = max(start₁, start₂)
                 overlap_end = min(ending₁, ending₂)
                 new_overlap = overlap_end - overlap_start + 1
