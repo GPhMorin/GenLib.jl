@@ -154,6 +154,9 @@ function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64
                         chromosome[BP] = true
                     end
                 end
+            end
+            current_index = 2
+            while current_index < length(chromosome₂)
                 current_start = parse(Int64, chromosome₂[current_index-1]) + 1
                 current_haplotype = chromosome₂[current_index]
                 current_end = parse(Int64, chromosome₂[current_index+1])
