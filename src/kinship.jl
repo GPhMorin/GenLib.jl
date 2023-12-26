@@ -59,7 +59,7 @@ end
 ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
 
 Computes the kinship coefficient between two individuals using pointers.
-"""
+
 function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
     # Ported from GENLIB's Kinship
     value = 0.
@@ -77,6 +77,33 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
         if !isnothing(individual₁.father)
             value += ϕ(individual₁.father, individual₂) / 2
             value += ϕ(individual₁.mother, individual₂) / 2
+        end
+    end
+    value
+end
+"""
+
+"""
+ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+
+Computes the kinship coefficient between two individuals using pointers.
+"""
+function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+    # Ported from GENLIB's Kinship
+    value = 0.
+    stack = Vector{Tuple{PointerIndividual, PointerIndividual, Int64}}()
+    stack.push!((individual₁, individual₂, 1))
+    while !isempty(stack)
+        individual₁, individual₂, depth = pop!(stack)
+        if individual₂.index > individual₁
+            individual₁, individual₂ = individual₂, individual₁
+        end
+        if individual₁.ID == individual₂.ID
+            value += 0.5 ^ depth
+        end
+        if !isnothing(individual₁.father)
+            push!(stack, individual₁.father, individual₂, depth+1)
+            push!(stack, individual₁.mother, individual₂, depth+1)
         end
     end
     value
