@@ -132,14 +132,14 @@ function simuHaplo_traceback(
 end
 
 function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64}
-    descent = Dict{Vector{Bool}}()
+    descent = Dict{Int64, Vector{Bool}}()
     open(filename) do file
         lines = readlines(file)
         _, proband_indices = split(lines[1], ';')
         for proband_index in proband_indices
             line = lines[proband_index+1]
             information, chromosome₁, chromosome₂ = split(line, ['{', '}'])
-            proband = split(information, ';')[2]
+            proband = Int64(split(information, ';')[2])
             chromosome₁ = split(chromosome₁, ';')
             chromosome₂ = split(chromosome₂, ';')
             BP_length = chromosome₁[end]
