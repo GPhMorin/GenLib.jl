@@ -95,11 +95,13 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
     push!(stack, (individual₁, individual₂, 1))
     while !isempty(stack)
         individual₁, individual₂, depth = pop!(stack)
-        if individual₂.index > individual₁.index
-            individual₁, individual₂ = individual₂, individual₁
-        end
         if individual₁.ID == individual₂.ID
             value += 0.5 ^ depth
+            if !isnothing(individual.father)
+                push!(stack, (individual₁.father, individual₁.mother, depth+1))
+            end
+        elseif individual₂.index > individual₁.index
+            individual₁, individual₂ = individual₂, individual₁
         end
         if !isnothing(individual₁.father)
             push!(stack, (individual₁.father, individual₂, depth+1))
