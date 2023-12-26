@@ -133,38 +133,38 @@ end
 
 function parse_output(filename::String, founder_haplotype::String)::Matrix{Int64}
     descent = Dict{Int64, Vector{Tuple{Int64, Int64}}}()
-    open(filename) do file
-        lines = readlines(file)
-        proband_indices = parse(Int64, split(lines[1], ';')[2])
-        Threads.@threads for proband_index in 1:proband_indices
-            line = lines[proband_index+1]
-            information, chromosome₁, chromosome₂ = filter(!isempty, split(line, ['{', '}']))
-            proband = parse(Int64, split(information, ';')[2])
-            chromosome₁ = split(chromosome₁, ';')
-            chromosome₂ = split(chromosome₂, ';')
-            BP_length = parse(Int64, chromosome₁[end])
-            chromosome = zeros(BP_length)
-            current_index = 2
-            while current_index < length(chromosome₁)
-                current_start = parse(Int64, chromosome₁[current_index-1]) + 1
-                current_haplotype = chromosome₁[current_index]
-                current_end = parse(Int64, chromosome₁[current_index+1])
-                if current_haplotype == founder_haplotype
-                    for BP in current_start:current_end
-                        chromosome[BP] = true
-                    end
+    file = open(filename)
+    lines = readlines(file)
+    close(file)
+    proband_indices = parse(Int64, split(lines[1], ';')[2])
+    Threads.@threads for proband_index in 1:proband_indices
+        line = lines[proband_index+1]
+        information, chromosome₁, chromosome₂ = filter(!isempty, split(line, ['{', '}']))
+        proband = parse(Int64, split(information, ';')[2])
+        chromosome₁ = split(chromosome₁, ';')
+        chromosome₂ = split(chromosome₂, ';')
+        BP_length = parse(Int64, chromosome₁[end])
+        chromosome = zeros(BP_length)
+        current_index = 2
+        while current_index < length(chromosome₁)
+            current_start = parse(Int64, chromosome₁[current_index-1]) + 1
+            current_haplotype = chromosome₁[current_index]
+            current_end = parse(Int64, chromosome₁[current_index+1])
+            if current_haplotype == founder_haplotype
+                for BP in current_start:current_end
+                    chromosome[BP] = true
                 end
             end
-            current_index = 2
-            while current_index < length(chromosome₂)
-                current_start = parse(Int64, chromosome₂[current_index-1]) + 1
-                current_haplotype = chromosome₂[current_index]
-                current_end = parse(Int64, chromosome₂[current_index+1])
-                if current_haplotype == founder_haplotype
-                    push!(descent[proband], (current_start, current_end))
-                end
-                current_index += 2
+        end
+        current_index = 2
+        while current_index < length(chromosome₂)
+            current_start = parse(Int64, chromosome₂[current_index-1]) + 1
+            current_haplotype = chromosome₂[current_index]
+            current_end = parse(Int64, chromosome₂[current_index+1])
+            if current_haplotype == founder_haplotype
+                push!(descent[proband], (current_start, current_end))
             end
+            current_index += 2
         end
     end
     probands = sort(collect(keys(descent)))
