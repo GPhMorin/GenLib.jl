@@ -16,6 +16,7 @@ mutable struct PointerIndividual
     children::Vector{PointerIndividual}
     sex::SEX
     state::STATE
+    probability::Float64
     allele::Int64
     sort::Int64
     haplotype₁::Int64
@@ -31,7 +32,7 @@ In REPL: to avoid crash, end function call with `;`.
 function point(genealogy::Dict{Int64, Individual})::Dict{Int64, PointerIndividual}
     pointer::Dict{Int64, PointerIndividual} = Dict()
     for (ID, individual) in genealogy
-        pointer[ID] = PointerIndividual(ID, nothing, nothing, individual.index, [], individual.sex, UNEXPLORED, 0, 0, 0, 0)
+        pointer[ID] = PointerIndividual(ID, nothing, nothing, individual.index, [], individual.sex, UNEXPLORED, 0., 0, 0, 0, 0)
     end
     for (ID, individual) in genealogy
         pointer_individual = pointer[ID]
