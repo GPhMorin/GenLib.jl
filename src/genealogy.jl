@@ -21,6 +21,28 @@ end
 """
 genealogy(filename::String)::Dict{Int64, Individual}
 
+Reads a DataFrame and returns a dictionary of individuals.
+"""
+function genealogy(dataframe::DataFrame)::Dict{Int64, Individual}
+    genealogy::Dict{Int64, Individual} = Dict()
+    for (index, row) in enumerate(eachrow(dataframe))
+        genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
+    end
+    for row in eachrow(dataframe)
+        individual = genealogy[row.ind]
+        if individual.father != 0
+            push!(genealogy[individual.father].children, row.ind)
+        end
+        if individual.mother != 0
+            push!(genealogy[individual.mother].children, row.ind)
+        end
+    end
+    genealogy
+end
+
+"""
+genealogy(filename::String)::Dict{Int64, Individual}
+
 Reads a file with `filename` and returns a dictionary of individuals.
 """
 function genealogy(filename::String)::Dict{Int64, Individual}
