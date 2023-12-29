@@ -22,3 +22,5 @@ If you use this project in a publication, please cite the original R package:
   publisher={BioMed Central}
 }
 ```
+
+If you are a developer, you may clone this repository as `path/to/home/.julia/dev/GenLib/` and using: `import Pkg; Pkg.activate("path/to/home/.julia/dev/GenLib/")`. You may then use your local installation with the normal `using GenLib`.
