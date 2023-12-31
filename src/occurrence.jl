@@ -14,8 +14,8 @@ function occ(
     
     occurrence_matrix = Matrix{Int64}(undef, length(probandIDs), length(ancestorIDs))
     reference = refer(genealogy)
-    for ancestorID in ancestorIDs
-        reference[ancestorID].state = ANCESTOR
+    for ID in ancestorIDs
+        reference[ID].ancestor = true
     end
     for (i, probandID) in enumerate(probandIDs)
         proband = reference[probandID]
@@ -40,7 +40,7 @@ A recursive function that increments the occurrence of a reference `individual`
 if they are an ancestor.
 """
 function occur!(individual::ReferenceIndividual)
-    if individual.state == ANCESTOR
+    if individual.ancestor
         individual.occurrence += 1
     end
     if !isnothing(individual.father)
