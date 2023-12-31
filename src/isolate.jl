@@ -42,7 +42,7 @@ function branching(genealogy::Dict{Int64, Individual}; probandIDs::Vector{Int64}
         mark_descendants!(ancestor)
     end
     for (ID, individual) in genealogy
-        if reference[ID].ancestor | reference[ID].descendant
+        if reference[ID].ancestor & reference[ID].descendant
             isolated_genealogy[ID] = individual
         end
     end
