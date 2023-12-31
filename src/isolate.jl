@@ -1,34 +1,50 @@
 """
-branching(genealogy::Dict{Int64, Individual}, probands::Vector{Int64}, ancestors::Vector{Int64})
+mark_ancestors!(individual::ReferenceIndividual)
+
+A recursive function that marks the ancestors of a `individual`.
+"""
+function mark_ancestors!(individual::ReferenceIndividual)
+    individual.ancestor = true
+    if !isnothing(individual.father)
+        mark_ancestors!(individual.father)
+    end
+    if !isnothing(individual.mother)
+        mark_ancestors!(individual.mother)
+    end
+end
+
+"""
+mark_descendants!(individual::ReferenceIndividual)
+
+A recursive function that marks the descendants of a `individual`.
+"""
+function mark_descendants!(individual::ReferenceIndividual)
+    individual.descendant = true
+    for child in individual.children
+        mark_descendants!(child)
+    end
+end
+
+"""
+branching(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64})
 
 Takes a `genealogy` and removes individuals who are not in the paths between select `probands` and `ancestors`.
 """
-function branching(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64})::Dict{Int64, Individual}
-    pointer = point(genealogy)
+function branching(genealogy::Dict{Int64, Individual}; probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
+    isolated_genealogy = Dict{Int64, Individual}()
+    reference = point(genealogy)
     for ID in probandIDs
+        proband = reference[ID]
+        mark_ancestors!(proband)
     end
-end
-
-function mark_ancestors!(individual::PointerIndividual)
+    for ID in ancestorIDs
+        ancestor = reference[ID]
+        mark_descendants!(ancestor)
+    end
     for (ID, individual) in genealogy
-        if ID == ancestor
-            individual.ancestor = true
-        elseif ID ∈ descendant(genealogy, ancestor)
-            individual.ancestor = true
-        else
-            individual.ancestor = false
+        if reference[ID].ancestor | reference[ID].descendant
+            new_genealogy[ID] = individual
         end
     end
-end
-
-function mark_descendants!(gen::Dict{Int64, Individual}, ancestor::Int64)
-    for (ID, individual) in genealogy
-        if ID == ancestor
-            individual.descendant = true
-        elseif ID ∈ descendant(genealogy, ancestor)
-            individual.descendant = true
-        else
-            individual.descendant = false
-        end
-    end
+    isolated_genealogy
 end

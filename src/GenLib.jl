@@ -47,7 +47,7 @@ export genea140,
        pop140
 
 include("genealogy.jl")
-include("pointers.jl")
+include("reference.jl")
 include("isolate.jl")
 include("genetic_contribution.jl")
 include("utils.jl")

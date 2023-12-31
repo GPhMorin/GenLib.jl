@@ -8,12 +8,12 @@
     START
 end
 
-mutable struct PointerIndividual
+mutable struct ReferenceIndividual
     ID::Int64
-    father::Union{Nothing, PointerIndividual}
-    mother::Union{Nothing, PointerIndividual}
+    father::Union{Nothing, ReferenceIndividual}
+    mother::Union{Nothing, ReferenceIndividual}
     index::Int64
-    children::Vector{PointerIndividual}
+    children::Vector{ReferenceIndividual}
     sex::SEX
     state::STATE
     probability::Float64
@@ -28,13 +28,13 @@ end
 """
 point(genealogy::Dict{Int64, Individual})
 
-Takes a `genealogy` dictionary and returns a dictionary of pointers to individuals.
+Takes a `genealogy` dictionary and returns a dictionary of references to individuals.
 In REPL: to avoid crash, end function call with `;`.
 """
 function point(genealogy::Dict{Int64, Individual})
-    pointer::Dict{Int64, PointerIndividual} = Dict()
+    reference::Dict{Int64, ReferenceIndividual} = Dict()
     for (ID, individual) in genealogy
-        pointer[ID] = PointerIndividual(ID, # ID (ind in the ASC file)
+        reference[ID] = ReferenceIndividual(ID, # ID (ind in the ASC file)
         nothing, # father
         nothing, # mother
         individual.index, # index in the original ASC file
@@ -50,15 +50,15 @@ function point(genealogy::Dict{Int64, Individual})
         false) # whether the individual is a descendant
     end
     for (ID, individual) in genealogy
-        pointer_individual = pointer[ID]
+        reference_individual = reference[ID]
         if individual.father != 0
-            pointer_individual.father = pointer[individual.father]
-            push!(pointer_individual.father.children, pointer_individual)
+            reference_individual.father = reference[individual.father]
+            push!(reference_individual.father.children, reference_individual)
         end
         if individual.mother != 0
-            pointer_individual.mother = pointer[individual.mother]
-            push!(pointer_individual.mother.children, pointer_individual)
+            reference_individual.mother = reference[individual.mother]
+            push!(reference_individual.mother.children, reference_individual)
         end
     end
-    pointer
+    reference
 end
