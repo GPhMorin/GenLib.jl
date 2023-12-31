@@ -7,9 +7,9 @@ If the type is `:ind` (default), then the matrix corresponds to *probandIDs* × 
 If the type is `:total`, then the matrix corresponds to *ancestorIDs* × 1.
 """
 function occ(
-    genealogy::Dict{Int64, Individual},
-    probandIDs::Vector{Int64},
-    ancestorIDs::Vector{Int64};
+    genealogy::Dict{Int64, Individual};
+    probandIDs::Vector{Int64} = pro(genealogy),
+    ancestorIDs::Vector{Int64} = founder(genealogy);
     type::Symbol = :ind)
     
     occurrence_matrix = Matrix{Int64}(undef, length(probandIDs), length(ancestorIDs))
