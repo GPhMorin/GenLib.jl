@@ -1,7 +1,7 @@
 """
 mark_ancestors!(individual::ReferenceIndividual)
 
-A recursive function that marks the ancestors of a `individual`.
+A recursive function that marks the ancestors of an `individual`.
 """
 function mark_ancestors!(individual::ReferenceIndividual)
     individual.ancestor = true
@@ -16,7 +16,7 @@ end
 """
 mark_descendants!(individual::ReferenceIndividual)
 
-A recursive function that marks the descendants of a `individual`.
+A recursive function that marks the descendants of an `individual`.
 """
 function mark_descendants!(individual::ReferenceIndividual)
     individual.descendant = true
@@ -28,7 +28,7 @@ end
 """
 branching(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64})
 
-Takes a `genealogy` and removes individuals who are not in the paths between select `probands` and `ancestors`.
+Takes a `genealogy` and removes individuals who are not in the paths between select probands and ancestors.
 """
 function branching(genealogy::Dict{Int64, Individual}; probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
     isolated_genealogy = Dict{Int64, Individual}()
