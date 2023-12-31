@@ -35,21 +35,22 @@ In REPL: to avoid crash, end function call with `;`.
 function refer(genealogy::Dict{Int64, Individual})
     reference::Dict{Int64, ReferenceIndividual} = Dict()
     for (ID, individual) in genealogy
-        reference[ID] = ReferenceIndividual(ID, # ID (ind in the ASC file)
-        nothing, # father
-        nothing, # mother
-        individual.index, # index in the original ASC file
-        [], # children
-        individual.sex, # sex (1 for male, 2 for female)
-        UNEXPLORED, # status
-        0., # probability
-        0, # allele
-        0, # sort
-        0, # haplotype₁
-        0, # haplotype₂
-        false, # whether the individual is an ancestor
-        false, # whether the individual is a descendant
-        0) # occurrence
+        reference[ID] = ReferenceIndividual(
+            ID, # ID (ind in the ASC file)
+            nothing, # father
+            nothing, # mother
+            individual.index, # index in the original ASC file
+            [], # children
+            individual.sex, # sex (1 for male, 2 for female)
+            UNEXPLORED, # status
+            0., # probability
+            0, # allele
+            0, # sort
+            0, # haplotype₁
+            0, # haplotype₂
+            false, # whether the individual is an ancestor
+            false, # whether the individual is a descendant
+            0) # occurrence
     end
     for (ID, individual) in genealogy
         reference_individual = reference[ID]
