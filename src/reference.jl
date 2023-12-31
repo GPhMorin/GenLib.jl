@@ -23,6 +23,7 @@ mutable struct ReferenceIndividual
     haplotype₂::Int64
     ancestor::Bool
     descendant::Bool
+    occurrence::Int64
 end
 
 """
@@ -47,7 +48,8 @@ function refer(genealogy::Dict{Int64, Individual})
         0, # haplotype₁
         0, # haplotype₂
         false, # whether the individual is an ancestor
-        false) # whether the individual is a descendant
+        false, # whether the individual is a descendant
+        0) # occurrence
     end
     for (ID, individual) in genealogy
         reference_individual = reference[ID]
