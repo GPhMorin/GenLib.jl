@@ -1,9 +1,9 @@
 """
-phi(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
 
 Computes the kinship coefficient between two individuals using pointers.
 """
-function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
     # Ported from GENLIB's Kinship
     value = 0.
     if individual₂.index > individual₁.index
@@ -30,14 +30,14 @@ function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
 end
 
 """
-phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))::Matrix{Float64}
+phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
 
 Takes a `genealogy` dictionary, computes the kinship coefficient
 between all probands using a vector of `IDs` and returns a matrix.
 
 For faster processing, use `ϕ` instead if a child cannot have a single unknown parent.
 """
-function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))::Matrix{Float64}
+function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
     matrix = zeros(length(IDs), length(IDs))
     pointer = point(genealogy)
     individuals = [pointer[ID] for ID in IDs]
@@ -56,11 +56,11 @@ function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(geneal
 end
 
 """
-ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)
 
 Computes the kinship coefficient between two individuals using pointers.
 """
-function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)::Float64
+function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)
     # Ported from GENLIB's Kinship
     value = 0.
     if individual₂.index > individual₁.index
@@ -83,14 +83,14 @@ function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual):
 end
 
 """
-ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))::Matrix{Float64}
+ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
 
 Takes a `genealogy` dictionary, computes the kinship coefficient
 between all probands using a vector of `IDs` and returns a matrix.
 
 Use `phi` instead if a child can have only one unknown parent.
 """
-function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))::Matrix{Float64}
+function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
     matrix = zeros(length(IDs), length(IDs))
     pointer = point(genealogy)
     individuals = [pointer[ID] for ID in IDs]

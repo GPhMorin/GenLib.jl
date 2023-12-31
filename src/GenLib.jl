@@ -15,7 +15,7 @@ export Individual
 
 # GENLIB functions
 export genealogy,
-       isolate_genealogy,
+       branching,
        gc,
        phi,
        ϕ,
@@ -48,6 +48,7 @@ export genea140,
 
 include("genealogy.jl")
 include("pointers.jl")
+include("isolate.jl")
 include("genetic_contribution.jl")
 include("utils.jl")
 include("kinship.jl")

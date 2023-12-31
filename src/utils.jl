@@ -1,29 +1,29 @@
 """
-pro(genealogy::Dict{Int64, Individual})::Vector{Int64}
+pro(genealogy::Dict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a vector of proband IDs.
 """
-function pro(genealogy::Dict{Int64, Individual})::Vector{Int64}
+function pro(genealogy::Dict{Int64, Individual})
     probands = [ID for (ID, individual) in genealogy if isempty(individual.children)]
     sort!(probands)
 end
 
 """
-founder(genealogy::Dict{Int64, Individual})::Vector{Int64}
+founder(genealogy::Dict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a vector of founder IDs.
 """
-function founder(genealogy::Dict{Int64, Individual})::Vector{Int64}
+function founder(genealogy::Dict{Int64, Individual})
     founders = [ID for (ID, individual) in genealogy if individual.father == 0]
     sort!(founders)
 end
 
 """
-findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})::Vector{Int64}
+findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})
 
 Takes a `genealogy` and returns a vector of founders from whom the `IDs` descend.
 """
-function findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})::Vector{Int64}
+function findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})
     ancestorIDs = [ancestor(genealogy, ID) for ID in IDs]
     common_ancestorIDs = ∩(ancestorIDs...)
     founderIDs = [ancestorID for ancestorID in common_ancestorIDs
@@ -32,11 +32,11 @@ function findFounders(genealogy::Dict{Int64}, IDs::Vector{Int64})::Vector{Int64}
 end
 
 """
-get_paths(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Vector{Int64}}
+get_paths(genealogy::Dict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns the paths from an individual to their ancestors.
 """
-function get_paths(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Vector{Int64}}
+function get_paths(genealogy::Dict{Int64, Individual}, ID::Int64)
     paths = Vector{Vector{Int64}}([[ID]])
     individual = genealogy[ID]
     if individual.father != 0
@@ -57,21 +57,21 @@ function get_paths(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Vector
 end
 
 """
-children(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
+children(genealogy::Dict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns the children of an individual.
 """
-function children(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
+function children(genealogy::Dict{Int64, Individual}, ID::Int64)
     individual = genealogy[ID]
     individual.children
 end
 
 """
-descendant(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
+descendant(genealogy::Dict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns the descendants of an individual.
 """
-function descendant(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64}
+function descendant(genealogy::Dict{Int64, Individual}, ID::Int64)
     descendants = Set{Int64}()
     stack = Stack{Int64}()
     push!(stack, ID)
@@ -87,15 +87,14 @@ function descendant(genealogy::Dict{Int64, Individual}, ID::Int64)::Vector{Int64
 end
 
 """
-rec(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))::Vector{Int64}
+rec(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
 
 Takes a `genealogy` dictionary, a vector of `probandIDs` and a vector of `ancestorIDs` and returns the number of descendants of each ancestor.
 """
 function rec(
     genealogy::Dict{Int64, Individual},
     probandIDs::Vector{Int64} = pro(genealogy),
-    ancestorIDs::Vector{Int64} = founder(genealogy)
-    )::Vector{Int64}
+    ancestorIDs::Vector{Int64} = founder(genealogy))
     
     coverage = Vector{Int64}()
     for ancestorID in ancestorIDs
@@ -107,11 +106,11 @@ function rec(
 end
 
 """
-distance_matrix(similarity_matrix::Matrix{Float64})::Matrix{Float64}
+distance_matrix(similarity_matrix::Matrix{Float64})
 
 Converts a similarity matrix into a distance matrix normalized with values [0, 1].
 """
-function distance_matrix(matrix::Matrix{Float64})::Matrix{Float64}
+function distance_matrix(matrix::Matrix{Float64})
     if maximum(matrix) - minimum(matrix) == 0
         distance_matrix = zeros(size(matrix))
     else
@@ -120,12 +119,12 @@ function distance_matrix(matrix::Matrix{Float64})::Matrix{Float64}
 end
 
 """
-explore_tree(individual::PointerIndividual)::Int64
+explore_tree(individual::PointerIndividual)
 
 A recursive function that labels `individual`s on whether
 they lead from relevant ancestors to relevant probands.
 """
-function explore_tree(individual::PointerIndividual)::Int64
+function explore_tree(individual::PointerIndividual)
     # Ported from GENLIB's ExploreArbre
     state = individual.state
     if state == EXPLORED
@@ -162,11 +161,11 @@ function explore_tree(individual::PointerIndividual)::Int64
 end
 
 """
-prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})::Nothing
+prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})
 
 Initializes the value of the individuals' `sort` value.
 """
-function prepare_priority_sort(nodes::Vector{PointerIndividual})::Nothing
+function prepare_priority_sort(nodes::Vector{PointerIndividual})
     # Ported from GENLIB's PrepareSortPrioriteArbre
     for node in nodes
         if isnothing(node.father)
@@ -189,12 +188,12 @@ end
 start_priority_sort(node::PointerIndividual,
                     order::Dict{Int64, Int64},
                     index::Int64,
-                    jumps::Dict{Int64, Int64})::Nothing
+                    jumps::Dict{Int64, Int64})
 """
 function start_priority_sort(node::PointerIndividual,
                              order::Dict{Int64, Int64},
                              index::Int64,
-                             jumps::Dict{Int64, Int64})::Nothing
+                             jumps::Dict{Int64, Int64})
 
 
     # Ported from GENLIB's StartSortPrioriteArbre
@@ -225,13 +224,13 @@ priority_sort!(node::PointerIndividual,
                order::Dict{Int64, PointerIndividual},
                index::Int64,
                jumps::Dict{Int64, Int64},
-               nodelist::Vector{PointerIndividual})::Int64
+               nodelist::Vector{PointerIndividual})
 """
 function priority_sort!(node::PointerIndividual, 
                         order::Dict{Int64, PointerIndividual},
                         index::Int64,
                         jumps::Dict{Int64, Int64},
-                        nodelist::Vector{PointerIndividual})::Int64
+                        nodelist::Vector{PointerIndividual})
 
     # Ported from GENLIB's SortPrioriteArbre
 

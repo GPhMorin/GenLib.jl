@@ -19,11 +19,11 @@ struct Individual
 end
 
 """
-genealogy(filename::String)::Dict{Int64, Individual}
+genealogy(filename::String)
 
 Reads a DataFrame and returns a dictionary of individuals.
 """
-function genealogy(dataframe::DataFrame)::Dict{Int64, Individual}
+function genealogy(dataframe::DataFrame)
     genealogy::Dict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataframe))
         genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
@@ -41,11 +41,11 @@ function genealogy(dataframe::DataFrame)::Dict{Int64, Individual}
 end
 
 """
-genealogy(filename::String)::Dict{Int64, Individual}
+genealogy(filename::String)
 
 Reads a file with `filename` and returns a dictionary of individuals.
 """
-function genealogy(filename::String)::Dict{Int64, Individual}
+function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     genealogy::Dict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataset))
@@ -64,11 +64,11 @@ function genealogy(filename::String)::Dict{Int64, Individual}
 end
 
 """
-isolate_genealogy(genealogy::Dict{Int64, Individual}, ancestor::Int64)::Dict{Int64, Individual}
+isolate_genealogy(genealogy::Dict{Int64, Individual}, ancestor::Int64)
 
 Takes a `genealogy` and ablates parents from individuals who do not descend from the `ancestor`.
 """
-function isolate_genealogy(genealogy::Dict{Int64, Individual}, ancestor::Int64)::Dict{Int64, Individual}
+function isolate_genealogy(genealogy::Dict{Int64, Individual}, ancestor::Int64)
     descendants = descendant(genealogy, ancestor)
     isolated_genealogy = Dict{Int64, Individual}()
     for (ID, individual) in genealogy

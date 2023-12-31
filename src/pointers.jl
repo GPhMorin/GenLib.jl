@@ -21,18 +21,33 @@ mutable struct PointerIndividual
     sort::Int64
     haplotype₁::Int64
     haplotype₂::Int64
+    ancestor::Bool
+    descendant::Bool
 end
 
 """
-point(genealogy::Dict{Int64, Individual})::Dict{Int64, PointerIndividual}
+point(genealogy::Dict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a dictionary of pointers to individuals.
 In REPL: to avoid crash, end function call with `;`.
 """
-function point(genealogy::Dict{Int64, Individual})::Dict{Int64, PointerIndividual}
+function point(genealogy::Dict{Int64, Individual})
     pointer::Dict{Int64, PointerIndividual} = Dict()
     for (ID, individual) in genealogy
-        pointer[ID] = PointerIndividual(ID, nothing, nothing, individual.index, [], individual.sex, UNEXPLORED, 0., 0, 0, 0, 0)
+        pointer[ID] = PointerIndividual(ID, # ID (ind in the ASC file)
+        nothing, # father
+        nothing, # mother
+        individual.index, # index in the original ASC file
+        [], # children
+        individual.sex, # sex (1 for male, 2 for female)
+        UNEXPLORED, # status
+        0., # probability
+        0, # allele
+        0, # sort
+        0, # haplotype₁
+        0, # haplotype₂
+        false, # whether the individual is an ancestor
+        false) # whether the individual is a descendant
     end
     for (ID, individual) in genealogy
         pointer_individual = pointer[ID]

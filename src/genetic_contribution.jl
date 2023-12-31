@@ -1,13 +1,12 @@
 """
-gc(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))::Matrix{Float64}
+gc(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
 
 Takes a `genealogy` dictionary, computes the genetic contribution of each ancestor to each proband using a vector of `probandIDs` and a vector of `ancestorIDs` and returns a matrix.
 """
 function gc(
     genealogy::Dict{Int64, Individual};
     probandIDs::Vector{Int64} = pro(genealogy),
-    ancestorIDs::Vector{Int64} = founder(genealogy)
-    )::Matrix{Float64}
+    ancestorIDs::Vector{Int64} = founder(genealogy))
     
     # Ported from GENLIB's Congen
     matrix = zeros(length(probandIDs), length(ancestorIDs))
@@ -32,11 +31,11 @@ function gc(
 end
 
 """
-contribute!(individual::PointerIndividual, depth::Int8 = Int8(0))::Nothing
+contribute!(individual::PointerIndividual, depth::Int8 = Int8(0))
 
 Recursively computes the genetic contribution of an `individual` using a pointer at a certain `depth`.
 """
-function contribute!(individual::PointerIndividual, depth::Int8 = Int8(0))::Nothing
+function contribute!(individual::PointerIndividual, depth::Int8 = Int8(0))
     # Ported from GENLIB's ExploreConGenProposant
     if individual.state == PROBAND
         individual.probability += 0.5 ^ depth

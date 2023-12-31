@@ -7,7 +7,7 @@ end
 function poisson_crossover(sex::SEX,
                            parameters::Vector{Float64},
                            cM_length::Vector{Float64},
-                           recombinations::Int64)::Vector{Int64}
+                           recombinations::Int64)
     crossovers = Int64[]
 
     uniform_distribution = Uniform(0, 1)
@@ -52,8 +52,7 @@ function simuHaplo(
     physical_map_father::Union{Nothing, DataFrame} = nothing,
     seed::Int64 = 42,
     all_nodes::Bool = false,
-    output_directory::String = "."
-    )::Nothing
+    output_directory::String = ".")
 
     # Ported from GENLIB's simuHaplo
 
@@ -107,15 +106,14 @@ function simuHaplo(
     end
 end
 
-function simuHaplo_convert(directory::String = ".")::Nothing
+function simuHaplo_convert(directory::String = ".")
 end
 
 function simuHaplo_IBD_compare(
     probandID₁::Int64,
     probandID₂::Int64,
     BP_length::Int64,
-    proband_haplotypes_path::String
-    )::DataFrame
+    proband_haplotypes_path::String)
 
     # Ported from GENLIB's simuHaplo_IBD_compare
 end
@@ -125,13 +123,12 @@ function simuHaplo_traceback(
     probandID::Int64,
     ancestorID::Int64,
     all_nodes_path::String,
-    proband_haplotypes_path::String
-    )::DataFrame
+    proband_haplotypes_path::String)
 
     # Ported from GENLIB's simuHaplo_traceback
 end
 
-function overlap(haplotype₁::Vector{Tuple{Int64, Int64}}, haplotype₂::Vector{Tuple{Int64, Int64}})::Int64
+function overlap(haplotype₁::Vector{Tuple{Int64, Int64}}, haplotype₂::Vector{Tuple{Int64, Int64}})
     overlap = 0
     for (start₁, ending₁) in haplotype₁
         for (start₂, ending₂) in haplotype₂
@@ -146,7 +143,7 @@ function overlap(haplotype₁::Vector{Tuple{Int64, Int64}}, haplotype₂::Vector
     overlap
 end
 
-function parse_simuHaplo(filename::String, founder_haplotype::String)::Tuple{Vector{Int64}, Matrix{Int64}}
+function parse_simuHaplo(filename::String, founder_haplotype::String)
     descent = DefaultDict{Int64, Vector{Tuple{Int64, Int64}}}([])
     file = open(filename)
     lines = readlines(file)
