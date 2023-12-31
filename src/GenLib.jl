@@ -15,7 +15,6 @@ export Individual
 
 # GENLIB functions
 export genealogy,
-       branching,
        gc,
        phi,
        ϕ,
@@ -23,7 +22,8 @@ export genealogy,
        findDistance,
        ancestor,
        findMRCA,
-       point,
+       refer,
+       branching,
        pro,
        founder,
        findFounders,
@@ -49,8 +49,8 @@ export genea140,
 include("genealogy.jl")
 include("reference.jl")
 include("isolate.jl")
-include("genetic_contribution.jl")
 include("utils.jl")
+include("genetic_contribution.jl")
 include("kinship.jl")
 include("mrca.jl")
 include("meioses.jl")
