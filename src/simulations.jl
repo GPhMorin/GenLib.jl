@@ -57,18 +57,18 @@ function simuHaplo(
     # Ported from GENLIB's simuHaplo
 
     # Initialize all the nodes
-    pointer = point(genealogy)
+    refer = point(genealogy)
     haplotype = Dict{Int64, Haplotype}()
 
     # Label the nodes that are probands
     for ID in probandIDs
-        pointer[ID].state = EXPLOREDPROBAND
+        refer[ID].state = EXPLOREDPROBAND
     end
 
     # Label the starting points and ancestor haplotypes
     key = 1
     for ID in ancestorIDs
-        ancestor = pointer[ID]
+        ancestor = refer[ID]
         ancestor.state = START
         ancestor.haplotype₁ = key
         haplotype₁ = Haplotype("$(ancestor.ID).1", -1, true)
@@ -82,18 +82,18 @@ function simuHaplo(
 
     # Label the nodes' relevance
     for ID in ancestorIDs
-        ancestor = pointer[ID]
+        ancestor = refer[ID]
         explore_tree(ancestor)
     end
 
-    nodes = sort(collect(keys(pointer)))
+    nodes = sort(collect(keys(refer)))
     prepare_priority_sort(nodes)
 
     index = 1
-    order = Dict{Int64, PointerIndividual}()
+    order = Dict{Int64, ReferenceIndividual}()
     jumps = Dict{Int64, Int64}()
     for ID in ancestorIDs
-        ancestor = pointer(ID)
+        ancestor = refer(ID)
         start_priority_sort(ancestor, order, index, jumps)
     end
 

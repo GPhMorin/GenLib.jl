@@ -119,12 +119,12 @@ function distance_matrix(matrix::Matrix{Float64})
 end
 
 """
-explore_tree(individual::PointerIndividual)
+explore_tree(individual::ReferenceIndividual)
 
 A recursive function that labels `individual`s on whether
 they lead from relevant ancestors to relevant probands.
 """
-function explore_tree(individual::PointerIndividual)
+function explore_tree(individual::ReferenceIndividual)
     # Ported from GENLIB's ExploreArbre
     state = individual.state
     if state == EXPLORED
@@ -161,11 +161,11 @@ function explore_tree(individual::PointerIndividual)
 end
 
 """
-prepare_priority_sort(pointer::Dict{Int64, PointerIndividual})
+prepare_priority_sort(nodes::Vector{ReferenceIndividual})
 
 Initializes the value of the individuals' `sort` value.
 """
-function prepare_priority_sort(nodes::Vector{PointerIndividual})
+function prepare_priority_sort(nodes::Vector{ReferenceIndividual})
     # Ported from GENLIB's PrepareSortPrioriteArbre
     for node in nodes
         if isnothing(node.father)
@@ -185,12 +185,12 @@ function prepare_priority_sort(nodes::Vector{PointerIndividual})
 end
 
 """
-start_priority_sort(node::PointerIndividual,
+start_priority_sort(node::ReferenceIndividual,
                     order::Dict{Int64, Int64},
                     index::Int64,
                     jumps::Dict{Int64, Int64})
 """
-function start_priority_sort(node::PointerIndividual,
+function start_priority_sort(node::ReferenceIndividual,
                              order::Dict{Int64, Int64},
                              index::Int64,
                              jumps::Dict{Int64, Int64})
@@ -220,17 +220,17 @@ function start_priority_sort(node::PointerIndividual,
 end
 
 """
-priority_sort!(node::PointerIndividual, 
-               order::Dict{Int64, PointerIndividual},
+priority_sort!(node::ReferenceIndividual, 
+               order::Dict{Int64, ReferenceIndividual},
                index::Int64,
                jumps::Dict{Int64, Int64},
-               nodelist::Vector{PointerIndividual})
+               nodelist::Vector{ReferenceIndividual})
 """
-function priority_sort!(node::PointerIndividual, 
-                        order::Dict{Int64, PointerIndividual},
+function priority_sort!(node::ReferenceIndividual, 
+                        order::Dict{Int64, ReferenceIndividual},
                         index::Int64,
                         jumps::Dict{Int64, Int64},
-                        nodelist::Vector{PointerIndividual})
+                        nodelist::Vector{ReferenceIndividual})
 
     # Ported from GENLIB's SortPrioriteArbre
 

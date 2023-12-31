@@ -13,15 +13,15 @@ function occ(
     type::Symbol = :ind)
     
     occurrence_matrix = Matrix{Int64}(undef, length(probandIDs), length(ancestorIDs))
-    pointer = point(genealogy)
+    reference = refer(genealogy)
     for ancestorID in ancestorIDs
-        pointer[ancestorID].state = ANCESTOR
+        reference[ancestorID].state = ANCESTOR
     end
     for (i, probandID) in enumerate(probandIDs)
-        proband = pointer[probandID]
+        proband = reference[probandID]
         occur!(proband)
         for (j, ancestorID) in enumerate(ancestorIDs)
-            ancestor = pointer[ancestorID]
+            ancestor = reference[ancestorID]
             occurrence_matrix[i, j] = ancestor.occurrence
             ancestor.occurrence = 0
         end
@@ -34,12 +34,12 @@ function occ(
 end
 
 """
-occur!(individual::PointerIndividual)
+occur!(individual::ReferenceIndividual)
 
-A recursive function that increments the occurrence of a pointer `individual`
+A recursive function that increments the occurrence of a reference `individual`
 if they are an ancestor.
 """
-function occur!(individual::PointerIndividual)
+function occur!(individual::ReferenceIndividual)
     if individual.state == ANCESTOR
         individual.occurrence += 1
     end

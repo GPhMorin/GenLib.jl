@@ -32,7 +32,7 @@ Takes a `genealogy` and removes individuals who are not in the paths between sel
 """
 function branching(genealogy::Dict{Int64, Individual}; probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
     isolated_genealogy = Dict{Int64, Individual}()
-    reference = point(genealogy)
+    reference = refer(genealogy)
     for ID in probandIDs
         proband = reference[ID]
         mark_ancestors!(proband)

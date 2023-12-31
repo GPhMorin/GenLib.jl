@@ -10,9 +10,9 @@ function gc(
     
     # Ported from GENLIB's Congen
     matrix = zeros(length(probandIDs), length(ancestorIDs))
-    pointer = point(genealogy)
-    probands = [pointer[ID] for ID in probandIDs]
-    ancestors = [pointer[ID] for ID in ancestorIDs]
+    reference = refer(genealogy)
+    probands = [reference[ID] for ID in probandIDs]
+    ancestors = [reference[ID] for ID in ancestorIDs]
     for proband in probands
         proband.probability = 0.
         proband.state = PROBAND
@@ -31,11 +31,11 @@ function gc(
 end
 
 """
-contribute!(individual::PointerIndividual, depth::Int8 = Int8(0))
+contribute!(individual::ReferenceIndividual, depth::Int8 = Int8(0))
 
-Recursively computes the genetic contribution of an `individual` using a pointer at a certain `depth`.
+Recursively computes the genetic contribution of an `individual` using a reference at a certain `depth`.
 """
-function contribute!(individual::PointerIndividual, depth::Int8 = Int8(0))
+function contribute!(individual::ReferenceIndividual, depth::Int8 = Int8(0))
     # Ported from GENLIB's ExploreConGenProposant
     if individual.state == PROBAND
         individual.probability += 0.5 ^ depth

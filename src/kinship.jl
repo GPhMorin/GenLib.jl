@@ -1,9 +1,9 @@
 """
-phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
+phi(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual)
 
-Computes the kinship coefficient between two individuals using pointers.
+Computes the kinship coefficient between two individuals using references.
 """
-function phi(individual₁::PointerIndividual, individual₂::PointerIndividual)
+function phi(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual)
     # Ported from GENLIB's Kinship
     value = 0.
     if individual₂.index > individual₁.index
@@ -39,8 +39,8 @@ For faster processing, use `ϕ` instead if a child cannot have a single unknown 
 """
 function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
     matrix = zeros(length(IDs), length(IDs))
-    pointer = point(genealogy)
-    individuals = [pointer[ID] for ID in IDs]
+    reference = refer(genealogy)
+    individuals = [reference[ID] for ID in IDs]
     Threads.@threads for j in eachindex(individuals)
         Threads.@threads for i in eachindex(individuals)
             individual₁ = individuals[i]
@@ -56,11 +56,11 @@ function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(geneal
 end
 
 """
-ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)
+ϕ(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual)
 
-Computes the kinship coefficient between two individuals using pointers.
+Computes the kinship coefficient between two individuals using references.
 """
-function ϕ(individual₁::PointerIndividual, individual₂::PointerIndividual)
+function ϕ(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual)
     # Ported from GENLIB's Kinship
     value = 0.
     if individual₂.index > individual₁.index
@@ -92,8 +92,8 @@ Use `phi` instead if a child can have only one unknown parent.
 """
 function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
     matrix = zeros(length(IDs), length(IDs))
-    pointer = point(genealogy)
-    individuals = [pointer[ID] for ID in IDs]
+    reference = refer(genealogy)
+    individuals = [reference[ID] for ID in IDs]
     Threads.@threads for j in eachindex(individuals)
         Threads.@threads for i in eachindex(individuals)
             individual₁ = individuals[i]
