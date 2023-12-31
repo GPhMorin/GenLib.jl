@@ -4,7 +4,7 @@
 
 An unofficial, pure Julia port of R's GENLIB genetics and genealogical library.
 
-To install, using REPL: `using Pkg; Pkg.add(url="https://github.com/GPhMorin/GenLib.jl")` or `add https://github.com/GPhMorin/GenLib.jl` in the Pkg REPL mode.
+To install, using REPL: `using Pkg; Pkg.add(url="https://github.com/GPhMorin/GenLib.jl")` or `add https://github.com/GPhMorin/GenLib.jl` in the Pkg REPL mode. You may then use the library with `using GenLib` or `import GenLib`.
 
 If you use this project in a publication, please cite the original R package:
 
@@ -23,4 +23,4 @@ If you use this project in a publication, please cite the original R package:
 }
 ```
 
-If you are a developer, you may clone this repository as `path/to/home/.julia/dev/GenLib/` and using: `import Pkg; Pkg.activate("path/to/home/.julia/dev/GenLib/")`. You may then use your local installation with the normal `using GenLib`.
+If you are a developer, you may clone this repository as `path/to/home/.julia/dev/GenLib/` and using: `import Pkg; Pkg.activate("path/to/home/.julia/dev/GenLib/")`. You may then use your local installation with the normal `using GenLib` or `import GenLib`.
