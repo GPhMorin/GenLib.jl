@@ -83,7 +83,7 @@ function branching(genealogy, IDs)
 end
 
 function ablate(genealogy, IDs)
-    ablated_genealogy = Dict()
+    ablated_genealogy = Dict{Int64, Individual}()
     for (ID, individual) in genealogy
         if ID ∉ IDs
             father = 0
@@ -95,7 +95,7 @@ function ablate(genealogy, IDs)
                 mother = individual.mother ∈ IDs ? individual.mother : 0
             end
             children = filter(x -> x ∈ IDs, individual.children)
-            isolated_genealogy[ID] = Individual(father, mother, individual.index, children, individual.sex)
+            ablated_genealogy[ID] = Individual(father, mother, individual.index, children, individual.sex)
         end
     end
     ablated_genealogy
