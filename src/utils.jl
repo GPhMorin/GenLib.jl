@@ -14,7 +14,7 @@ founder(genealogy::Dict{Int64, Individual})
 Takes a `genealogy` dictionary and returns a vector of founder IDs.
 """
 function founder(genealogy::Dict{Int64, Individual})
-    founders = [ID for (ID, individual) in genealogy if individual.father == 0]
+    founders = [ID for (ID, individual) in genealogy if (individual.father == 0) && (individual.mother == 0)]
     sort!(founders)
 end
 

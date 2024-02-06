@@ -57,3 +57,27 @@ function branching(genealogy::Dict{Int64, Individual}; probandIDs::Vector{Int64}
     end
     isolated_genealogy
 end
+
+"""
+branching(genealogy, IDs)
+
+Takes a `genealogy` and isolates individuals with one of the given `IDs`.
+"""
+function branching(genealogy, IDs)
+    isolated_genealogy = Dict()
+    for (ID, individual) in genealogy
+        if ID ∈ IDs
+            father = 0
+            if individual.father != 0
+                father = individual.father ∈ IDs ? individual.father : 0
+            end
+            mother = 0
+            if individual.mother != 0
+                mother = individual.mother ∈ IDs ? individual.mother : 0
+            end
+            children = filter(x -> x ∈ IDs, individual.children)
+            isolated_genealogy[ID] = Individual(father, mother, individual.index, children, individual.sex)
+        end
+    end
+    isolated_genealogy
+end

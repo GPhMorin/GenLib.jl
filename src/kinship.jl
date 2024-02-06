@@ -83,27 +83,165 @@ function ϕ(individual₁::ReferenceIndividual, individual₂::ReferenceIndividu
 end
 
 """
-ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
-
-Takes a `genealogy` dictionary, computes the kinship coefficient
-between all probands using a vector of `IDs` and returns a matrix.
-
-Use `phi` instead if a child can have only one unknown parent.
 """
-function ϕ(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
-    matrix = zeros(length(IDs), length(IDs))
-    reference = refer(genealogy)
-    individuals = [reference[ID] for ID in IDs]
-    Threads.@threads for j in eachindex(individuals)
-        Threads.@threads for i in eachindex(individuals)
-            individual₁ = individuals[i]
-            individual₂ = individuals[j]
-            if individual₂.ID > individual₁.ID
-                matrix[i, j] = matrix[j, i] = ϕ(individual₁, individual₂)
-            elseif individual₁.ID == individual₂.ID
-                matrix[i, j] = ϕ(individual₁, individual₁)
+function initialize_ancestry(genealogy, IDs, founderIDs)
+    A = SparseMatrixCSC{Bool, Int64}(undef, length(IDs), length(IDs))
+    for founderID in founderIDs
+        i = findfirst(founderID .== IDs)
+        A[i, i] = true
+    end
+    for ID in IDs
+        i = findfirst(ID .== IDs)
+        if !A[i, i]
+            f = findfirst(IDs .== genealogy[ID].father)
+            m = findfirst(IDs .== genealogy[ID].mother)
+            for possible_ancestor in IDs
+                v = findfirst(possible_ancestor .== IDs)
+                if !isnothing(f)
+                    if A[f, v]
+                        A[i, v] = true
+                    end
+                end
+                if !isnothing(m)
+                    if A[m, v]
+                        A[i, v] = true
+                    end
+                end
+                if i == v
+                    A[i, i] = true
+                end
             end
         end
     end
-    matrix
+    A
+end
+
+"""
+"""
+function cut_vertices(genealogy, probandIDs, founderIDs)
+    vertex_cuts = Int64[]
+    for candidateID in collect(keys(genealogy))
+        if (candidateID ∉ probandIDs) && (candidateID ∉ founderIDs)
+            stack = ancestor(genealogy, candidateID)
+            is_candidate = true
+            while !isempty(stack)
+                ID = pop!(stack)
+                if ID ∈ probandIDs
+                    is_candidate = false
+                    break
+                end
+                if ID != candidateID
+                    push!(stack, genealogy[ID].children...)
+                end
+            end
+            if is_candidate
+                push!(vertex_cuts, candidateID)
+            end
+        end
+    end
+    vertex_cuts = [vertex₁ for vertex₁ in vertex_cuts if !any(vertex₁ ∈ ancestor(genealogy, vertex₂) for vertex₂ in vertex_cuts)]
+    vertex_cuts
+end
+
+function cut_vertices(A)
+    indices = Int64[]
+    number = size(A, 1)
+    for candidate in eachindex(number)
+        println("candidate: ", candidate)
+        candidate_ancestors = A[candidate, :]
+        println("candidate_ancestors: ", candidate_ancestors)
+        ancestors_descendants = [any(row) for row in eachrow(A[:, candidate_ancestors])]
+        println("ancestors_descendants: ", ancestors_descendants)
+        candidate_descendants = A[:, candidate]
+        if !any(ancestors_descendants .- candidate_descendants > 0)
+            push!(indices, candidate)
+        end
+    end
+    indices
+end
+
+"""
+ϕ(genealogy, probandIDs = pro(genealogy), founderIDs = founder(genealogy))
+
+Takes a `genealogy` dictionary, computes the kinship coefficient
+between all probands using a vector of `probandIDs`
+and a vector of `founderIDs` and returns a matrix.
+
+An implementation of algorithm 1 found in Kirkpatrick et al., 2019.
+"""
+function ϕ(genealogy, probandIDs = pro(genealogy), founderIDs = founder(genealogy))
+    if probandIDs == founderIDs
+        return zeros(length(founderIDs), length(founderIDs))
+    end
+
+    vertex_cuts = cut_vertices(genealogy, probandIDs, founderIDs)
+    println(vertex_cuts)
+
+    unorderedIDs = [ID for ID in collect(keys(genealogy))]
+    indices = [genealogy[ID].index for ID in unorderedIDs]
+    order = sortperm(indices)
+    IDs = unorderedIDs[order]
+
+    Φ = ones(length(IDs), length(IDs)) .* -1
+    founderIDs = [ID for ID in IDs if ID ∈ founderIDs]
+    A = initialize_ancestry(genealogy, IDs, founderIDs)
+    Ψ = ϕ(genealogy, subfounderIDs, founderIDs)
+
+    for founderID in founderIDs
+        f₁ = findfirst(founderID .== IDs)
+        f₂ = findfirst(founderID .== founderIDs)
+        Φ[f₁, f₁] = (1 + Ψ[f₂, f₂]) / 2
+    end
+    for founderID₁ in founderIDs, founderID₂ in founderIDs
+        f₁ = findfirst(founderID₁ .== IDs)
+        g₁ = findfirst(founderID₂ .== IDs)
+        if f₁ != g₁
+            f₂ = findfirst(founderID₁ .== founderIDs)
+            g₂ = findfirst(founderID₂ .== founderIDs)
+            Φ[f₁, g₁] = Ψ[f₂, g₂]
+        end
+    end
+    for founderID in founderIDs, ID in IDs
+        f = findfirst(founderID .== IDs)
+        j = findfirst(ID .== IDs)
+        if !A[j, f]
+            Φ[j, f] = 0
+        end
+    end
+    for ID₁ in IDs
+        for ID₂ in IDs
+            p = findfirst(IDs .== genealogy[ID₁].father)
+            m = findfirst(IDs .== genealogy[ID₁].mother)
+            if !isnothing(p) && !isnothing(m)
+                i = findfirst(IDs .== ID₁)
+                j = findfirst(IDs .== ID₂)
+                if i == j
+                    Φ[i, i] = (1 + Φ[m, p]) / 2
+                elseif !A[j, i]
+                    Φ[i, j] = Φ[j, i] =  (Φ[m, j] + Φ[p, j]) / 2
+                end
+            elseif !isnothing(p)
+                i = findfirst(IDs .== ID₁)
+                j = findfirst(IDs .== ID₂)
+                if i == j
+                    Φ[i, i] = 0.5
+                elseif !A[j, i]
+                    Φ[i, j] = Φ[j, i] =  Φ[p, j] / 2
+                end
+            elseif !isnothing(m)
+                i = findfirst(IDs .== ID₁)
+                j = findfirst(IDs .== ID₂)
+                if i == j
+                    Φ[i, i] = 0.5
+                elseif !A[j, i]
+                    Φ[i, j] = Φ[j, i] =  Φ[m, j] / 2
+                end
+            end
+        end
+    end
+    for i in eachindex(IDs)
+        Φ[i, i] = (2 * Φ[i, i]) - 1
+    end
+    indices = [findfirst(ID .== IDs) for ID in IDs if ID ∈ probandIDs]
+    A # Φ[indices, indices]
 end

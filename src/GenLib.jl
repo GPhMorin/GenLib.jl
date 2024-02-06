@@ -4,6 +4,7 @@ using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack, DefaultDict
 using Distributions
+using SparseArrays
 
 # For evaluating the sex manually
 export SEX,
@@ -35,7 +36,9 @@ export genealogy,
        population,
        remove_relatives!,
        occ,
-       parse_simuHaplo
+       parse_simuHaplo,
+       cut_vertices # for testing purposes
+       initialize_ancestry # for testing purposes
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
