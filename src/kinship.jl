@@ -84,9 +84,13 @@ end
 
 """
 """
-function initialize_ancestry(genealogy, IDs, founderIDs)
-    A = SparseMatrixCSC{Bool, Int64}(undef, length(IDs), length(IDs))
-    for founderID in founderIDs
+function initialize_ancestry(genealogy)
+    A = SparseMatrixCSC{Bool, Int64}(undef, length(genealogy), length(genealogy))
+    unorderedIDs = [ID for ID in collect(keys(genealogy))]
+    indices = [genealogy[ID].index for ID in unorderedIDs]
+    order = sortperm(indices)
+    IDs = unorderedIDs[order]
+    for founderID in founder(genealogy)
         i = findfirst(founderID .== IDs)
         A[i, i] = true
     end
@@ -143,21 +147,57 @@ function cut_vertices(genealogy, probandIDs, founderIDs)
     vertex_cuts
 end
 
+"""
 function cut_vertices(A)
     indices = Int64[]
     number = size(A, 1)
-    for candidate in eachindex(number)
-        println("candidate: ", candidate)
-        candidate_ancestors = A[candidate, :]
-        println("candidate_ancestors: ", candidate_ancestors)
+    for candidate in 1:number
+        candidate_ancestors = Array(A[candidate, :])
         ancestors_descendants = [any(row) for row in eachrow(A[:, candidate_ancestors])]
-        println("ancestors_descendants: ", ancestors_descendants)
-        candidate_descendants = A[:, candidate]
-        if !any(ancestors_descendants .- candidate_descendants > 0)
+        candidate_descendants = Array(A[:, candidate])
+        leaks = ancestors_descendants .- (candidate_ancestors .|| candidate_descendants) .> 0
+        if !any(leaks)
             push!(indices, candidate)
         end
     end
     indices
+end
+"""
+
+function cut_vertex(individual, candidateID)
+    value = true
+    for child in individual.children
+        if child.state == PROBAND
+            return false
+        elseif child.ID != candidateID
+            value = value && cut_vertex(child, candidateID)
+        end
+    end
+    value
+end
+
+function cut_vertices(genealogy)
+    vertices = Int64[]
+    reference = refer(genealogy)
+    probandIDs = pro(genealogy)
+    for ID in probandIDs
+        reference[ID].state = PROBAND
+    end
+    founderIDs = founder(genealogy)
+    unorderedIDs = [ID for ID in collect(keys(genealogy))]
+    indices = [genealogy[ID].index for ID in unorderedIDs]
+    order = sortperm(indices)
+    candidateIDs = unorderedIDs[order]
+    for candidateID in candidateIDs
+        ancestorIDs = ancestor(genealogy, candidateID)
+        sourceIDs = filter(x -> x ∈ founderIDs, ancestorIDs)
+        if all(cut_vertex(reference[sourceID], candidateID) for sourceID in sourceIDs)
+            push!(vertices, candidateID)
+        end
+    end
+    ancestorIDs = union([ancestor(genealogy, vertex) for vertex in vertices]...)
+    vertices = filter(x -> (x ∈ vertices && x ∉ ancestorIDs) || (x ∈ founderIDs && x ∉ ancestorIDs), candidateIDs)
+    vertices
 end
 
 """
@@ -169,38 +209,41 @@ and a vector of `founderIDs` and returns a matrix.
 
 An implementation of algorithm 1 found in Kirkpatrick et al., 2019.
 """
-function ϕ(genealogy, probandIDs = pro(genealogy), founderIDs = founder(genealogy))
+"""
+function ϕ(genealogy, probandIDs = pro(genealogy))
+    founderIDs = founder(genealogy)
     if probandIDs == founderIDs
         return zeros(length(founderIDs), length(founderIDs))
     end
 
-    vertex_cuts = cut_vertices(genealogy, probandIDs, founderIDs)
-    println(vertex_cuts)
+    isolated_genealogy = branching(genealogy; probandIDs = probandIDs)
+    vertex_cuts = cut_vertices(isolated_genealogy)
+    Ψ = ϕ(genealogy, vertex_cuts)
 
-    unorderedIDs = [ID for ID in collect(keys(genealogy))]
+    unorderedIDs = [ID for ID in collect(keys(isolated_genealogy))]
     indices = [genealogy[ID].index for ID in unorderedIDs]
     order = sortperm(indices)
     IDs = unorderedIDs[order]
 
     Φ = ones(length(IDs), length(IDs)) .* -1
-    founderIDs = [ID for ID in IDs if ID ∈ founderIDs]
-    A = initialize_ancestry(genealogy, IDs, founderIDs)
-    Ψ = ϕ(genealogy, subfounderIDs, founderIDs)
 
-    for founderID in founderIDs
+    for founderID in vertex_cuts
         f₁ = findfirst(founderID .== IDs)
-        f₂ = findfirst(founderID .== founderIDs)
+        f₂ = findfirst(founderID .== vertex_cuts)
         Φ[f₁, f₁] = (1 + Ψ[f₂, f₂]) / 2
     end
-    for founderID₁ in founderIDs, founderID₂ in founderIDs
+    for founderID₁ in vertex_cuts, founderID₂ in vertex_cuts
         f₁ = findfirst(founderID₁ .== IDs)
         g₁ = findfirst(founderID₂ .== IDs)
         if f₁ != g₁
-            f₂ = findfirst(founderID₁ .== founderIDs)
-            g₂ = findfirst(founderID₂ .== founderIDs)
+            f₂ = findfirst(founderID₁ .== vertex_cuts)
+            g₂ = findfirst(founderID₂ .== vertex_cuts)
             Φ[f₁, g₁] = Ψ[f₂, g₂]
         end
     end
+
+    A = initialize_ancestry(isolated_genealogy)
+
     for founderID in founderIDs, ID in IDs
         f = findfirst(founderID .== IDs)
         j = findfirst(ID .== IDs)
@@ -243,5 +286,98 @@ function ϕ(genealogy, probandIDs = pro(genealogy), founderIDs = founder(genealo
         Φ[i, i] = (2 * Φ[i, i]) - 1
     end
     indices = [findfirst(ID .== IDs) for ID in IDs if ID ∈ probandIDs]
-    A # Φ[indices, indices]
+    Φ[indices, indices]
+end
+"""
+
+"""
+"""
+
+function ϕ(genealogy, Ψ, probandIDs = pro(genealogy))
+    founderIDs = founder(genealogy)
+    if probandIDs == founderIDs
+        return zeros(length(founderIDs), length(founderIDs))
+    end
+
+    unorderedIDs = [ID for ID in collect(keys(isolated_genealogy))]
+    indices = [genealogy[ID].index for ID in unorderedIDs]
+    order = sortperm(indices)
+    IDs = unorderedIDs[order]
+
+    Φ = ones(length(IDs), length(IDs)) .* -1
+
+    for founderID in vertex_cuts
+        f₁ = findfirst(founderID .== IDs)
+        f₂ = findfirst(founderID .== vertex_cuts)
+        Φ[f₁, f₁] = (1 + Ψ[f₂, f₂]) / 2
+    end
+    for founderID₁ in vertex_cuts, founderID₂ in vertex_cuts
+        f₁ = findfirst(founderID₁ .== IDs)
+        g₁ = findfirst(founderID₂ .== IDs)
+        if f₁ != g₁
+            f₂ = findfirst(founderID₁ .== vertex_cuts)
+            g₂ = findfirst(founderID₂ .== vertex_cuts)
+            Φ[f₁, g₁] = Ψ[f₂, g₂]
+        end
+    end
+
+    A = initialize_ancestry(isolated_genealogy)
+
+    for founderID in founderIDs, ID in IDs
+        f = findfirst(founderID .== IDs)
+        j = findfirst(ID .== IDs)
+        if !A[j, f]
+            Φ[j, f] = 0
+        end
+    end
+    for ID₁ in IDs
+        for ID₂ in IDs
+            p = findfirst(IDs .== genealogy[ID₁].father)
+            m = findfirst(IDs .== genealogy[ID₁].mother)
+            if !isnothing(p) && !isnothing(m)
+                i = findfirst(IDs .== ID₁)
+                j = findfirst(IDs .== ID₂)
+                if i == j
+                    Φ[i, i] = (1 + Φ[m, p]) / 2
+                elseif !A[j, i]
+                    Φ[i, j] = Φ[j, i] =  (Φ[m, j] + Φ[p, j]) / 2
+                end
+            elseif !isnothing(p)
+                i = findfirst(IDs .== ID₁)
+                j = findfirst(IDs .== ID₂)
+                if i == j
+                    Φ[i, i] = 0.5
+                elseif !A[j, i]
+                    Φ[i, j] = Φ[j, i] =  Φ[p, j] / 2
+                end
+            elseif !isnothing(m)
+                i = findfirst(IDs .== ID₁)
+                j = findfirst(IDs .== ID₂)
+                if i == j
+                    Φ[i, i] = 0.5
+                elseif !A[j, i]
+                    Φ[i, j] = Φ[j, i] =  Φ[m, j] / 2
+                end
+            end
+        end
+    end
+    for i in eachindex(IDs)
+        Φ[i, i] = (2 * Φ[i, i]) - 1
+    end
+    indices = [findfirst(ID .== IDs) for ID in IDs if ID ∈ probandIDs]
+    Φ[indices, indices]
+end
+
+function ϕ(genealogy)
+    founderIDs = founder(genealogy)
+    probandIDs = pro(genealogy)
+    Ψ = zeros(length(founderIDs), length(founderIDs))
+    ablated_genealogy = genealogy
+    while !(probandIDs == founderIDs)
+        ablated_genealogy = ablate(ablated_genealogy, founderIDs)
+        founderIDs = founder(ablated_genealogy)
+        println(founderIDs)
+        Ψ = ϕ(genealogy, Ψ, founderIDs)
+    end
+    ϕ(genealogy, Ψ, probandIDs)
 end

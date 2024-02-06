@@ -37,7 +37,8 @@ export genealogy,
        remove_relatives!,
        occ,
        parse_simuHaplo,
-       cut_vertices # for testing purposes
+       ablate, # for testing purposes
+       cut_vertices, # for testing purposes
        initialize_ancestry # for testing purposes
 
 # GENLIB datasets
