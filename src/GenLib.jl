@@ -5,6 +5,7 @@ using DataFrames: DataFrame
 using DataStructures: Stack, DefaultDict
 using Distributions
 using SparseArrays
+using LinearAlgebra
 
 # For evaluating the sex manually
 export SEX,
@@ -39,7 +40,9 @@ export genealogy,
        parse_simuHaplo,
        ablate, # for testing purposes
        cut_vertices, # for testing purposes
-       initialize_ancestry # for testing purposes
+       initialize_ancestry, # for testing purposes
+       phi2, # for testing purposes
+       set_ancestors # for testing purposes
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"

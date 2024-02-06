@@ -37,6 +37,7 @@ between all probands using a vector of `IDs` and returns a matrix.
 
 For faster processing, use `ϕ` instead if a child cannot have a single unknown parent.
 """
+
 function phi(genealogy::Dict{Int64, Individual}, IDs::Vector{Int64} = pro(genealogy))
     matrix = zeros(length(IDs), length(IDs))
     reference = refer(genealogy)
@@ -235,42 +236,44 @@ function ϕ(genealogy::Dict{Int64, Individual},
         end
     end
 
-    A = initialize_ancestry(isolated_genealogy)
-
-    for founderID in founderIDs, ID in IDs
-        f = findfirst(founderID .== IDs)
-        j = findfirst(ID .== IDs)
-        if !A[j, f]
-            Φ[j, f] = 0
+    for ID in IDs
+        ancestorIDs = ancestor(isolated_genealogy, ID)
+        for founderID in founderIDs
+            f = findfirst(founderID .== IDs)
+            j = findfirst(ID .== IDs)
+            if (ID != founderID) && (founderID ∉ ancestorIDs)
+                Φ[j, f] = 0
+            end
         end
     end
     for ID₁ in IDs
         for ID₂ in IDs
-            p = findfirst(IDs .== genealogy[ID₁].father)
-            m = findfirst(IDs .== genealogy[ID₁].mother)
+            ancestorIDs = ancestor(isolated_genealogy, ID₂)
+            p = findfirst(IDs .== isolated_genealogy[ID₁].father)
+            m = findfirst(IDs .== isolated_genealogy[ID₁].mother)
             if !isnothing(p) && !isnothing(m)
                 i = findfirst(IDs .== ID₁)
                 j = findfirst(IDs .== ID₂)
                 if i == j
                     Φ[i, i] = (1 + Φ[m, p]) / 2
-                elseif !A[j, i]
-                    Φ[i, j] = Φ[j, i] =  (Φ[m, j] + Φ[p, j]) / 2
+                elseif ID₂ ∉ ancestorIDs
+                    Φ[i, j] = Φ[j, i] = (Φ[m, j] + Φ[p, j]) / 2
                 end
             elseif !isnothing(p)
                 i = findfirst(IDs .== ID₁)
                 j = findfirst(IDs .== ID₂)
                 if i == j
                     Φ[i, i] = 0.5
-                elseif !A[j, i]
-                    Φ[i, j] = Φ[j, i] =  Φ[p, j] / 2
+                elseif ID₂ ∉ ancestorIDs
+                    Φ[i, j] = Φ[j, i] = Φ[p, j] / 2
                 end
             elseif !isnothing(m)
                 i = findfirst(IDs .== ID₁)
                 j = findfirst(IDs .== ID₂)
                 if i == j
                     Φ[i, i] = 0.5
-                elseif !A[j, i]
-                    Φ[i, j] = Φ[j, i] =  Φ[m, j] / 2
+                elseif ID₂ ∉ ancestorIDs
+                    Φ[i, j] = Φ[j, i] = Φ[m, j] / 2
                 end
             end
         end
@@ -297,7 +300,6 @@ function ϕ(genealogy::Dict{Int64, Individual})
         upperIDs = cut_vertices(isolated_genealogy)
         pushfirst!(C, upperIDs)
     end
-    println(length(C))
     for i in 1:length(C)-1
         upperIDs = C[i]
         lowerIDs = C[i+1]
@@ -305,4 +307,109 @@ function ϕ(genealogy::Dict{Int64, Individual})
         println("YES")
     end
     Ψ
+end
+
+function phi2(genealogy::Dict{Int64, Individual})
+    founderIDs = founder(genealogy)
+    probandIDs = pro(genealogy)
+
+    Ψ = zeros(length(founderIDs), length(founderIDs))
+    
+    upperIDs = cut_vertices(genealogy)
+    lowerIDs = probandIDs
+    C = [upperIDs, lowerIDs]
+    while upperIDs != lowerIDs
+        isolated_genealogy = branching(genealogy, probandIDs = upperIDs)
+        lowerIDs = copy(upperIDs)
+        upperIDs = cut_vertices(isolated_genealogy)
+        pushfirst!(C, upperIDs)
+    end
+    for i in 1:length(C)-1
+        upperIDs = C[i]
+        lowerIDs = C[i+1]
+        Vᵢ = branching(genealogy; probandIDs = lowerIDs, ancestorIDs = upperIDs)
+        Ψ = phi2(Vᵢ, Ψ)
+        println("YES")
+    end
+    Ψ
+end
+
+function phi2(genealogy::Dict{Int64, Individual}, Ψ::Matrix{Float64})
+    lowerIDs = pro(genealogy)
+    upperIDs = founder(genealogy)
+    matrix = 0.5 * Matrix(I, length(lowerIDs), length(lowerIDs))
+    if lowerIDs == upperIDs
+        return matrix
+    end
+    reference = refer(genealogy)
+    individuals = [reference[ID] for ID in lowerIDs]
+    Threads.@threads for j in eachindex(individuals)
+        Threads.@threads for i in eachindex(individuals)
+            individual₁ = individuals[i]
+            individual₂ = individuals[j]
+            if individual₂.ID > individual₁.ID
+                matrix[i, j] = matrix[j, i] = phi2(individual₁, individual₂, Ψ, upperIDs)
+            elseif individual₁.ID == individual₂.ID
+                matrix[i, j] = phi2(individual₁, individual₁, Ψ, upperIDs)
+            end
+        end
+    end
+    matrix
+end
+
+function phi2(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual, Ψ::Matrix{Float64}, upperIDs::Vector{Int64})
+    # Ported from GENLIB's Kinship
+    value = 0.
+    if individual₂.index > individual₁.index
+        if !isnothing(individual₂.father)
+            value += phi2(individual₂.father, individual₁, Ψ, upperIDs) / 2
+        end
+        if !isnothing(individual₂.mother)
+            value += phi2(individual₂.mother, individual₁, Ψ, upperIDs) / 2
+        end
+    elseif individual₁.index == individual₂.index
+        if !isnothing(individual₁.father) & !isnothing(individual₁.mother)
+            value += (1 + phi2(individual₁.father, individual₁.mother, Ψ, upperIDs)) / 2
+        end
+        if isnothing(individual₁.father) & isnothing(individual₁.mother)
+            i = findfirst(individual₁.ID .== upperIDs)
+            value += Ψ[i, i]
+        end
+    else
+        if isnothing(individual₁.father) && isnothing(individual₁.mother) && isnothing(individual₂.father) && isnothing(individual₂.mother)
+            i = findfirst(individual₁.ID .== upperIDs)
+            j = findfirst(individual₂.ID .== upperIDs)
+            value += Ψ[i, j]
+        end
+        if !isnothing(individual₁.father)
+            value += phi2(individual₁.father, individual₂, Ψ, upperIDs) / 2
+        end
+        if !isnothing(individual₁.mother)
+            value += phi2(individual₁.mother, individual₂, Ψ, upperIDs) / 2
+        end
+        
+    end
+    value
+end
+
+function set_ancestors(genealogy)
+    ancestors = Dict()
+    unorderedIDs = [ID for ID in collect(keys(genealogy))]
+    indices = [genealogy[ID].index for ID in unorderedIDs]
+    order = sortperm(indices)
+    IDs = unorderedIDs[order]
+    for ID in IDs
+        m = genealogy[ID].mother
+        f = genealogy[ID].father
+        if (m > 0) && (f > 0)
+            ancestors[ID] = union(ancestors[m], ancestors[f])
+        elseif (m > 0)
+            ancestors[ID] = ancestors[m]
+        elseif (f > 0)
+            ancestors[ID] = ancestors[f]
+        else
+            ancestors[ID] = [ID]
+        end
+    end
+    ancestors
 end
