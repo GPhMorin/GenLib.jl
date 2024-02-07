@@ -211,21 +211,22 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     if probandIDs == founderIDs
         return zeros(length(founderIDs), length(founderIDs))
     end
-    Φ = zeros(length(genealogy), length(genealogy))
+    Φ = ones(length(genealogy), length(genealogy)) * -1
     for (f, founderID) in enumerate(founderIDs)
         i = genealogy[founderID].index
         Φ[i, i] = (1 + Ψ[f, f]) / 2
     end
     for (f, ID₁) in enumerate(founderIDs), (g, ID₂) in enumerate(founderIDs)
         if ID₁ != ID₂
-            Φ[f, g] = Ψ[f, g]
+            Φ[genealogy[ID₁].index, genealogy[ID₂].index] = Ψ[f, g]
         end
     end
     ancestors = set_ancestors(genealogy)
     for i in eachindex(enumeration)
         (ID, _) = enumeration[i]
-        for (f, founderID) in enumerate(founderIDs)
+        for founderID in founderIDs
             if (ID != founderID) && (founderID ∉ ancestors[ID])
+                f = genealogy[founderID].index
                 Φ[i, f] = Φ[f, i] = 0
             end
         end
@@ -244,7 +245,7 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
                 elseif ID₁ ∉ ancestors[ID₂]
                     p = genealogy[father].index
                     m = genealogy[mother].index
-                    Φ[i, j] = Φ[j, i] = (Φ[p, j] + Φ[m, j]) / 2
+                    Φ[i, j] = Φ[j, i] = (Φ[m, j] + Φ[p, j]) / 2
                 end
             elseif father != 0
                 if i == j
@@ -291,8 +292,8 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}; pro = pro(genealogy), ver
             println("Kinships for generation ", i, "/", length(C)-1, " completed.")
         end
     end
-    probandIDs = filter(x -> x ∈ pro, collect(keys(genealogy)))
-    order = sortperm(probandIDs)
+    probands = filter(x -> x ∈ pro, collect(keys(genealogy)))
+    order = sortperm(probands)
     Ψ[order, order]
 end
 

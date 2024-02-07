@@ -38,6 +38,7 @@ function genealogy(dataframe::DataFrame)
         end
     end
     if !check_order(genealogy)
+        println("Reordering the genealogy...")
         return order_genealogy(genealogy)
     else
         return genealogy
@@ -65,6 +66,7 @@ function genealogy(filename::String)
         end
     end
     if !check_order(genealogy)
+        println("Reordering the genealogy...")
         return order_genealogy(genealogy)
     else
         return genealogy
