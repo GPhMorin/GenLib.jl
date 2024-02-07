@@ -3,9 +3,9 @@ pro(genealogy::Dict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a vector of proband IDs.
 """
-function pro(genealogy::Dict{Int64, Individual})
+function pro(genealogy::OrderedDict{Int64, Individual})
     probands = [ID for (ID, individual) in genealogy if isempty(individual.children)]
-    sort!(probands)
+    sort(probands)
 end
 
 """
@@ -13,9 +13,9 @@ founder(genealogy::Dict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a vector of founder IDs.
 """
-function founder(genealogy::Dict{Int64, Individual})
+function founder(genealogy::OrderedDict{Int64, Individual})
     founders = [ID for (ID, individual) in genealogy if (individual.father == 0) && (individual.mother == 0)]
-    sort!(founders)
+    sort(founders)
 end
 
 """

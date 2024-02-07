@@ -2,7 +2,7 @@ module GenLib
 
 using CSV
 using DataFrames: DataFrame
-using DataStructures: Stack, DefaultDict
+using DataStructures: Stack, DefaultDict, OrderedDict
 using Distributions
 using SparseArrays
 using LinearAlgebra
@@ -42,7 +42,8 @@ export genealogy,
        cut_vertices, # for testing purposes
        initialize_ancestry, # for testing purposes
        phi2, # for testing purposes
-       set_ancestors # for testing purposes
+       set_ancestors, # for testing purposes
+       check_order # for testing purposes
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"

@@ -3,7 +3,7 @@ ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns a vector of all of their ancestors.
 """
-function ancestor(genealogy::Dict{Int64, Individual}, ID::Int64)
+function ancestor(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
     ancestors = Set{Int64}()
     stack = Stack{Int64}()
     push!(stack, ID)

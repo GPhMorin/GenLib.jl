@@ -32,7 +32,7 @@ refer(genealogy::Dict{Int64, Individual})
 Takes a `genealogy` dictionary and returns a dictionary of references to individuals.
 In REPL: to avoid crash, end function call with `;`.
 """
-function refer(genealogy::Dict{Int64, Individual})
+function refer(genealogy::OrderedDict{Int64, Individual})
     reference::Dict{Int64, ReferenceIndividual} = Dict()
     for (ID, individual) in genealogy
         reference[ID] = ReferenceIndividual(

@@ -24,7 +24,7 @@ genealogy(filename::String)
 Reads a DataFrame and returns a dictionary of individuals.
 """
 function genealogy(dataframe::DataFrame)
-    genealogy::Dict{Int64, Individual} = Dict()
+    genealogy::OrderedDict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataframe))
         genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
     end
@@ -37,7 +37,11 @@ function genealogy(dataframe::DataFrame)
             push!(genealogy[individual.mother].children, row.ind)
         end
     end
-    genealogy
+    if !check_order(genealogy)
+        return order_genealogy(genealogy)
+    else
+        return genealogy
+    end
 end
 
 """
@@ -47,7 +51,7 @@ Reads a file with `filename` and returns a dictionary of individuals.
 """
 function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
-    genealogy::Dict{Int64, Individual} = Dict()
+    genealogy::OrderedDict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataset))
         genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
     end
@@ -60,5 +64,65 @@ function genealogy(filename::String)
             push!(genealogy[individual.mother].children, row.ind)
         end
     end
-    genealogy
+    if !check_order(genealogy)
+        return order_genealogy(genealogy)
+    else
+        return genealogy
+    end
+end
+
+function check_order(genealogy::OrderedDict{Int64, Individual})
+    value = true
+    for (_, individual) in genealogy
+        father = individual.father
+        mother = individual.mother
+        if (father != 0)
+            if individual.index < genealogy[father].index
+                value = false
+                break
+            end
+        end
+        if (mother != 0)
+            if individual.index < genealogy[mother].index
+                value = false
+                break
+            end
+        end
+    end
+    value
+end
+
+function order_genealogy(genealogy::OrderedDict{Int64, Individual})
+    founderIDs = founder(genealogy)
+    sortedIDs = []
+    queue = founderIDs
+    while !isempty(queue)
+        ID = popfirst!(queue)
+        individual = genealogy[ID]
+        if (individual.father ∈ sortedIDs) && (individual.mother ∈ sortedIDs)
+            push!(sortedIDs, ID)
+            filter!(x -> x ≠ ID, queue)
+            push!(queue, individual.children...)
+        elseif (individual.father == 0) && (individual.mother == 0)
+            push!(sortedIDs, ID)
+            filter!(x -> x ≠ ID, queue)
+            push!(queue, individual.children...)
+        elseif (individual.father == 0) && (individual.mother ∈ sortedIDs)
+            push!(sortedIDs, ID)
+            filter!(x -> x ≠ ID, queue)
+            push!(queue, individual.children...)
+        elseif (individual.mother == 0) && (individual.father ∈ sortedIDs)
+            push!(sortedIDs, ID)
+            filter!(x -> x ≠ ID, queue)
+            push!(queue, individual.children...)
+        else
+            push!(queue, ID)
+        end
+    end
+    ordered_genealogy = OrderedDict{Int64, Individual}()
+    for (index, ID) in enumerate(sortedIDs)
+        individual = genealogy[ID]
+        ordered_genealogy[ID] = Individual(individual.father, individual.mother, index, individual.children, individual.sex)
+    end
+    ordered_genealogy
 end
