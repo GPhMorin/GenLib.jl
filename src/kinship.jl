@@ -211,7 +211,7 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     if probandIDs == founderIDs
         return zeros(length(founderIDs), length(founderIDs))
     end
-    Φ = ones(length(genealogy), length(genealogy)) * -1
+    Φ = zeros(length(genealogy), length(genealogy)) * -1
     for (f, founderID) in enumerate(founderIDs)
         i = genealogy[founderID].index
         Φ[i, i] = (1 + Ψ[f, f]) / 2
@@ -233,35 +233,48 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     end
     for i in eachindex(enumeration)
         for j in eachindex(enumeration)
-            (ID₁, individual₁) = enumeration[i]
-            (ID₂, _) = enumeration[j]
-            father = individual₁.father
-            mother = individual₁.mother
-            if (father != 0) && (mother != 0)
-                if i == j
+            coefficient = 0.
+            if i > j # i cannot be an ancestor of j
+                (ID₁, individual₁) = enumeration[i]
+                father = individual₁.father
+                if (father != 0)
                     p = genealogy[father].index
-                    m = genealogy[mother].index
-                    Φ[i, i] = (1 + Φ[m, p]) / 2
-                elseif ID₁ ∉ ancestors[ID₂]
-                    p = genealogy[father].index
-                    m = genealogy[mother].index
-                    Φ[i, j] = Φ[j, i] = (Φ[m, j] + Φ[p, j]) / 2
+                    coefficient += Φ[p, j] / 2
                 end
-            elseif father != 0
-                if i == j
-                    Φ[i, i] = 0.5
-                elseif ID₁ ∉ ancestors[ID₂]
-                    p = genealogy[father].index
-                    Φ[i, j] = Φ[j, i] = Φ[p, j] / 2
-                end
-            elseif mother != 0
-                if i == j
-                    Φ[i, i] = 0.5
-                elseif ID₁ ∉ ancestors[ID₂]
+                mother = individual₁.mother
+                if mother != 0
                     m = genealogy[mother].index
-                    Φ[i, j] = Φ[j, i] = Φ[m, j] / 2
+                    coefficient += Φ[m, j] / 2
+                end
+            elseif i < j # i can be an ancestor of j
+                (ID₁, individual₁) = enumeration[i]
+                (ID₂, _) = enumeration[j]
+                if ID₁ ∉ ancestors[ID₂]
+                    father = individual₁.father
+                    if father != 0
+                        p = genealogy[father].index
+                        coefficient += Φ[p, j] / 2
+                    end
+                    mother = individual₁.mother
+                    if mother != 0
+                        m = genealogy[mother].index
+                        coefficient += Φ[m, j] / 2
+                    end
+                end
+            else # i == j
+                coefficient += 0.5
+                (_, individual) = enumeration[i]
+                father = individual.father
+                mother = individual.mother
+                if father != 0
+                    if mother != 0
+                        p = genealogy[father].index
+                        m = genealogy[mother].index
+                        coefficient += Φ[m, p] / 2
+                    end
                 end
             end
+            Φ[i, j] = Φ[j, i] = coefficient
         end
     end
     for i in 1:length(genealogy)
