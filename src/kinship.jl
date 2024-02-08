@@ -159,79 +159,74 @@ end
 """
 
 function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
-    probands = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
-    founders = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
-    if probands == founders
-        return zeros(length(founders), length(founders))
+    reference = refer(genealogy)
+    probandIDs = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
+    probands = [reference[ID] for ID in probandIDs]
+    founderIDs = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
+    founders = [reference[ID] for ID in founderIDs]
+    if probandIDs == founderIDs
+        return Matrix{Float64}(undef, length(founderIDs), length(founderIDs))
     end
     n = length(genealogy)
     Φ = zeros(n, n) * -1
     for (f, founder) in enumerate(founders)
-        i = genealogy[founder].index
-        Φ[i, i] = (1 + Ψ[f, f]) / 2
+        Φ[founder.index, founder.index] = (1 + Ψ[f, f]) / 2
     end
-    for (f, ID₁) in enumerate(founders), (g, ID₂) in enumerate(founders)
-        if ID₁ != ID₂
-            Φ[genealogy[ID₁].index, genealogy[ID₂].index] = Ψ[f, g]
+    for (f, founder₁) in enumerate(founders), (g, founder₂) in enumerate(founders)
+        if founder₁ != founder₂
+            Φ[founder₁.index, founder₂.index] = Ψ[f, g]
         end
     end
     ancestors = set_ancestors(genealogy)
-    for (i, (ID, individual)) in enumerate(genealogy)
+    for (ID, individual) in reference
         for founder in founders
-            if (ID != founder) && (founder ∉ ancestors[ID])
-                f = genealogy[founder].index
-                Φ[i, f] = Φ[f, i] = 0
+            if (ID != founder.ID) && (founder.ID ∉ ancestors[ID])
+                Φ[individual.index, founder.index] = Φ[founder.index, individual.index] = 0
             end
         end
     end
-    for (i, (ID₁, individual₁)) in enumerate(genealogy), (j, (ID₂, individual₂)) in enumerate(genealogy)
+    for (IDᵢ, individualᵢ) in reference, (IDⱼ, individualⱼ) in reference
         coefficient = 0.
-        if i > j # i cannot be an ancestor of j
-            father = individual₁.father
-            if (father != 0)
-                p = genealogy[father].index
-                coefficient += Φ[p, j] / 2
+        if individualᵢ.index > individualⱼ.index # i cannot be an ancestor of j
+            father = individualᵢ.father
+            if !isnothing(father)
+                coefficient += Φ[father.index, individualⱼ.index] / 2
             end
-            mother = individual₁.mother
-            if mother != 0
-                m = genealogy[mother].index
-                coefficient += Φ[m, j] / 2
+            mother = individualᵢ.mother
+            if !isnothing(mother)
+                coefficient += Φ[mother.index, individualⱼ.index] / 2
             end
-        elseif i < j # i can be an ancestor of j
-            if ID₁ ∉ ancestors[ID₂]
-                father = individual₁.father
-                if father != 0
-                    p = genealogy[father].index
-                    coefficient += Φ[p, j] / 2
+        elseif individualᵢ.index < individualⱼ.index # i can be an ancestor of j
+            if IDᵢ ∉ ancestors[IDⱼ]
+                father = individualᵢ.father
+                if !isnothing(father)
+                    coefficient += Φ[father.index, individualⱼ.index] / 2
                 end
-                mother = individual₁.mother
-                if mother != 0
-                    m = genealogy[mother].index
-                    coefficient += Φ[m, j] / 2
+                mother = individualᵢ.mother
+                if !isnothing(mother)
+                    coefficient += Φ[mother.index, individualⱼ.index] / 2
                 end
             end
         else # i == j
             coefficient += 0.5
-            father = individual₁.father
-            mother = individual₁.mother
-            if father != 0
-                if mother != 0
-                    p = genealogy[father].index
-                    m = genealogy[mother].index
-                    coefficient += Φ[m, p] / 2
+            father = individualᵢ.father
+            mother = individualᵢ.mother
+            if !isnothing(father)
+                if !isnothing(mother)
+                    coefficient += Φ[mother.index, father.index] / 2
                 end
             end
         end
-        Φ[i, j] = Φ[j, i] = coefficient
+        Φ[individualᵢ.index, individualⱼ.index] = Φ[individualⱼ.index, individualᵢ.index] = coefficient
     end
     for i in 1:n
         Φ[i, i] = (2 * Φ[i, i]) - 1
     end
-    indices = [genealogy[ID].index for ID in probands]
+    indices = [proband.index for proband in probands]
     Φ[indices, indices]
 end
 
-function ϕ(genealogy::OrderedDict{Int64, Individual}; pro = pro(genealogy), verbose = false)
+function ϕ(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), verbose::Bool = false)
     founders = founder(genealogy)
     Ψ = zeros(length(founders), length(founders))
     upperIDs = cut_vertices(genealogy)
