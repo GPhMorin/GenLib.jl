@@ -139,10 +139,7 @@ function cut_vertices(genealogy::OrderedDict{Int64, Individual})
         reference[ID].state = PROBAND
     end
     founderIDs = founder(genealogy)
-    unorderedIDs = [ID for ID in collect(keys(genealogy))]
-    indices = [genealogy[ID].index for ID in unorderedIDs]
-    order = sortperm(indices)
-    candidateIDs = unorderedIDs[order]
+    candidateIDs = [ID for ID in collect(keys(genealogy))]
     for candidateID in candidateIDs
         ancestorIDs = ancestor(genealogy, candidateID)
         sourceIDs = filter(x -> x ∈ founderIDs, ancestorIDs)
