@@ -86,28 +86,26 @@ end
 """
 """
 function initialize_ancestry(genealogy::OrderedDict{Int64, Individual})
-    A = SparseMatrixCSC{Bool, Int64}(undef, length(genealogy), length(genealogy))
-    unorderedIDs = [ID for ID in collect(keys(genealogy))]
-    indices = [genealogy[ID].index for ID in unorderedIDs]
-    order = sortperm(indices)
-    IDs = unorderedIDs[order]
+    A = Bool.(zeros(length(genealogy), length(genealogy)))
     for founderID in founder(genealogy)
-        i = findfirst(founderID .== IDs)
+        i = genealogy[founderID].index
         A[i, i] = true
     end
-    for ID in IDs
-        i = findfirst(ID .== IDs)
+    for (ID₁, individual₁) in genealogy
+        i = individual₁.index
         if !A[i, i]
-            f = findfirst(IDs .== genealogy[ID].father)
-            m = findfirst(IDs .== genealogy[ID].mother)
-            for possible_ancestor in IDs
-                v = findfirst(possible_ancestor .== IDs)
-                if !isnothing(f)
+            father = individual₁.father
+            mother = individual₁.mother
+            for (ID₂, individual₂) in genealogy
+                v = individual₂.index
+                if father != 0
+                    f = genealogy[father].index
                     if A[f, v]
                         A[i, v] = true
                     end
                 end
-                if !isnothing(m)
+                if mother != 0
+                    m = genealogy[mother].index
                     if A[m, v]
                         A[i, v] = true
                     end
@@ -120,50 +118,6 @@ function initialize_ancestry(genealogy::OrderedDict{Int64, Individual})
     end
     A
 end
-
-"""
-"""
-function cut_vertices(genealogy::OrderedDict{Int64, Individual}, probandIDs, founderIDs)
-    vertex_cuts = Int64[]
-    for candidateID in collect(keys(genealogy))
-        if (candidateID ∉ probandIDs) && (candidateID ∉ founderIDs)
-            stack = ancestor(genealogy, candidateID)
-            is_candidate = true
-            while !isempty(stack)
-                ID = pop!(stack)
-                if ID ∈ probandIDs
-                    is_candidate = false
-                    break
-                end
-                if ID != candidateID
-                    push!(stack, genealogy[ID].children...)
-                end
-            end
-            if is_candidate
-                push!(vertex_cuts, candidateID)
-            end
-        end
-    end
-    vertex_cuts = [vertex₁ for vertex₁ in vertex_cuts if !any(vertex₁ ∈ ancestor(genealogy, vertex₂) for vertex₂ in vertex_cuts)]
-    vertex_cuts
-end
-
-"""
-function cut_vertices(A)
-    indices = Int64[]
-    number = size(A, 1)
-    for candidate in 1:number
-        candidate_ancestors = Array(A[candidate, :])
-        ancestors_descendants = [any(row) for row in eachrow(A[:, candidate_ancestors])]
-        candidate_descendants = Array(A[:, candidate])
-        leaks = ancestors_descendants .- (candidate_ancestors .|| candidate_descendants) .> 0
-        if !any(leaks)
-            push!(indices, candidate)
-        end
-    end
-    indices
-end
-"""
 
 function cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
     value = true
@@ -205,39 +159,48 @@ end
 """
 
 function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
-    enumeration = [(ID, individual) for (ID, individual) in genealogy]
-    probandIDs = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
-    founderIDs = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
-    if probandIDs == founderIDs
-        return zeros(length(founderIDs), length(founderIDs))
+    probands = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
+    founders = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
+    if probands == founders
+        return zeros(length(founders), length(founders))
     end
-    Φ = zeros(length(genealogy), length(genealogy)) * -1
-    for (f, founderID) in enumerate(founderIDs)
-        i = genealogy[founderID].index
+    n = length(genealogy)
+    Φ = zeros(n, n) * -1
+    for (f, founder) in enumerate(founders)
+        i = genealogy[founder].index
         Φ[i, i] = (1 + Ψ[f, f]) / 2
     end
-    for (f, ID₁) in enumerate(founderIDs), (g, ID₂) in enumerate(founderIDs)
+    for (f, ID₁) in enumerate(founders), (g, ID₂) in enumerate(founders)
         if ID₁ != ID₂
             Φ[genealogy[ID₁].index, genealogy[ID₂].index] = Ψ[f, g]
         end
     end
     ancestors = set_ancestors(genealogy)
-    for i in eachindex(enumeration)
-        (ID, _) = enumeration[i]
-        for founderID in founderIDs
-            if (ID != founderID) && (founderID ∉ ancestors[ID])
-                f = genealogy[founderID].index
+    for (i, (ID, individual)) in enumerate(genealogy)
+        for founder in founders
+            if (ID != founder) && (founder ∉ ancestors[ID])
+                f = genealogy[founder].index
                 Φ[i, f] = Φ[f, i] = 0
             end
         end
     end
-    for i in eachindex(enumeration)
-        for j in eachindex(enumeration)
-            coefficient = 0.
-            if i > j # i cannot be an ancestor of j
-                (ID₁, individual₁) = enumeration[i]
+    for (i, (ID₁, individual₁)) in enumerate(genealogy), (j, (ID₂, individual₂)) in enumerate(genealogy)
+        coefficient = 0.
+        if i > j # i cannot be an ancestor of j
+            father = individual₁.father
+            if (father != 0)
+                p = genealogy[father].index
+                coefficient += Φ[p, j] / 2
+            end
+            mother = individual₁.mother
+            if mother != 0
+                m = genealogy[mother].index
+                coefficient += Φ[m, j] / 2
+            end
+        elseif i < j # i can be an ancestor of j
+            if ID₁ ∉ ancestors[ID₂]
                 father = individual₁.father
-                if (father != 0)
+                if father != 0
                     p = genealogy[father].index
                     coefficient += Φ[p, j] / 2
                 end
@@ -246,41 +209,25 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
                     m = genealogy[mother].index
                     coefficient += Φ[m, j] / 2
                 end
-            elseif i < j # i can be an ancestor of j
-                (ID₁, individual₁) = enumeration[i]
-                (ID₂, _) = enumeration[j]
-                if ID₁ ∉ ancestors[ID₂]
-                    father = individual₁.father
-                    if father != 0
-                        p = genealogy[father].index
-                        coefficient += Φ[p, j] / 2
-                    end
-                    mother = individual₁.mother
-                    if mother != 0
-                        m = genealogy[mother].index
-                        coefficient += Φ[m, j] / 2
-                    end
-                end
-            else # i == j
-                coefficient += 0.5
-                (_, individual) = enumeration[i]
-                father = individual.father
-                mother = individual.mother
-                if father != 0
-                    if mother != 0
-                        p = genealogy[father].index
-                        m = genealogy[mother].index
-                        coefficient += Φ[m, p] / 2
-                    end
+            end
+        else # i == j
+            coefficient += 0.5
+            father = individual₁.father
+            mother = individual₁.mother
+            if father != 0
+                if mother != 0
+                    p = genealogy[father].index
+                    m = genealogy[mother].index
+                    coefficient += Φ[m, p] / 2
                 end
             end
-            Φ[i, j] = Φ[j, i] = coefficient
         end
+        Φ[i, j] = Φ[j, i] = coefficient
     end
-    for i in 1:length(genealogy)
+    for i in 1:n
         Φ[i, i] = (2 * Φ[i, i]) - 1
     end
-    indices = [genealogy[ID].index for ID in probandIDs]
+    indices = [genealogy[ID].index for ID in probands]
     Φ[indices, indices]
 end
 
@@ -313,16 +260,14 @@ end
 function set_ancestors(genealogy::OrderedDict{Int64, Individual})
     ancestors = Dict()
     for (ID, individual) in genealogy
+        ancestors[ID] = [ID]
         mother = individual.mother
         father = individual.father
-        if (mother != 0) && (father != 0)
-            ancestors[ID] = union(ancestors[mother], ancestors[father], [ID])
-        elseif (mother != 0)
-            ancestors[ID] = union(ancestors[mother], [ID])
-        elseif (father != 0)
-            ancestors[ID] = union(ancestors[father], [ID])
-        else
-            ancestors[ID] = [ID]
+        if (mother != 0)
+            ancestors[ID] = union(ancestors[mother], ancestors[ID])
+        end
+        if (father != 0)
+            ancestors[ID] = union(ancestors[father], ancestors[ID])
         end
     end
     ancestors
