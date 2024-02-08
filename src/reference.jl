@@ -33,7 +33,7 @@ Takes a `genealogy` dictionary and returns a dictionary of references to individ
 In REPL: to avoid crash, end function call with `;`.
 """
 function refer(genealogy::OrderedDict{Int64, Individual})
-    reference::Dict{Int64, ReferenceIndividual} = Dict()
+    reference::OrderedDict{Int64, ReferenceIndividual} = Dict()
     for (ID, individual) in genealogy
         reference[ID] = ReferenceIndividual(
             ID, # ID (ind in the ASC file)
