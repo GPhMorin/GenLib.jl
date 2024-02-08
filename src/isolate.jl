@@ -26,7 +26,7 @@ function mark_descendants!(individual::ReferenceIndividual)
 end
 
 """
-branching(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64})
+branching(genealogy::Dict{Int64, Individual}, pro::Vector{Int64}, ancestors::Vector{Int64})
 
 Takes a `genealogy` and removes individuals who are not in the paths between select probands and ancestors.
 """
@@ -58,47 +58,4 @@ function branching(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64}
         end
     end
     isolated_genealogy
-end
-
-"""
-branching(genealogy, IDs)
-
-Takes a `genealogy` and isolates individuals with one of the given `IDs`.
-"""
-function branching(genealogy, IDs)
-    isolated_genealogy = Dict()
-    for (ID, individual) in genealogy
-        if ID ∈ IDs
-            father = 0
-            if individual.father != 0
-                father = individual.father ∈ IDs ? individual.father : 0
-            end
-            mother = 0
-            if individual.mother != 0
-                mother = individual.mother ∈ IDs ? individual.mother : 0
-            end
-            children = filter(x -> x ∈ IDs, individual.children)
-            isolated_genealogy[ID] = Individual(father, mother, individual.index, children, individual.sex)
-        end
-    end
-    isolated_genealogy
-end
-
-function ablate(genealogy, IDs)
-    ablated_genealogy = Dict{Int64, Individual}()
-    for (ID, individual) in genealogy
-        if ID ∉ IDs
-            father = 0
-            if individual.father != 0
-                father = individual.father ∈ IDs ? individual.father : 0
-            end
-            mother = 0
-            if individual.mother != 0
-                mother = individual.mother ∈ IDs ? individual.mother : 0
-            end
-            children = filter(x -> x ∈ IDs, individual.children)
-            ablated_genealogy[ID] = Individual(father, mother, individual.index, children, individual.sex)
-        end
-    end
-    ablated_genealogy
 end

@@ -27,13 +27,13 @@ mutable struct ReferenceIndividual
 end
 
 """
-refer(genealogy::Dict{Int64, Individual})
+refer(genealogy::OrderedDict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a dictionary of references to individuals.
 In REPL: to avoid crash, end function call with `;`.
 """
 function refer(genealogy::OrderedDict{Int64, Individual})
-    reference::OrderedDict{Int64, ReferenceIndividual} = Dict()
+    reference = OrderedDict{Int64, ReferenceIndividual}()
     for (ID, individual) in genealogy
         reference[ID] = ReferenceIndividual(
             ID, # ID (ind in the ASC file)

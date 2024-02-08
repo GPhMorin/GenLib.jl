@@ -73,6 +73,13 @@ function genealogy(filename::String)
     end
 end
 
+"""
+check_order(genealogy::OrderedDict{Int64, Individual})
+
+Takes a given `genealogy` dictionary and checks whether
+the individuals appear in chronological order,
+i.e. any individual's parents appear before them.
+"""
 function check_order(genealogy::OrderedDict{Int64, Individual})
     value = true
     for (_, individual) in genealogy
@@ -94,6 +101,13 @@ function check_order(genealogy::OrderedDict{Int64, Individual})
     value
 end
 
+"""
+order_genealogy(genealogy::OrderedDict{Int64, Individual})
+
+Given a `genealogy` dictionary, returns a reordered genealogy
+where the individuals are in chronological order,
+i.e. any individual's parents appear before them.
+"""
 function order_genealogy(genealogy::OrderedDict{Int64, Individual})
     founderIDs = founder(genealogy)
     sortedIDs = []

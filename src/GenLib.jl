@@ -38,12 +38,7 @@ export genealogy,
        remove_relatives!,
        occ,
        parse_simuHaplo,
-       ablate, # for testing purposes
-       cut_vertices, # for testing purposes
-       initialize_ancestry, # for testing purposes
-       phi2, # for testing purposes
-       set_ancestors, # for testing purposes
-       check_order # for testing purposes
+       check_order
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
@@ -65,6 +60,5 @@ include("meioses.jl")
 include("population.jl")
 include("remove_relatives.jl")
 include("occurrence.jl")
-include("simulations.jl")
 
 end
