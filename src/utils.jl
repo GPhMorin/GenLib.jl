@@ -285,7 +285,7 @@ will appear in the same order as in the genealogy.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
-function genout(genealogy::OrderedDict, sorted::Bool = false)
+function genout(genealogy::OrderedDict; sorted::Bool = false)
     inds = Int64[]
     fathers = Int64[]
     mothers = Int64[]

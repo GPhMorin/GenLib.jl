@@ -155,6 +155,6 @@ If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
 function save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
-    df = genout(genealogy, sorted)
+    df = genout(genealogy, sorted = sorted)
     CSV.write(path, df, delim="\t")
 end
