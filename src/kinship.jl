@@ -162,7 +162,14 @@ function cut_vertices(genealogy::OrderedDict{Int64, Individual})
         # never reaches a "sink" (proband) individual
         ancestorIDs = ancestor(genealogy, candidateID)
         sourceIDs = filter(x -> x ∈ founderIDs, ancestorIDs)
-        if all(cut_vertex(reference[sourceID], candidateID) for sourceID in sourceIDs)
+        candidate = true
+        for sourceID in sourceIDs
+            if !cut_vertex(reference[sourceID], candidateID)
+                candidate = false
+                break
+            end
+        end
+        if candidate
             push!(vertices, candidateID)
         end
     end
