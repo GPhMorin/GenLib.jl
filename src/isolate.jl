@@ -1,5 +1,5 @@
 """
-mark_ancestors!(individual::ReferenceIndividual)
+    mark_ancestors!(individual::ReferenceIndividual)
 
 A recursive function that marks the ancestors of an `individual`.
 """
@@ -14,7 +14,7 @@ function mark_ancestors!(individual::ReferenceIndividual)
 end
 
 """
-mark_descendants!(individual::ReferenceIndividual)
+    mark_descendants!(individual::ReferenceIndividual)
 
 A recursive function that marks the descendants of an `individual`.
 """
@@ -26,7 +26,7 @@ function mark_descendants!(individual::ReferenceIndividual)
 end
 
 """
-branching(genealogy::Dict{Int64, Individual}, pro::Vector{Int64}, ancestors::Vector{Int64})
+    branching(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy))
 
 Takes a `genealogy` and removes individuals who are not in the paths between select probands and ancestors.
 """

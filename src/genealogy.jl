@@ -1,8 +1,3 @@
-@enum SEX begin
-    MALE = 1
-    FEMALE = 2
-end
-
 """
 An `Individual` is an immutable object containing
 the ID to their `father` and `mother` (0 if unknown),
@@ -15,18 +10,18 @@ struct Individual
     mother::Int64
     index::Int64
     children::Vector{Int64}
-    sex::SEX
+    sex::Int64
 end
 
 """
-genealogy(filename::String)
+    genealogy(filename::String)
 
 Reads a DataFrame and returns a dictionary of individuals.
 """
 function genealogy(dataframe::DataFrame)
     genealogy::OrderedDict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataframe))
-        genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
+        genealogy[row.ind] = Individual(row.father, row.mother, index, [], row.sex)
     end
     for row in eachrow(dataframe)
         individual = genealogy[row.ind]
@@ -46,7 +41,7 @@ function genealogy(dataframe::DataFrame)
 end
 
 """
-genealogy(filename::String)
+    genealogy(filename::String)
 
 Reads a file with `filename` and returns a dictionary of individuals.
 """
@@ -54,7 +49,7 @@ function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     genealogy::OrderedDict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataset))
-        genealogy[row.ind] = Individual(row.father, row.mother, index, [], SEX(row.sex))
+        genealogy[row.ind] = Individual(row.father, row.mother, index, [], row.sex)
     end
     for row in eachrow(dataset)
         individual = genealogy[row.ind]
@@ -74,7 +69,7 @@ function genealogy(filename::String)
 end
 
 """
-check_order(genealogy::OrderedDict{Int64, Individual})
+    check_order(genealogy::OrderedDict{Int64, Individual})
 
 Takes a given `genealogy` dictionary and checks whether
 the individuals appear in chronological order,
@@ -102,7 +97,7 @@ function check_order(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-order_genealogy(genealogy::OrderedDict{Int64, Individual})
+    order_genealogy(genealogy::OrderedDict{Int64, Individual})
 
 Given a `genealogy` dictionary, returns a reordered genealogy
 where the individuals are in chronological order,
@@ -144,7 +139,7 @@ function order_genealogy(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
+    save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
 
 Takes a `genealogy` dictionary and exports it as a CSV file at a given `path`.
 

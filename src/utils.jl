@@ -1,5 +1,5 @@
 """
-pro(genealogy::OrderedDict{Int64, Individual})
+    pro(genealogy::OrderedDict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a vector of proband IDs.
 """
@@ -9,7 +9,7 @@ function pro(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-founder(genealogy::OrderedDict{Int64, Individual})
+    founder(genealogy::OrderedDict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a vector of founder IDs.
 """
@@ -19,7 +19,7 @@ function founder(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-findFounders(genealogy::OrderedDict{Int64}, IDs::Vector{Int64})
+    findFounders(genealogy::OrderedDict{Int64}, IDs::Vector{Int64})
 
 Takes a `genealogy` and returns a vector of founders from whom the `IDs` descend.
 """
@@ -32,7 +32,7 @@ function findFounders(genealogy::OrderedDict{Int64}, IDs::Vector{Int64})
 end
 
 """
-get_paths(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
+    get_paths(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns the paths from an individual to their ancestors.
 """
@@ -57,7 +57,7 @@ function get_paths(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 end
 
 """
-children(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
+    children(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns the children of an individual.
 """
@@ -67,7 +67,7 @@ function children(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 end
 
 """
-descendant(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
+    descendant(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns the descendants of an individual.
 """
@@ -87,7 +87,7 @@ function descendant(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 end
 
 """
-rec(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
+    rec(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
 
 Takes a `genealogy` dictionary, a vector of `probandIDs` and a vector of `ancestorIDs` and returns the number of descendants of each ancestor.
 """
@@ -106,7 +106,7 @@ function rec(
 end
 
 """
-distance_matrix(matrix::Matrix{Float64})
+    distance_matrix(matrix::Matrix{Float64})
 
 Converts a similarity matrix into a distance matrix normalized with values [0, 1].
 """
@@ -119,163 +119,7 @@ function distance_matrix(matrix::Matrix{Float64})
 end
 
 """
-explore_tree(individual::ReferenceIndividual)
-
-A recursive function that labels `individual`s on whether
-they lead from relevant ancestors to relevant probands.
-"""
-function explore_tree(individual::ReferenceIndividual)
-    # Ported from GENLIB's ExploreArbre
-    state = individual.state
-    if state == EXPLORED
-        0
-    elseif state == NODE
-        1
-    elseif state == PROBAND
-        1
-    elseif state == START
-        for child in individual.children
-            explore_tree(child)
-        end
-        1
-    elseif state == EXPLOREDPROBAND
-        state = PROBAND
-        for child in individual.children
-            explore_tree(child)
-        end
-        1
-    elseif state == UNEXPLORED
-        useful = 0
-        for child in individual.children
-            useful += explore_tree(child)
-        end
-        if useful > 0
-            state = NODE
-            1
-        else
-            state = EXPLORED
-            0
-        end
-    end
-    99
-end
-
-"""
-prepare_priority_sort(nodes::Vector{ReferenceIndividual})
-
-Initializes the value of the individuals' `sort` value.
-"""
-function prepare_priority_sort(nodes::Vector{ReferenceIndividual})
-    # Ported from GENLIB's PrepareSortPrioriteArbre
-    for node in nodes
-        if isnothing(node.father)
-            node.sort = -1
-        elseif node.father.state == UNEXPLORED | node.father.state == EXPLORED
-            node.sort = -1
-        elseif isnothing(node.mother)
-            node.sort = -1
-        elseif node.mother.state == UNEXPLORED | node.mother.state == EXPLORED
-            node.sort = -1
-        elseif node.father.state == EXPLOREDPROBAND | node.mother.state == EXPLOREDPROBAND
-            node.sort = -1
-        else
-            node.sort = 0
-        end
-    end
-end
-
-"""
-start_priority_sort(node::ReferenceIndividual,
-                    order::Dict{Int64, Int64},
-                    index::Int64,
-                    jumps::Dict{Int64, Int64})
-"""
-function start_priority_sort(node::ReferenceIndividual,
-                             order::Dict{Int64, Int64},
-                             index::Int64,
-                             jumps::Dict{Int64, Int64})
-
-
-    # Ported from GENLIB's StartSortPrioriteArbre
-
-    node.sort = 5
-    nodelist = []
-
-    for child in node.children
-        if child.sort == -1
-            priority_sort!(child, order, index, jumps, nodelist)
-        end
-    end
-    empty!(nodelist)
-
-    for child in node.children
-        if child.sort == -1
-        elseif child.sort == 0
-            child.sort = 1
-        elseif child.sort == 1
-            priority_sort!(child, order, index, jumps, nodelist)
-        end
-    end
-    empty!(nodelist)
-end
-
-"""
-priority_sort!(node::ReferenceIndividual, 
-               order::Dict{Int64, ReferenceIndividual},
-               index::Int64,
-               jumps::Dict{Int64, Int64},
-               nodelist::Vector{ReferenceIndividual})
-"""
-function priority_sort!(node::ReferenceIndividual, 
-                        order::Dict{Int64, ReferenceIndividual},
-                        index::Int64,
-                        jumps::Dict{Int64, Int64},
-                        nodelist::Vector{ReferenceIndividual})
-
-    # Ported from GENLIB's SortPrioriteArbre
-
-    jump = 0
-
-    if !isempty(nodelist)
-        return 0
-    end
-
-    if (node.state != PROBAND & node.state != NODE) | node.sort == 5
-        return 0
-    end
-
-    order[index] = node
-    index += 1
-
-    former_flag = copy(node.sort)
-    node.sort = 5
-
-    for child in node.children
-        if child.sort == -1
-            jump += priority_sort!(child, order, index, jumps, nodelist)
-        end
-    end
-
-    jumps[index] = jump
-
-    if former_flag == -1
-        jump += 1
-    end
-
-    for child in node.children
-        if child.sort == -1
-        elseif child.sort == 0
-            child.sort = 1
-        elseif child.sort == 1
-            push!(nodelist, child)
-        end
-    end
-
-    jump
-end
-
-"""
-genout(genealogy::OrderedDict, sorted::Bool = false)
+    genout(genealogy::OrderedDict, sorted::Bool = false)
 
 Returns a `genealogy` dictionary as a DataFrame.
 
@@ -295,7 +139,7 @@ function genout(genealogy::OrderedDict; sorted::Bool = false)
             push!(inds, ID)
             push!(fathers, individual.father)
             push!(mothers, individual.mother)
-            push!(sexes, Int64(individual.sex))
+            push!(sexes, individual.sex)
         end
     else # if sorted
         inds = sort(collect(keys(genealogy)))
@@ -303,7 +147,7 @@ function genout(genealogy::OrderedDict; sorted::Bool = false)
             individual = genealogy[ID]
             push!(fathers, individual.father)
             push!(mothers, individual.mother)
-            push!(sexes, Int64(individual.sex))
+            push!(sexes, individual.sex)
         end
     end
     df = DataFrame([inds, fathers, mothers, sexes], ["ind", "father", "mother", "sex"])

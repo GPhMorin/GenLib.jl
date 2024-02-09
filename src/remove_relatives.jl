@@ -1,5 +1,5 @@
 """
-remove_relatives!(probandIDs::Vector{Int64}, genealogy::OrderedDict{Int64, Individual})
+    remove_relatives!(probandIDs::Vector{Int64}, genealogy::OrderedDict{Int64, Individual})
 
 Takes a list of `probandIDs` and, according to a given `genealogy`,
 removes IDs of individuals who are first cousins or closer in the genealogy.
@@ -20,7 +20,7 @@ function remove_relatives!(probandIDs::Vector{Int64}, genealogy::OrderedDict{Int
 end
 
 """
-add_relatives!(relativeIDs::Vector{Int64}, individual::ReferenceIndividual, depth::Int64)
+    add_relatives!(relativeIDs::Vector{Int64}, individual::ReferenceIndividual, depth::Int64)
 
 Recursively add IDs of individuals who are first cousins or closer.
 """

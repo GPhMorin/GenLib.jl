@@ -1,5 +1,5 @@
 """
-ancestor(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
+    ancestor(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
 Takes a `genealogy` dictionary and an `ID` and returns a vector of all of their ancestors.
 """
@@ -24,7 +24,7 @@ function ancestor(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 end
 
 """
-ancestor(genealogy::OrderedDict{Int64, Individual}, IDs::Set{Int64})
+    ancestor(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
 
 Takes a `genealogy` dictionary and a set of `IDs` and returns a vector of all of their ancestors.
 """
@@ -34,7 +34,7 @@ function ancestor(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
 end
 
 """
-findMRCA(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
+    findMRCA(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
 
 Takes a `genealogy` dictionary and a vector of `IDs` and returns a vector of most recent common ancestors.
 """

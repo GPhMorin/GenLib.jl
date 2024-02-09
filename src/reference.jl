@@ -14,7 +14,7 @@ mutable struct ReferenceIndividual
     mother::Union{Nothing, ReferenceIndividual}
     index::Int64
     children::Vector{ReferenceIndividual}
-    sex::SEX
+    sex::Int64
     state::STATE
     probability::Float64
     allele::Int64
@@ -27,7 +27,7 @@ mutable struct ReferenceIndividual
 end
 
 """
-refer(genealogy::OrderedDict{Int64, Individual})
+    refer(genealogy::OrderedDict{Int64, Individual})
 
 Takes a `genealogy` dictionary and returns a dictionary of references to individuals.
 In REPL: to avoid crash, end function call with `;`.

@@ -1,5 +1,5 @@
 """
-phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
+    phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
 
 Computes the kinship coefficient between two individuals using references.
 A matrix of the founders' kinships may optionally be provided.
@@ -42,7 +42,7 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
 end
 
 """
-phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 Takes a `genealogy` dictionary, computes the kinship coefficients
 between all probands provided a matrix of the founders' kinships
@@ -81,7 +81,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-phi(genealogy::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+    phi(genealogy::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(genealogy); verbose::Bool = false)
 
 Takes a `genealogy` dictionary, computes the kinship coefficients
 between the provided IDs of `probands` and returns a matrix.
@@ -117,7 +117,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
 end
 
 """
-phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+    phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
 
 Takes a `genealogy` dictionary, computes the kinship coefficients
 between the provided IDs of `rowIDs` and `columnIDs` and returns a matrix.
@@ -141,7 +141,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, c
 end
 
 """
-cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
+    cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
 
 Returns whether an individual with `candidateID` can be used
 as a cut vertex according to the definition in Kirkpatrick et al., 2019.
@@ -162,7 +162,7 @@ function cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
 end
 
 """
-cut_vertices(genealogy::OrderedDict{Int64, Individual})
+    cut_vertices(genealogy::OrderedDict{Int64, Individual})
 
 Given a `genealogy` dictionary, returns the IDs of the cut vertices
 as defined in Kirkpatrick et al., 2019.
@@ -204,7 +204,7 @@ function cut_vertices(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-set_ancestors(genealogy::OrderedDict{Int64, Individual})
+    set_ancestors(genealogy::OrderedDict{Int64, Individual})
 
 Given a `genealogy` dictionary, creates a lookup table
 of the individuals' ancestors, as defined in Kirkpatrick et al., 2019.
@@ -226,7 +226,7 @@ function set_ancestors(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
@@ -299,7 +299,7 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+    ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 

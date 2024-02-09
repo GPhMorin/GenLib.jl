@@ -1,5 +1,5 @@
 """
-population(filename::String)
+    population(filename::String)
 
 Reads a file with `filename` and returns a dictionary of populations.
 """
