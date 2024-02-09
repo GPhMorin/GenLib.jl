@@ -29,7 +29,7 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
                 value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
             end
         else # Reverse the order since a > b
-            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j ≱ i (Karigl, 1981)
+            # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j ≱ i (Karigl, 1981)
             if !isnothing(individualᵢ.father)
                 value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
             end
