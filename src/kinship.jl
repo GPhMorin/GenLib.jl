@@ -95,7 +95,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
     levels = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
         # Cut the pedigree into several sub-pedigrees
-        isolated_genealogy = branching(genealogy; pro = upperIDs)
+        isolated_genealogy = branching(genealogy, pro = upperIDs)
         lowerIDs = copy(upperIDs)
         upperIDs = cut_vertices(isolated_genealogy)
         pushfirst!(levels, upperIDs)
@@ -104,7 +104,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
         # For each sub-pedigree, calculate the kinships using the previous founders' kinships
         upperIDs = levels[i]
         lowerIDs = levels[i+1]
-        Vᵢ = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
+        Vᵢ = branching(genealogy, pro = lowerIDs, ancestors = upperIDs)
         Ψ = phi(Vᵢ, Ψ)
         if verbose
             println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
