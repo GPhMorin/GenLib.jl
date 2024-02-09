@@ -4,11 +4,6 @@ using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack, OrderedDict
 
-# For evaluating the sex manually
-export SEX,
-       MALE,
-       FEMALE
-
 # For creating new genealogies manually
 export Individual
 
