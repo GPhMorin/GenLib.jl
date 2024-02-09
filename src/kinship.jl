@@ -128,13 +128,12 @@ function phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, c
     Threads.@threads for i in eachindex(rowIDs)
         Threads.@threads for j in eachindex(columnIDs)
             IDᵢ = rowIDs[i]
+            IDⱼ = columnIDs[j]
             individualᵢ = reference[IDᵢ]
-            if i == j # Calculate once
-                Φ[i, i] = phi(individualᵢ, individualᵢ)
-            else
-                IDⱼ = columnIDs[j]
-                individualⱼ = reference[IDⱼ]
-                Φ[i, j] = phi(individualᵢ, individualⱼ)
+            individualⱼ = reference[IDⱼ]
+            Φ[i, j] = phi(individualᵢ, individualⱼ)
+            if IDᵢ == IDⱼ # For the individual with themself
+                Φ[i, j] = (2 * Φ[i, j]) - 1 # Transform kinship to inbreeding
             end
         end
     end
