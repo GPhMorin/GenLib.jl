@@ -2,7 +2,7 @@ module GenLib
 
 using CSV
 using DataFrames: DataFrame
-using DataStructures: Stack, DefaultDict, OrderedDict
+using DataStructures: Stack, OrderedDict
 using Distributions
 using SparseArrays
 using LinearAlgebra
@@ -37,7 +37,6 @@ export genealogy,
        population,
        remove_relatives!,
        occ,
-       parse_simuHaplo,
        check_order
 
 # GENLIB datasets
