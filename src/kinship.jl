@@ -14,8 +14,16 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
         end
     else # At least one of the individuals is not a founder
         value = 0.
-        if individualⱼ.index > individualᵢ.index # From the genealogical order, i cannot be an ancestor of j
-            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i ≱ j (Karigl, 1981)
+        if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
+            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
+            if !isnothing(individualᵢ.father)
+                value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
+            end
+            if !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
+            end
+        elseif individualⱼ.index > individualᵢ.index # Reverse the order since a > b
+            # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
             if !isnothing(individualⱼ.father)
                 value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
             end
@@ -27,14 +35,6 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
             value += 1/2
             if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
                 value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
-            end
-        else # Reverse the order since a > b
-            # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j ≱ i (Karigl, 1981)
-            if !isnothing(individualᵢ.father)
-                value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
-            end
-            if !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
             end
         end
         return value
