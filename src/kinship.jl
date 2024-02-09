@@ -117,6 +117,31 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
 end
 
 """
+phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+
+Takes a `genealogy` dictionary, computes the kinship coefficients
+between the provided IDs of `rowIDs` and `columnIDs` and returns a matrix.
+"""
+function phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+    reference = refer(genealogy)
+    Φ = zeros(length(rowIDs), length(columnIDs)) # Initialize the kinship matrix
+    Threads.@threads for i in eachindex(rowIDs)
+        Threads.@threads for j in eachindex(columnIDs)
+            IDᵢ = rowIDs[i]
+            individualᵢ = reference[IDᵢ]
+            if i == j # Calculate once
+                Φ[i, i] = phi(individualᵢ, individualᵢ)
+            else
+                IDⱼ = columnIDs[j]
+                individualⱼ = reference[IDⱼ]
+                Φ[i, j] = phi(individualᵢ, individualⱼ)
+            end
+        end
+    end
+    Φ
+end
+
+"""
 cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
 
 Returns whether an individual with `candidateID` can be used
