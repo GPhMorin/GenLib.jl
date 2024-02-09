@@ -202,14 +202,14 @@ function set_ancestors(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-Φ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
 Takes a `genealogy` dictionary and a `Ψ` matrix of founder kinships
 and computes the kinship matrix of all probands.
 """
-function Φ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     reference = refer(genealogy)
     probandIDs = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
     probands = [reference[ID] for ID in probandIDs]
@@ -275,14 +275,14 @@ function Φ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-Φ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
 Takes a `genealogy` dictionary and a list of `probandIDs`
 and computes the kinship matrix of those probands.
 """
-function Φ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+function ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
     founders = founder(genealogy)
     Ψ = zeros(length(founders), length(founders))
     upperIDs = cut_vertices(genealogy)
@@ -298,7 +298,7 @@ function Φ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64}
         upperIDs = C[i]
         lowerIDs = C[i+1]
         Vᵢ = branching(genealogy, pro = lowerIDs, ancestors = upperIDs)
-        Ψ = Φ(Vᵢ, Ψ)
+        Ψ = ϕ(Vᵢ, Ψ)
         if verbose
             println("Kinships for generation ", i, "/", length(C)-1, " completed.")
         end
