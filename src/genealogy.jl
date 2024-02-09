@@ -143,17 +143,18 @@ function order_genealogy(genealogy::OrderedDict{Int64, Individual})
     ordered_genealogy
 end
 
-function save_genealogy(genealogy::OrderedDict, path::String)
-    inds = Int64[]
-    fathers = Int64[]
-    mothers = Int64[]
-    sexes = Int64[]
-    for (ID, individual) in genealogy
-        push!(inds, ID)
-        push!(fathers, individual.father)
-        push!(mothers, individual.mother)
-        push!(sexes, individual.sex)
-    end
-    df = DataFrame([inds, fathers, mothers, sexes], ["ind", "father", "mother", "sex"])
-    CSV.write(path, df)
+"""
+save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
+
+Takes a `genealogy` dictionary and exports it as a CSV file at a given `path`.
+
+If `sorted` is `false` (the default), then the individuals
+will appear in the same order as in the genealogy.
+
+If `sorted` is `true`, then the individuals
+will appear in alphabetical ID order.
+"""
+function save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
+    df = genout(genealogy, sorted)
+    CSV.write(path, df, delim="\t")
 end

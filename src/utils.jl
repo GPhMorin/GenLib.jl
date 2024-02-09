@@ -273,3 +273,39 @@ function priority_sort!(node::ReferenceIndividual,
 
     jump
 end
+
+"""
+genout(genealogy::OrderedDict, sorted::Bool = false)
+
+Returns a `genealogy` dictionary as a DataFrame.
+
+If `sorted` is `false` (the default), then the individuals
+will appear in the same order as in the genealogy.
+
+If `sorted` is `true`, then the individuals
+will appear in alphabetical ID order.
+"""
+function genout(genealogy::OrderedDict, sorted::Bool = false)
+    inds = Int64[]
+    fathers = Int64[]
+    mothers = Int64[]
+    sexes = Int64[]
+    if !sorted
+        for (ID, individual) in genealogy
+            push!(inds, ID)
+            push!(fathers, individual.father)
+            push!(mothers, individual.mother)
+            push!(sexes, Int64(individual.sex))
+        end
+    else # if sorted
+        inds = sort(collect(keys(genealogy)))
+        for ID in inds
+            individual = genealogy[ID]
+            push!(fathers, individual.father)
+            push!(mothers, individual.mother)
+            push!(sexes, Int64(individual.sex))
+        end
+    end
+    df = DataFrame([inds, fathers, mothers, sexes], ["ind", "father", "mother", "sex"])
+    df
+end

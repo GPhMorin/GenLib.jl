@@ -29,7 +29,8 @@ export genealogy,
        get_paths,
        children,
        descendant,
-       rec
+       rec,
+       genout
 
 # Custom functions
 export distance_matrix,

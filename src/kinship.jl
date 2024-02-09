@@ -42,42 +42,6 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
 end
 
 """
-phi(genealogy::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(genealogy); verbose::Bool = false)
-
-Takes a `genealogy` dictionary, computes the kinship coefficients
-between the provided IDs of `probands` and returns a matrix.
-If no probands are provided, kinships for all of the genealogy's probands are computed.
-"""
-function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
-    founderIDs = founder(genealogy)
-    Ψ = zeros(length(founderIDs), length(founderIDs)) # Initialize the top founders' kinships
-    upperIDs = cut_vertices(genealogy)
-    lowerIDs = probandIDs
-    levels = [upperIDs, lowerIDs]
-    while upperIDs != lowerIDs
-        # Cut the pedigree into several sub-pedigrees
-        isolated_genealogy = branching(genealogy; pro = upperIDs)
-        lowerIDs = copy(upperIDs)
-        upperIDs = cut_vertices(isolated_genealogy)
-        pushfirst!(levels, upperIDs)
-    end
-    for i in 1:length(levels)-1
-        # For each sub-pedigree, calculate the kinships using the previous founders' kinships
-        upperIDs = levels[i]
-        lowerIDs = levels[i+1]
-        Vᵢ = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
-        Ψ = phi(Vᵢ, Ψ)
-        if verbose
-            println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
-        end
-    end
-    # In GENLIB, the kinship matrix is in alphabetical ID order
-    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(genealogy)))
-    order = sortperm(probandIDs)
-    Ψ[order, order]
-end
-
-"""
 phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 Takes a `genealogy` dictionary, computes the kinship coefficients
@@ -114,6 +78,42 @@ function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
         end
         return Φ
     end
+end
+
+"""
+phi(genealogy::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+
+Takes a `genealogy` dictionary, computes the kinship coefficients
+between the provided IDs of `probands` and returns a matrix.
+If no probands are provided, kinships for all of the genealogy's probands are computed.
+"""
+function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+    founderIDs = founder(genealogy)
+    Ψ = zeros(length(founderIDs), length(founderIDs)) # Initialize the top founders' kinships
+    upperIDs = cut_vertices(genealogy)
+    lowerIDs = probandIDs
+    levels = [upperIDs, lowerIDs]
+    while upperIDs != lowerIDs
+        # Cut the pedigree into several sub-pedigrees
+        isolated_genealogy = branching(genealogy; pro = upperIDs)
+        lowerIDs = copy(upperIDs)
+        upperIDs = cut_vertices(isolated_genealogy)
+        pushfirst!(levels, upperIDs)
+    end
+    for i in 1:length(levels)-1
+        # For each sub-pedigree, calculate the kinships using the previous founders' kinships
+        upperIDs = levels[i]
+        lowerIDs = levels[i+1]
+        Vᵢ = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
+        Ψ = phi(Vᵢ, Ψ)
+        if verbose
+            println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
+        end
+    end
+    # In GENLIB, the kinship matrix is in alphabetical ID order
+    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(genealogy)))
+    order = sortperm(probandIDs)
+    Ψ[order, order]
 end
 
 """
