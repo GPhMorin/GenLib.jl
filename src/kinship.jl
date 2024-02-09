@@ -50,17 +50,19 @@ If no probands are provided, kinships for all of the genealogy's probands are co
 """
 function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
     founderIDs = founder(genealogy)
-    Ψ = zeros(length(founderIDs), length(founderIDs))
+    Ψ = zeros(length(founderIDs), length(founderIDs)) # Initialize the top founders' kinships
     upperIDs = cut_vertices(genealogy)
     lowerIDs = probandIDs
     levels = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
+        # Cut the pedigree into several sub-pedigrees
         isolated_genealogy = branching(genealogy; pro = upperIDs)
         lowerIDs = copy(upperIDs)
         upperIDs = cut_vertices(isolated_genealogy)
         pushfirst!(levels, upperIDs)
     end
     for i in 1:length(levels)-1
+        # For each sub-pedigree, calculate the kinships using the previous founders' kinships
         upperIDs = levels[i]
         lowerIDs = levels[i+1]
         Vᵢ = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
@@ -69,6 +71,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
             println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
         end
     end
+    # In GENLIB, the kinship matrix is in alphabetical ID order
     probandIDs = filter(x -> x ∈ probandIDs, collect(keys(genealogy)))
     order = sortperm(probandIDs)
     Ψ[order, order]
@@ -88,18 +91,18 @@ function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     founderIDs = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
     founders = [reference[ID] for ID in founderIDs]
     if probandIDs == founderIDs
-        return zeros(length(founderIDs), length(founderIDs))
+        return Ψ # The founders' kinships
     else
         Φ = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
         for f in eachindex(founders)
-            founders[f].sort = f
+            founders[f].sort = f # To later access values in the Ψ matrix
         end
         Threads.@threads for i in eachindex(probandIDs)
             Threads.@threads for j in eachindex(probandIDs)
-                if i == j
+                if i == j # Calculate only once
                     individualᵢ = probands[i]
                     Φ[i, i] = phi(individualᵢ, individualᵢ, Ψ)
-                elseif i < j
+                elseif i < j # Calculate only once
                     individualᵢ = probands[i]
                     individualⱼ = probands[j]
                     Φ[i, j] = Φ[j, i] = phi(individualᵢ, individualⱼ, Ψ)
@@ -107,7 +110,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
             end
         end
         for i in eachindex(probandIDs)
-            Φ[i, i] = (2 * Φ[i, i]) - 1
+            Φ[i, i] = (2 * Φ[i, i]) - 1 # Transform diagonal into inbreedings
         end
         return Φ
     end
@@ -122,6 +125,9 @@ as a cut vertex according to the definition in Kirkpatrick et al., 2019.
 function cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
     value = true
     for child in individual.children
+        # Check if going down the pedigree
+        # while avoiding the candidate ID
+        # reaches a proband (sink) anyway
         if child.state == PROBAND
             return false
         elseif child.ID != candidateID
@@ -145,18 +151,22 @@ function cut_vertices(genealogy::OrderedDict{Int64, Individual})
     vertices = Int64[]
     reference = refer(genealogy)
     probandIDs = pro(genealogy)
-    for ID in probandIDs
+    for ID in probandIDs # Mark the probands
         reference[ID].state = PROBAND
     end
     founderIDs = founder(genealogy)
     candidateIDs = [ID for ID in collect(keys(genealogy))]
     for candidateID in candidateIDs
+        # Check if avoiding paths from a "source" (founder)
+        # down the pedigree through the candidate ID
+        # never reaches a "sink" (proband) individual
         ancestorIDs = ancestor(genealogy, candidateID)
         sourceIDs = filter(x -> x ∈ founderIDs, ancestorIDs)
         if all(cut_vertex(reference[sourceID], candidateID) for sourceID in sourceIDs)
             push!(vertices, candidateID)
         end
     end
+    # Keep only the lowest candidates
     ancestorIDs = union([ancestor(genealogy, vertex) for vertex in vertices]...)
     vertices = filter(x -> (x ∈ vertices && x ∉ ancestorIDs) || (x ∈ founderIDs && x ∉ ancestorIDs), candidateIDs)
     vertices
