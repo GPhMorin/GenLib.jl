@@ -1,10 +1,10 @@
 """
-remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})
+remove_relatives!(probandIDs::Vector{Int64}, genealogy::OrderedDict{Int64, Individual})
 
 Takes a list of `probandIDs` and, according to a given `genealogy`,
 removes IDs of individuals who are first cousins or closer in the genealogy.
 """
-function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Individual})
+function remove_relatives!(probandIDs::Vector{Int64}, genealogy::OrderedDict{Int64, Individual})
     reference = refer(genealogy)
     candidateIDs = copy(probandIDs)
     empty!(probandIDs)
@@ -20,21 +20,21 @@ function remove_relatives!(probandIDs::Vector{Int64}, genealogy::Dict{Int64, Ind
 end
 
 """
-add_relatives!(relativeIDs::Vector{Int64}, individual::ReferenceIndividual, depth::Int8)
+add_relatives!(relativeIDs::Vector{Int64}, individual::ReferenceIndividual, depth::Int64)
 
 Recursively add IDs of individuals who are first cousins or closer.
 """
-function add_relatives!(relativeIDs::Vector{Int64}, individual::ReferenceIndividual, depth::Int8)
+function add_relatives!(relativeIDs::Vector{Int64}, individual::ReferenceIndividual, depth::Int64)
     push!(relativeIDs, individual.ID)
     if depth < 4
         if !isnothing(individual.father)
-            add_relatives!(relativeIDs, individual.father, depth += Int8(1))
+            add_relatives!(relativeIDs, individual.father, depth += 1)
         end
         if !isnothing(individual.mother)
-            add_relatives!(relativeIDs, individual.mother, depth += Int8(1))
+            add_relatives!(relativeIDs, individual.mother, depth += 1)
         end
         for child in individual.children
-            add_relatives!(relativeIDs, child, depth += Int8(1))
+            add_relatives!(relativeIDs, child, depth += 1)
         end
     end
 end

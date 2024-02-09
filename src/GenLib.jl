@@ -2,8 +2,7 @@ module GenLib
 
 using CSV
 using DataFrames: DataFrame
-using DataStructures: Stack, DefaultDict
-using Distributions
+using DataStructures: Stack, OrderedDict
 
 # For evaluating the sex manually
 export SEX,
@@ -17,7 +16,7 @@ export Individual
 export genealogy,
        gc,
        phi,
-       ϕ,
+       Φ,
        findDistances,
        findDistance,
        ancestor,
@@ -31,11 +30,15 @@ export genealogy,
        children,
        descendant,
        rec,
-       distance_matrix,
+       genout
+
+# Custom functions
+export distance_matrix,
        population,
        remove_relatives!,
        occ,
-       parse_simuHaplo
+       check_order,
+       save_genealogy
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
@@ -57,6 +60,5 @@ include("meioses.jl")
 include("population.jl")
 include("remove_relatives.jl")
 include("occurrence.jl")
-include("simulations.jl")
 
 end

@@ -26,33 +26,35 @@ function mark_descendants!(individual::ReferenceIndividual)
 end
 
 """
-branching(genealogy::Dict{Int64, Individual}, probandIDs::Vector{Int64}, ancestorIDs::Vector{Int64})
+branching(genealogy::Dict{Int64, Individual}, pro::Vector{Int64}, ancestors::Vector{Int64})
 
 Takes a `genealogy` and removes individuals who are not in the paths between select probands and ancestors.
 """
-function branching(genealogy::Dict{Int64, Individual}; probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
-    isolated_genealogy = Dict{Int64, Individual}()
+function branching(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy))
+    isolated_genealogy = OrderedDict{Int64, Individual}()
     ref = refer(genealogy)
-    for ID in probandIDs
+    for ID in pro
         proband = ref[ID]
         mark_ancestors!(proband)
     end
-    for ID in ancestorIDs
+    for ID in ancestors
         ancestor = ref[ID]
         mark_descendants!(ancestor)
     end
+    index = 0
     for (ID, individual) in genealogy
-        if ref[ID].ancestor & ref[ID].descendant
+        if (ref[ID].ancestor & ref[ID].descendant)
+            index += 1
             father = 0
             if individual.father != 0
-                father = ref[individual.father].ancestor & ref[individual.father].descendant ? individual.father : 0
+                father = ref[individual.father].ancestor && ref[individual.father].descendant ? individual.father : 0 
             end
             mother = 0
             if individual.mother != 0
-                mother = ref[individual.mother].ancestor & ref[individual.mother].descendant ? individual.mother : 0
+                mother = ref[individual.mother].ancestor && ref[individual.mother].descendant ? individual.mother : 0 
             end
-            children = filter(x -> ref[x].ancestor & ref[x].descendant, individual.children)
-            isolated_genealogy[ID] = Individual(father, mother, individual.index, children, individual.sex)
+            children = filter(x -> ref[x].ancestor && ref[x].descendant, individual.children)
+            isolated_genealogy[ID] = Individual(father, mother, index, children, individual.sex)
         end
     end
     isolated_genealogy
