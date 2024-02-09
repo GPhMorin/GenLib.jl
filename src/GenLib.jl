@@ -1,11 +1,8 @@
 module GenLib
 
-using CSV
+using CSV: read
 using DataFrames: DataFrame
 using DataStructures: Stack, OrderedDict
-using Distributions
-using SparseArrays
-using LinearAlgebra
 
 # For evaluating the sex manually
 export SEX,
