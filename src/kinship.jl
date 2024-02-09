@@ -28,7 +28,7 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
             if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
                 value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
             end
-        else # Reverse the order since a ≱ b
+        else # Reverse the order since a > b
             # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j ≱ i (Karigl, 1981)
             if !isnothing(individualᵢ.father)
                 value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
@@ -63,8 +63,8 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
     for i in 1:length(levels)-1
         upperIDs = levels[i]
         lowerIDs = levels[i+1]
-        segmented_genealogy = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
-        Ψ = phi(segmented_genealogy, Ψ)
+        Vᵢ = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
+        Ψ = phi(Vᵢ, Ψ)
         if verbose
             println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
         end
