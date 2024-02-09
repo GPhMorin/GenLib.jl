@@ -29,12 +29,15 @@ export genealogy,
        get_paths,
        children,
        descendant,
-       rec,
-       distance_matrix,
+       rec
+
+# Custom functions
+export distance_matrix,
        population,
        remove_relatives!,
        occ,
-       check_order
+       check_order,
+       save_genealogy
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
