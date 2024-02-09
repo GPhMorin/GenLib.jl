@@ -19,7 +19,7 @@ export Individual
 export genealogy,
        gc,
        phi,
-       ϕ,
+       Φ,
        findDistances,
        findDistance,
        ancestor,

@@ -1,37 +1,40 @@
 """
-phi(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
+phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
 
 Computes the kinship coefficient between two individuals using references.
 A matrix of the founders' kinships may optionally be provided.
 """
-function phi(individual₁::ReferenceIndividual, individual₂::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
+function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
     # Adapted from GENLIB and Kirkpatrick et al., 2019.
-    if (individual₁.allele > 0) && (individual₂.allele > 0) # They are both founders
-        if individual₁.allele == individual₂.allele
-            return (1 + Ψ[individual₁.allele, individual₁.allele]) / 2
-        else
-            return Ψ[individual₁.allele, individual₂.allele]
+    if (individualᵢ.sort != 0) && (individualⱼ.sort != 0) # They are both founders
+        if individualᵢ.sort == individualⱼ.sort # Same individual
+            return (1 + Ψ[individualᵢ.sort, individualᵢ.sort]) / 2
+        else # Two different founders
+            return Ψ[individualᵢ.sort, individualⱼ.sort]
         end
-    else
+    else # At least one of the individuals is not a founder
         value = 0.
-        if individual₂.index > individual₁.index
-            if !isnothing(individual₂.father)
-                value += phi(individual₂.father, individual₁, Ψ) / 2
+        if individualⱼ.index > individualᵢ.index # From the genealogical order, i cannot be an ancestor of j
+            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i ≱ j (Karigl, 1981)
+            if !isnothing(individualⱼ.father)
+                value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
             end
-            if !isnothing(individual₂.mother)
-                value += phi(individual₂.mother, individual₁, Ψ) / 2
+            if !isnothing(individualⱼ.mother)
+                value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
             end
-        elseif individual₁.index == individual₂.index
+        elseif individualᵢ.index == individualⱼ.index # Same individual
+            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
             value += 1/2
-            if !isnothing(individual₁.father) & !isnothing(individual₁.mother)
-                value += phi(individual₁.father, individual₁.mother, Ψ) / 2
+            if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
             end
-        else
-            if !isnothing(individual₁.father)
-                value += phi(individual₁.father, individual₂, Ψ) / 2
+        else # Reverse the order since a ≱ b
+            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j ≱ i (Karigl, 1981)
+            if !isnothing(individualᵢ.father)
+                value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
             end
-            if !isnothing(individual₁.mother)
-                value += phi(individual₁.mother, individual₂, Ψ) / 2
+            if !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
             end
         end
         return value
@@ -50,20 +53,20 @@ function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64
     Ψ = zeros(length(founderIDs), length(founderIDs))
     upperIDs = cut_vertices(genealogy)
     lowerIDs = probandIDs
-    C = [upperIDs, lowerIDs]
+    levels = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
         isolated_genealogy = branching(genealogy; pro = upperIDs)
         lowerIDs = copy(upperIDs)
         upperIDs = cut_vertices(isolated_genealogy)
-        pushfirst!(C, upperIDs)
+        pushfirst!(levels, upperIDs)
     end
-    for i in 1:length(C)-1
-        upperIDs = C[i]
-        lowerIDs = C[i+1]
+    for i in 1:length(levels)-1
+        upperIDs = levels[i]
+        lowerIDs = levels[i+1]
         segmented_genealogy = branching(genealogy; pro = lowerIDs, ancestors = upperIDs)
         Ψ = phi(segmented_genealogy, Ψ)
         if verbose
-            println("Kinships for generation ", i, "/", length(C)-1, " completed.")
+            println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
         end
     end
     probandIDs = filter(x -> x ∈ probandIDs, collect(keys(genealogy)))
@@ -89,7 +92,7 @@ function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     else
         Φ = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
         for f in eachindex(founders)
-            founders[f].allele = f
+            founders[f].sort = f
         end
         Threads.@threads for i in eachindex(probandIDs)
             Threads.@threads for j in eachindex(probandIDs)
@@ -182,14 +185,14 @@ function set_ancestors(genealogy::OrderedDict{Int64, Individual})
 end
 
 """
-ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+Φ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
 Takes a `genealogy` dictionary and a `Ψ` matrix of founder kinships
 and computes the kinship matrix of all probands.
 """
-function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+function Φ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     reference = refer(genealogy)
     probandIDs = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
     probands = [reference[ID] for ID in probandIDs]
@@ -255,14 +258,14 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+Φ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
 Takes a `genealogy` dictionary and a list of `probandIDs`
 and computes the kinship matrix of those probands.
 """
-function ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+function Φ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
     founders = founder(genealogy)
     Ψ = zeros(length(founders), length(founders))
     upperIDs = cut_vertices(genealogy)
@@ -278,7 +281,7 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64}
         upperIDs = C[i]
         lowerIDs = C[i+1]
         Vᵢ = branching(genealogy, pro = lowerIDs, ancestors = upperIDs)
-        Ψ = ϕ(Vᵢ, Ψ)
+        Ψ = Φ(Vᵢ, Ψ)
         if verbose
             println("Kinships for generation ", i, "/", length(C)-1, " completed.")
         end
