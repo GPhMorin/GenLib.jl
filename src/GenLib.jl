@@ -1,6 +1,6 @@
 module GenLib
 
-using CSV: read
+using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack, OrderedDict
 
