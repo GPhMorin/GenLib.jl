@@ -1,7 +1,8 @@
 """
     phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
 
-Computes the kinship coefficient between two individuals using references.
+Return the kinship coefficient between two individuals.
+
 A matrix of the founders' kinships may optionally be provided.
 """
 function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
@@ -44,9 +45,8 @@ end
 """
     phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
-Takes a `genealogy` dictionary, computes the kinship coefficients
-between all probands provided a matrix of the founders' kinships
-and returns a matrix of the probands' kinships.
+Return a square matrix of the pairwise kinship coefficients between all probands
+provided a matrix of the founders' kinships.
 """
 function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     reference = refer(genealogy)
@@ -83,8 +83,9 @@ end
 """
     phi(genealogy::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(genealogy); verbose::Bool = false)
 
-Takes a `genealogy` dictionary, computes the kinship coefficients
-between the provided IDs of `probands` and returns a matrix.
+Return a square matrix of the pairwise kinship coefficients
+between the provided probands.
+
 If no probands are provided, kinships for all of the genealogy's probands are computed.
 """
 function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
@@ -119,8 +120,8 @@ end
 """
     phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
 
-Takes a `genealogy` dictionary, computes the kinship coefficients
-between the provided IDs of `rowIDs` and `columnIDs` and returns a matrix.
+Return a rectangle matrix of kinship coefficients
+between row IDs and column IDs.
 """
 function phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     reference = refer(genealogy)
@@ -143,8 +144,11 @@ end
 """
     cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
 
-Returns whether an individual with `candidateID` can be used
-as a cut vertex according to the definition in Kirkpatrick et al., 2019.
+Return whether an individual can be used as a cut vertex.
+
+A cut vertex is an individual that "when removed,
+disrupt every path from any source [founder]
+to any sink [proband]" (Kirkpatrick et al., 2019).
 """
 function cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
     value = true
@@ -206,8 +210,9 @@ end
 """
     set_ancestors(genealogy::OrderedDict{Int64, Individual})
 
-Given a `genealogy` dictionary, creates a lookup table
-of the individuals' ancestors, as defined in Kirkpatrick et al., 2019.
+Return a lookup table of the individuals' ancestors.
+
+As defined in Kirkpatrick et al., 2019.
 """
 function set_ancestors(genealogy::OrderedDict{Int64, Individual})
     ancestors = Dict()
@@ -230,8 +235,8 @@ end
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
-Takes a `genealogy` dictionary and a `Ψ` matrix of founder kinships
-and computes the kinship matrix of all probands.
+Return a square matrix of pairwise kinship coefficients
+between all probands given the founders' kinships.
 """
 function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     reference = refer(genealogy)
@@ -301,10 +306,12 @@ end
 """
     ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
 
-An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
-Takes a `genealogy` dictionary and a list of `probandIDs`
-and computes the kinship matrix of those probands.
+Return the square matrix of the pairwise kinship coefficients of a set of probands.
+
+If no probands are given, return the square matrix for all probands in the pedigree.
+
+An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 """
 function ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
     founders = founder(genealogy)

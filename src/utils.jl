@@ -1,7 +1,7 @@
 """
     pro(genealogy::OrderedDict{Int64, Individual})
 
-Takes a `genealogy` dictionary and returns a vector of proband IDs.
+Return a vector of proband IDs in alphabetical order.
 """
 function pro(genealogy::OrderedDict{Int64, Individual})
     probands = [ID for (ID, individual) in genealogy if isempty(individual.children)]
@@ -11,7 +11,7 @@ end
 """
     founder(genealogy::OrderedDict{Int64, Individual})
 
-Takes a `genealogy` dictionary and returns a vector of founder IDs.
+Return a vector of founder IDs in alphabetical order.
 """
 function founder(genealogy::OrderedDict{Int64, Individual})
     founders = [ID for (ID, individual) in genealogy if (individual.father == 0) && (individual.mother == 0)]
@@ -21,7 +21,7 @@ end
 """
     findFounders(genealogy::OrderedDict{Int64}, IDs::Vector{Int64})
 
-Takes a `genealogy` and returns a vector of founders from whom the `IDs` descend.
+Return a vector of founders from whom the `IDs` descend.
 """
 function findFounders(genealogy::OrderedDict{Int64}, IDs::Vector{Int64})
     ancestorIDs = [ancestor(genealogy, ID) for ID in IDs]
@@ -34,7 +34,7 @@ end
 """
     get_paths(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
-Takes a `genealogy` dictionary and an `ID` and returns the paths from an individual to their ancestors.
+Return the paths from an individual to their ancestors.
 """
 function get_paths(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
     paths = Vector{Vector{Int64}}([[ID]])
@@ -59,7 +59,7 @@ end
 """
     children(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
-Takes a `genealogy` dictionary and an `ID` and returns the children of an individual.
+Return the children of an individual.
 """
 function children(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
     individual = genealogy[ID]
@@ -69,7 +69,7 @@ end
 """
     descendant(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
 
-Takes a `genealogy` dictionary and an `ID` and returns the descendants of an individual.
+Return the descendants of an individual.
 """
 function descendant(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
     descendants = Set{Int64}()
@@ -89,7 +89,7 @@ end
 """
     rec(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
 
-Takes a `genealogy` dictionary, a vector of `probandIDs` and a vector of `ancestorIDs` and returns the number of descendants of each ancestor.
+Return the number of descendants of each ancestor.
 """
 function rec(
     genealogy::OrderedDict{Int64, Individual},
@@ -108,7 +108,7 @@ end
 """
     distance_matrix(matrix::Matrix{Float64})
 
-Converts a similarity matrix into a distance matrix normalized with values [0, 1].
+Convert a similarity matrix into a distance matrix normalized with values [0, 1].
 """
 function distance_matrix(matrix::Matrix{Float64})
     if maximum(matrix) - minimum(matrix) == 0
@@ -121,10 +121,10 @@ end
 """
     genout(genealogy::OrderedDict, sorted::Bool = false)
 
-Returns a `genealogy` dictionary as a DataFrame.
+Return a pedigree as a DataFrame.
 
 If `sorted` is `false` (the default), then the individuals
-will appear in the same order as in the genealogy.
+will appear in the same order as in the pedigree.
 
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.

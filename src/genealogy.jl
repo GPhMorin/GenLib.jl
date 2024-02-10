@@ -1,10 +1,3 @@
-"""
-An `Individual` is an immutable object containing
-the ID to their `father` and `mother` (0 if unknown),
-the `index` in which it appeared in the ancestry file,
-the IDs of their `children`,
-and their `sex` (1 for a male, 2 for a female).
-"""
 struct Individual
     father::Int64
     mother::Int64
@@ -14,9 +7,9 @@ struct Individual
 end
 
 """
-    genealogy(filename::String)
+    genealogy(dataframe::DataFrame)
 
-Reads a DataFrame and returns a dictionary of individuals.
+Return an ordered dictionary of individuals from a `DataFrame`.
 """
 function genealogy(dataframe::DataFrame)
     genealogy::OrderedDict{Int64, Individual} = Dict()
@@ -43,7 +36,7 @@ end
 """
     genealogy(filename::String)
 
-Reads a file with `filename` and returns a dictionary of individuals.
+Return an ordered dictionary of individuals from a CSV file.
 """
 function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
@@ -71,8 +64,7 @@ end
 """
     check_order(genealogy::OrderedDict{Int64, Individual})
 
-Takes a given `genealogy` dictionary and checks whether
-the individuals appear in chronological order,
+Return whether the individuals appear in chronological order in the dictionary,
 i.e. any individual's parents appear before them.
 """
 function check_order(genealogy::OrderedDict{Int64, Individual})
@@ -99,8 +91,7 @@ end
 """
     order_genealogy(genealogy::OrderedDict{Int64, Individual})
 
-Given a `genealogy` dictionary, returns a reordered genealogy
-where the individuals are in chronological order,
+Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
 function order_genealogy(genealogy::OrderedDict{Int64, Individual})
@@ -141,7 +132,7 @@ end
 """
     save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
 
-Takes a `genealogy` dictionary and exports it as a CSV file at a given `path`.
+Export the pedigree as a CSV file at a given `path`.
 
 If `sorted` is `false` (the default), then the individuals
 will appear in the same order as in the genealogy.

@@ -1,7 +1,8 @@
 """
     gc(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy))
 
-Takes a `genealogy` dictionary, computes the genetic contribution of each ancestor to each proband using a vector of `probandIDs` and a vector of `ancestorIDs` and returns a matrix.
+Return a matrix of the genetic contribution
+of each ancestor (columns) to each proband (rows).
 """
 function gc(
     genealogy::OrderedDict{Int64, Individual};
@@ -33,7 +34,7 @@ end
 """
     contribute!(individual::ReferenceIndividual, depth::Int64 = 0)
 
-Recursively computes the genetic contribution of an `individual` using a reference at a certain `depth`.
+Recursively compute the genetic contributions of an individual.
 """
 function contribute!(individual::ReferenceIndividual, depth::Int64 = 0)
     # Ported from GENLIB's ExploreConGenProposant

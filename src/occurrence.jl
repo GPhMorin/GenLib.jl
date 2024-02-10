@@ -1,10 +1,10 @@
 """
     occ(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy), typeOcc::String = "IND")
 
-Takes a `genealogy`, a vector of `probandIDs`, a vector of `ancestorIDs`
-and optionally a `type` (`:ind` or `:total`) and returns a matrix of occurrences.
-If the type is `:ind` (default), then the matrix corresponds to *probandIDs* × *ancestorIDs*.
-If the type is `:total`, then the matrix corresponds to *ancestorIDs* × 1.
+Return a matrix of ancestors' occurrences.
+
+If `typeOcc` is `:ind` (default), then the matrix corresponds to the occurrence per individual.
+If `typeOcc` is `:total`, then the matrix corresponds to the total occurrence.
 """
 function occ(
     genealogy::OrderedDict{Int64, Individual};
@@ -36,8 +36,7 @@ end
 """
     occur!(individual::ReferenceIndividual)
 
-A recursive function that increments the occurrence of a reference `individual`
-if they are an ancestor.
+Recursively increment the occurrence of an `individual` if they are an ancestor.
 """
 function occur!(individual::ReferenceIndividual)
     if individual.ancestor

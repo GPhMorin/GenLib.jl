@@ -29,7 +29,8 @@ end
 """
     refer(genealogy::OrderedDict{Int64, Individual})
 
-Takes a `genealogy` dictionary and returns a dictionary of references to individuals.
+Return a dictionary of references to individuals.
+
 In REPL: to avoid crash, end function call with `;`.
 """
 function refer(genealogy::OrderedDict{Int64, Individual})
