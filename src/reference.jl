@@ -19,8 +19,6 @@ mutable struct ReferenceIndividual
     probability::Float64
     allele::Int64
     sort::Int64
-    haplotype₁::Int64
-    haplotype₂::Int64
     ancestor::Bool
     descendant::Bool
     occurrence::Int64
@@ -54,8 +52,6 @@ function refer(genealogy::OrderedDict{Int64, Individual})
             0., # probability
             0, # allele
             0, # sort
-            0, # haplotype₁
-            0, # haplotype₂
             false, # whether the individual is an ancestor
             false, # whether the individual is a descendant
             0) # occurrence
