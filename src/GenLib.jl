@@ -7,36 +7,33 @@ using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack, OrderedDict
 
-# For creating new genealogies manually
-export Individual
-
 # GENLIB functions
-export genealogy,
-       gc,
-       phi,
-       ϕ,
-       findDistances,
-       findDistance,
-       ancestor,
-       findMRCA,
-       refer,
+export ancestor,
        branching,
-       pro,
-       founder,
-       findFounders,
-       get_paths,
        children,
-       descendant,
-       rec,
-       genout
+       findDistance,
+       findFounders,
+       findMRCA,
+       founder,
+       gc,
+       genealogy,
+       genout,
+       phi,
+       pro,
+       rec
 
 # Custom functions
-export distance_matrix,
-       population,
-       remove_relatives!,
+export check_order,
+       descendant,
+       distance_matrix,
+       findDistances,
+       get_paths,
        occ,
-       check_order,
-       save_genealogy
+       population,
+       refer,
+       remove_relatives!,
+       save_genealogy,
+       ϕ
 
 # GENLIB datasets
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
