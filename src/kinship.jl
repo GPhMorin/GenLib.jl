@@ -2,6 +2,7 @@
     phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
 
 Return the kinship coefficient between two individuals.
+The diagonal corresponds to inbreedings.
 
 A matrix of the founders' kinships may optionally be provided.
 """
@@ -47,6 +48,7 @@ end
 
 Return a square matrix of the pairwise kinship coefficients between all probands
 provided a matrix of the founders' kinships.
+The diagonal corresponds to inbreedings.
 """
 function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     reference = refer(genealogy)
@@ -85,6 +87,7 @@ end
 
 Return a square matrix of the pairwise kinship coefficients
 between the provided probands.
+The diagonal corresponds to inbreedings.
 
 If no probands are provided, kinships for all of the genealogy's probands are computed.
 """
@@ -120,8 +123,8 @@ end
 """
     phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
 
-Return a rectangle matrix of kinship coefficients
-between row IDs and column IDs.
+Return a rectangle matrix of kinship coefficients between row IDs and column IDs.
+The kinship of someone with themself is replaced with their inbreeding.
 """
 function phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     reference = refer(genealogy)
