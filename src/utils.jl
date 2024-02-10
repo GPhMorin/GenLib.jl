@@ -106,19 +106,6 @@ function rec(
 end
 
 """
-    distance_matrix(matrix::Matrix{Float64})
-
-Convert a similarity matrix into a distance matrix normalized with values [0, 1].
-"""
-function distance_matrix(matrix::Matrix{Float64})
-    if maximum(matrix) - minimum(matrix) == 0
-        distance_matrix = zeros(size(matrix))
-    else
-        distance_matrix = (maximum(matrix .- minimum(matrix)) .- (matrix .- minimum(matrix)))/maximum(matrix .- minimum(matrix))
-    end
-end
-
-"""
     genout(genealogy::OrderedDict, sorted::Bool = false)
 
 Return a pedigree as a DataFrame.
