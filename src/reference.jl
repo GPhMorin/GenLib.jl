@@ -44,7 +44,7 @@ function refer(genealogy::OrderedDict{Int64, Individual})
             ID, # ID (ind in the ASC file)
             nothing, # father
             nothing, # mother
-            individual.index, # index in the original ASC file
+            individual.index, # index in the genealogy
             [], # children
             individual.sex, # sex (1 for male, 2 for female)
             UNEXPLORED, # status
