@@ -26,6 +26,13 @@ mutable struct ReferenceIndividual
     occurrence::Int64
 end
 
+function Base.show(io::IO, individual::ReferenceIndividual)
+    println(io, "ind: ", individual.ID)
+    println(io, "father: ", !isnothing(individual.father) ? individual.father.ID : 0)
+    println(io, "mother: ", !isnothing(individual.mother) ? individual.mother.ID : 0)
+    print(io, "sex: ", individual.sex)
+end
+
 """
     refer(genealogy::OrderedDict{Int64, Individual})
 
