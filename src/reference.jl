@@ -17,7 +17,6 @@ mutable struct ReferenceIndividual
     sex::Int64
     state::STATE
     probability::Float64
-    allele::Int64
     sort::Int64
     ancestor::Bool
     descendant::Bool
@@ -50,7 +49,6 @@ function refer(genealogy::OrderedDict{Int64, Individual})
             individual.sex, # sex (1 for male, 2 for female)
             UNEXPLORED, # status
             0., # probability
-            0, # allele
             0, # sort
             false, # whether the individual is an ancestor
             false, # whether the individual is a descendant
