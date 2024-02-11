@@ -248,7 +248,7 @@ function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64}
         upperIDs = C[i]
         lowerIDs = C[i+1]
         Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
-        Ψ = ϕ(Vᵢ, Ψ)
+        Ψ = phi(Vᵢ, Ψ)
         if verbose
             println("Kinships for segment ", i, "/", length(C)-1, " completed.")
         end
