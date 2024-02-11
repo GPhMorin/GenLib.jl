@@ -251,10 +251,10 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
     founders = [pedigree[ID] for ID in founderIDs]
     if probandIDs == founderIDs
-        return Matrix{Float64}(undef, length(founderIDs), length(founderIDs))
+        return Ψ
     end
     n = length(pedigree)
-    Φ = zeros(n, n) * -1
+    Φ = ones(n, n) * -1
     for (f, founder) in enumerate(founders)
         Φ[founder.index, founder.index] = (1 + Ψ[f, f]) / 2
     end

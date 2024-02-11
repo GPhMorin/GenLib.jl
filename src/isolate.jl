@@ -41,8 +41,10 @@ function branching(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} 
         ancestor = pedigree[ID]
         mark_descendants!(ancestor)
     end
-    for (index, (ID, individual)) in enumerate(pedigree)
+    index = 0
+    for (ID, individual) in pedigree
         if (individual.ancestor && individual.descendant)
+            index += 1
             isolated_pedigree[ID] = Individual(ID, nothing, nothing, index, [],
                                                 individual.sex, UNEXPLORED, 0., 0,
                                                 false, false, 0)
