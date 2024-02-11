@@ -242,8 +242,6 @@ Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
-
-The diagonal corresponds to inbreedings.
 """
 function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
@@ -255,13 +253,8 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     end
     n = length(pedigree)
     Φ = Matrix{Float64}(undef, n, n)
-    for (f, founder) in enumerate(founders)
-        Φ[founder.index, founder.index] = (1 + Ψ[f, f]) / 2
-    end
-    for (f, founder₁) in enumerate(founders), (g, founder₂) in enumerate(founders)
-        if founder₁.ID < founder₂.ID
-            Φ[founder₁.index, founder₂.index] = Φ[founder₂.index, founder₁.index] = Ψ[f, g]
-        end
+    for (index, founder) in enumerate(founders)
+        founder.sort = index
     end
     for (_, individualᵢ) in pedigree
         i = individualᵢ.index
@@ -270,35 +263,46 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
             coefficient = 0.
             if i > j # i cannot be an ancestor of j
                 father = individualᵢ.father
-                if !isnothing(father)
-                    coefficient += Φ[father.index, individualⱼ.index] / 2
-                end
                 mother = individualᵢ.mother
-                if !isnothing(mother)
-                    coefficient += Φ[mother.index, individualⱼ.index] / 2
+                if individualᵢ.sort != 0 && individualⱼ.sort != 0 # Both i and j are founders
+                    coefficient += Ψ[individualᵢ.sort, individualⱼ.sort]
+                else
+                    if !isnothing(father)
+                        coefficient += Φ[father.index, individualⱼ.index] / 2
+                    end
+                    if !isnothing(mother)
+                        coefficient += Φ[mother.index, individualⱼ.index] / 2
+                    end
                 end
             elseif j > i # j cannot be an ancestor of i
                 father = individualⱼ.father
-                if !isnothing(father)
-                    coefficient += Φ[father.index, individualᵢ.index] / 2
-                end
                 mother = individualⱼ.mother
-                if !isnothing(mother)
-                    coefficient += Φ[mother.index, individualᵢ.index] / 2
+                if individualⱼ.sort != 0 && individualᵢ.sort != 0 # Both i and j are founders
+                    coefficient += Ψ[individualⱼ.sort, individualᵢ.sort]
+                else
+                    if !isnothing(father)
+                        coefficient += Φ[father.index, individualᵢ.index] / 2
+                    end
+                    if !isnothing(mother)
+                        coefficient += Φ[mother.index, individualᵢ.index] / 2
+                    end
                 end
             else # i.index == j.index, same individual
-                coefficient += 0.5
                 father = individualᵢ.father
                 mother = individualᵢ.mother
-                if !isnothing(father) && !isnothing(mother)
-                    coefficient += Φ[mother.index, father.index] / 2
+                if individualᵢ.sort != 0 # i is a founder
+                    coefficient += Ψ[individualᵢ.sort, individualᵢ.sort]
+                elseif !isnothing(father) && !isnothing(mother)
+                    coefficient += (1 + Φ[mother.index, father.index]) / 2
+                else
+                    coefficient += 0.5
                 end
             end
             Φ[i, j] = Φ[j, i] = coefficient
         end
     end
-    for i in 1:n
-        Φ[i, i] = (2 * Φ[i, i]) - 1
+    for founder in founders
+        founder.sort = 0
     end
     indices = [proband.index for proband in probands]
     Φ[indices, indices]
@@ -312,12 +316,13 @@ Return the square matrix of the pairwise kinship coefficients of a set of proban
 If no probands are given, return the square matrix for all probands in the pedigree.
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
-
-The diagonal corresponds to inbreedings.
 """
 function ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
+    for f in eachindex(founderIDs)
+        Ψ[f, f] = 0.5
+    end
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     upperIDs = cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
