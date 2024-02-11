@@ -171,35 +171,47 @@ to any sink [proband]" (Kirkpatrick et al., 2019).
 function cut_vertices(pedigree::OrderedDict{Int64, Individual})
     vertices = Int64[]
     probandIDs = pro(pedigree)
-    for ID in probandIDs # Mark the probands
-        pedigree[ID].state = PROBAND
+    probands = [pedigree[ID] for ID in probandIDs]
+    for proband in probands # Mark the probands
+        proband.state = PROBAND
     end
     founderIDs = founder(pedigree)
-    candidateIDs = [ID for ID in collect(keys(pedigree))]
-    for candidateID in candidateIDs
+    founders = [pedigree[ID] for ID in founderIDs]
+    for founder in founders # Mark the founders
+        founder.state = FOUNDER
+    end
+    stack = probands
+    while !isempty(stack)
+        candidate = pop!(stack)
         # Check if avoiding paths from a "source" (founder)
         # down the pedigree through the candidate ID
         # never reaches a "sink" (proband) individual
-        ancestorIDs = ancestor(pedigree, candidateID)
-        sourceIDs = filter(x -> x ∈ founderIDs, ancestorIDs)
-        candidate = true
+        sourceIDs = ancestor(pedigree, candidate.ID)
+        is_candidate = true
         for sourceID in sourceIDs
-            if !cut_vertex(pedigree[sourceID], candidateID)
-                candidate = false
+            if !cut_vertex(pedigree[sourceID], candidate.ID)
+                is_candidate = false
                 break
             end
         end
-        if candidate
-            push!(vertices, candidateID)
+        if is_candidate
+            push!(vertices, candidate.ID)
+        else
+            if !isnothing(candidate.father)
+                push!(stack, candidate.father)
+            end
+            if !isnothing(candidate.mother)
+                push!(stack, candidate.mother)
+            end
         end
     end
-    for ID in probandIDs # Unmark the probands
-        pedigree[ID].state = UNEXPLORED
+    for proband in probands # Unmark the probands
+        proband.state = UNEXPLORED
     end
-    # Keep only the lowest candidates
-    ancestorIDs = union([ancestor(pedigree, vertex) for vertex in vertices]...)
-    vertices = filter(x -> (x ∈ vertices && x ∉ ancestorIDs) || (x ∈ founderIDs && x ∉ ancestorIDs), candidateIDs)
-    vertices
+    for founder in founders # Unmark the founders
+        founder.state = UNEXPLORED
+    end
+    sort(collect(Set(vertices)))
 end
 
 """

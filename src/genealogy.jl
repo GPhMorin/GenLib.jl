@@ -1,6 +1,6 @@
 @enum STATE begin
     PROBAND
-    START
+    FOUNDER
     UNEXPLORED
 end
 
