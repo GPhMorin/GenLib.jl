@@ -1,47 +1,47 @@
 """
-    ancestor(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
+    ancestor(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
 
 Return a vector of an individual's ancestors.
 """
-function ancestor(genealogy::OrderedDict{Int64, Individual}, ID::Int64)
-    ancestors = Set{Int64}()
+function ancestor(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
+    ancestorIDs = Set{Int64}()
     stack = Stack{Int64}()
     push!(stack, ID)
     while !isempty(stack)
         ID = pop!(stack)
-        individual = genealogy[ID]
-        if individual.father != 0
-            push!(stack, individual.father)
-            push!(ancestors, individual.father)
+        individual = pedigree[ID]
+        if !isnothing(individual.father)
+            push!(stack, individual.father.ID)
+            push!(ancestorIDs, individual.father.ID)
         end
-        if individual.mother != 0
-            push!(stack, individual.mother)
-            push!(ancestors, individual.mother)
+        if !isnothing(individual.mother)
+            push!(stack, individual.mother.ID)
+            push!(ancestorIDs, individual.mother.ID)
         end
     end
-    ancestors = collect(ancestors)
-    sort!(ancestors)
+    ancestorIDs = collect(ancestorIDs)
+    sort!(ancestorIDs)
 end
 
 """
-    ancestor(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
+    ancestor(pedigree::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
 
 Return a vector of several individual's ancestors.
 """
-function ancestor(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
-    ancestors = union([ancestor(genealogy, ID) for ID in IDs]...)
-    sort!(ancestors)
+function ancestor(pedigree::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
+    ancestorIDs = union([ancestor(pedigree, ID) for ID in IDs]...)
+    sort!(ancestorIDs)
 end
 
 """
-    findMRCA(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
+    findMRCA(pedigree::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
 
 Return a vector of individuals' most recent common ancestors (MRCAs).
 """
-function findMRCA(genealogy::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
-    ancestors = [ancestor(genealogy, ID) for ID in IDs]
-    common_ancestors = ∩(ancestors...)
-    older_common_ancestors = ancestor(genealogy, common_ancestors)
-    most_recent_commmon_ancestors = setdiff(common_ancestors, older_common_ancestors)
-    most_recent_commmon_ancestors
+function findMRCA(pedigree::OrderedDict{Int64, Individual}, IDs::Vector{Int64})
+    ancestorIDs = [ancestor(pedigree, ID) for ID in IDs]
+    common_ancestorIDs = ∩(ancestorIDs...)
+    older_common_ancestorIDs = ancestor(pedigree, common_ancestorIDs)
+    most_recent_commmon_ancestorIDs = setdiff(common_ancestorIDs, older_common_ancestorIDs)
+    most_recent_commmon_ancestorIDs
 end

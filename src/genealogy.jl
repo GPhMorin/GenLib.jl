@@ -1,85 +1,135 @@
-struct Individual
-    father::Int64
-    mother::Int64
+@enum STATE begin
+    PROBAND
+    START
+    UNEXPLORED
+end
+
+mutable struct Individual
+    ID::Int64
+    father::Union{Nothing, Individual}
+    mother::Union{Nothing, Individual}
     index::Int64
-    children::Vector{Int64}
+    children::Vector{Individual}
     sex::Int64
+    state::STATE
+    probability::Float64
+    sort::Int64
+    ancestor::Bool
+    descendant::Bool
+    occurrence::Int64
+end
+
+function Base.show(io::IO, individual::Individual)
+    println(io, "ind: ", individual.ID)
+    println(io, "father: ", !isnothing(individual.father) ? individual.father.ID : 0)
+    println(io, "mother: ", !isnothing(individual.mother) ? individual.mother.ID : 0)
+    print(io, "sex: ", individual.sex)
 end
 
 """
     genealogy(dataframe::DataFrame)
 
-Return an ordered dictionary of individuals from a `DataFrame`.
+Return an ordered pedigree of individuals from a `DataFrame`.
 """
 function genealogy(dataframe::DataFrame)
-    genealogy::OrderedDict{Int64, Individual} = Dict()
+    pedigree::OrderedDict{Int64, Individual} = Dict()
     for (index, row) in enumerate(eachrow(dataframe))
-        genealogy[row.ind] = Individual(row.father, row.mother, index, [], row.sex)
+        pedigree[row.ind] = Individual(
+            row.ind, # ID
+            nothing, # father
+            nothing, # mother
+            index, # index in the genealogy
+            [], # children
+            row.sex, # sex (1 for male, 2 for female)
+            UNEXPLORED, # status
+            0., # probability
+            0, # sort
+            false, # whether the individual is an ancestor
+            false, # whether the individual is a descendant
+            0) # occurrence
     end
     for row in eachrow(dataframe)
-        individual = genealogy[row.ind]
-        if individual.father != 0
-            push!(genealogy[individual.father].children, row.ind)
+        father = row.father
+        if father != 0
+            pedigree[row.ind].father = pedigree[father]
+            push!(pedigree[father].children, pedigree[row.ind])
         end
-        if individual.mother != 0
-            push!(genealogy[individual.mother].children, row.ind)
+        mother = row.mother
+        if mother != 0
+            pedigree[row.ind].mother = pedigree[mother]
+            push!(pedigree[mother].children, pedigree[row.ind])
         end
     end
-    if !check_order(genealogy)
-        println("Reordering the genealogy...")
-        return order_genealogy(genealogy)
+    if !check_order(pedigree)
+        println("Reordering the pedigree...")
+        return order_genealogy(pedigree)
     else
-        return genealogy
+        return pedigree
     end
 end
 
 """
     genealogy(filename::String)
 
-Return an ordered dictionary of individuals from a CSV file.
+Return an ordered pedigree of individuals from a CSV file.
 """
 function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
-    genealogy::OrderedDict{Int64, Individual} = Dict()
+    pedigree = OrderedDict{Int64, Individual}()
     for (index, row) in enumerate(eachrow(dataset))
-        genealogy[row.ind] = Individual(row.father, row.mother, index, [], row.sex)
+        pedigree[row.ind] = Individual(
+            row.ind, # ID
+            nothing, # father
+            nothing, # mother
+            index, # index in the genealogy
+            [], # children
+            row.sex, # sex (1 for male, 2 for female)
+            UNEXPLORED, # status
+            0., # probability
+            0, # sort
+            false, # whether the individual is an ancestor
+            false, # whether the individual is a descendant
+            0) # occurrence
     end
     for row in eachrow(dataset)
-        individual = genealogy[row.ind]
-        if individual.father != 0
-            push!(genealogy[individual.father].children, row.ind)
+        father = row.father
+        if father != 0
+            pedigree[row.ind].father = pedigree[father]
+            push!(pedigree[father].children, pedigree[row.ind])
         end
-        if individual.mother != 0
-            push!(genealogy[individual.mother].children, row.ind)
+        mother = row.mother
+        if mother != 0
+            pedigree[row.ind].mother = pedigree[mother]
+            push!(pedigree[mother].children, pedigree[row.ind])
         end
     end
-    if !check_order(genealogy)
-        println("Reordering the genealogy...")
-        return order_genealogy(genealogy)
+    if !check_order(pedigree)
+        println("Reordering the pedigree...")
+        return order_genealogy(pedigree)
     else
-        return genealogy
+        return pedigree
     end
 end
 
 """
-    check_order(genealogy::OrderedDict{Int64, Individual})
+    check_order(pedigree::OrderedDict{Int64, Individual})
 
-Return whether the individuals appear in chronological order in the dictionary,
+Return whether the individuals appear in chronological order in the pedigree,
 i.e. any individual's parents appear before them.
 """
-function check_order(genealogy::OrderedDict{Int64, Individual})
+function check_order(pedigree::OrderedDict{Int64, Individual})
     value = true
-    for (_, individual) in genealogy
+    for (_, individual) in pedigree
         father = individual.father
         mother = individual.mother
-        if (father != 0)
-            if individual.index < genealogy[father].index
+        if !isnothing(father)
+            if individual.index < father.index
                 value = false
                 break
             end
         end
-        if (mother != 0)
-            if individual.index < genealogy[mother].index
+        if !isnothing(mother)
+            if individual.index < mother.index
                 value = false
                 break
             end
@@ -94,43 +144,42 @@ end
 Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
-function order_genealogy(genealogy::OrderedDict{Int64, Individual})
-    founderIDs = founder(genealogy)
-    sortedIDs = []
-    queue = founderIDs
+function order_genealogy(pedigree::OrderedDict{Int64, Individual})
+    founderIDs = founder(pedigree)
+    sorted_individuals = []
+    queue = [pedigree[ID] for ID in founderIDs]
     while !isempty(queue)
-        ID = popfirst!(queue)
-        individual = genealogy[ID]
-        if (individual.father ∈ sortedIDs) && (individual.mother ∈ sortedIDs)
-            push!(sortedIDs, ID)
-            filter!(x -> x ≠ ID, queue)
+        individual = popfirst!(queue)
+        if (individual.father ∈ sorted_individuals) && (individual.mother ∈ sorted_individuals)
+            push!(sorted_individuals, individual)
+            filter!(x -> x ≠ individual, queue)
             push!(queue, individual.children...)
-        elseif (individual.father == 0) && (individual.mother == 0)
-            push!(sortedIDs, ID)
-            filter!(x -> x ≠ ID, queue)
+        elseif isnothing(individual.father) && isnothing(individual.mother)
+            push!(sorted_individuals, individual)
+            filter!(x -> x ≠ individual, queue)
             push!(queue, individual.children...)
-        elseif (individual.father == 0) && (individual.mother ∈ sortedIDs)
-            push!(sortedIDs, ID)
-            filter!(x -> x ≠ ID, queue)
+        elseif isnothing(individual.father) && (individual.mother ∈ sorted_individuals)
+            push!(sorted_individuals, individual)
+            filter!(x -> x ≠ individual, queue)
             push!(queue, individual.children...)
-        elseif (individual.mother == 0) && (individual.father ∈ sortedIDs)
-            push!(sortedIDs, ID)
-            filter!(x -> x ≠ ID, queue)
+        elseif isnothing(individual.mother) && (individual.father ∈ sorted_individuals)
+            push!(sorted_individuals, individual)
+            filter!(x -> x ≠ individual, queue)
             push!(queue, individual.children...)
         else
-            push!(queue, ID)
+            push!(queue, individual)
         end
     end
     ordered_genealogy = OrderedDict{Int64, Individual}()
-    for (index, ID) in enumerate(sortedIDs)
-        individual = genealogy[ID]
-        ordered_genealogy[ID] = Individual(individual.father, individual.mother, index, individual.children, individual.sex)
+    for (index, individual) in enumerate(sorted_individuals)
+        individual.index = index
+        ordered_genealogy[individual.ID] = individual
     end
     ordered_genealogy
 end
 
 """
-    save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
+    save_genealogy(genealogy::OrderedDict{Int64, Individual}, path::String, sorted::Bool = false)
 
 Export the pedigree as a CSV file at a given `path`.
 
@@ -140,7 +189,7 @@ will appear in the same order as in the genealogy.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
-function save_genealogy(genealogy::OrderedDict, path::String, sorted::Bool = false)
+function save_genealogy(genealogy::OrderedDict{Int64, Individual}, path::String, sorted::Bool = false)
     df = genout(genealogy, sorted = sorted)
     CSV.write(path, df, delim="\t")
 end

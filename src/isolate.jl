@@ -1,9 +1,9 @@
 """
-    mark_ancestors!(individual::ReferenceIndividual)
+    mark_ancestors!(individual::Individual)
 
 Recursively mark the ancestors of an `individual`.
 """
-function mark_ancestors!(individual::ReferenceIndividual)
+function mark_ancestors!(individual::Individual)
     individual.ancestor = true
     if !isnothing(individual.father)
         mark_ancestors!(individual.father)
@@ -14,11 +14,11 @@ function mark_ancestors!(individual::ReferenceIndividual)
 end
 
 """
-    mark_descendants!(individual::ReferenceIndividual)
+    mark_descendants!(individual::Individual)
 
 Recursively mark the descendants of an `individual`.
 """
-function mark_descendants!(individual::ReferenceIndividual)
+function mark_descendants!(individual::Individual)
     individual.descendant = true
     for child in individual.children
         mark_descendants!(child)
@@ -26,37 +26,47 @@ function mark_descendants!(individual::ReferenceIndividual)
 end
 
 """
-    branching(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy))
+    branching(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
 
 Return a pedigree that filters individuals who are in the paths
 between select probands and ancestors.
 """
-function branching(genealogy::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy))
-    isolated_genealogy = OrderedDict{Int64, Individual}()
-    ref = refer(genealogy)
+function branching(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
+    isolated_pedigree = OrderedDict{Int64, Individual}()
     for ID in pro
-        proband = ref[ID]
+        proband = pedigree[ID]
         mark_ancestors!(proband)
     end
     for ID in ancestors
-        ancestor = ref[ID]
+        ancestor = pedigree[ID]
         mark_descendants!(ancestor)
     end
-    index = 0
-    for (ID, individual) in genealogy
-        if (ref[ID].ancestor & ref[ID].descendant)
-            index += 1
-            father = 0
-            if individual.father != 0
-                father = ref[individual.father].ancestor && ref[individual.father].descendant ? individual.father : 0 
-            end
-            mother = 0
-            if individual.mother != 0
-                mother = ref[individual.mother].ancestor && ref[individual.mother].descendant ? individual.mother : 0 
-            end
-            children = filter(x -> ref[x].ancestor && ref[x].descendant, individual.children)
-            isolated_genealogy[ID] = Individual(father, mother, index, children, individual.sex)
+    for (index, (ID, individual)) in enumerate(pedigree)
+        if (individual.ancestor && individual.descendant)
+            isolated_pedigree[ID] = Individual(ID, nothing, nothing, index, [],
+                                                individual.sex, UNEXPLORED, 0., 0,
+                                                false, false, 0)
         end
     end
-    isolated_genealogy
+    for (ID, individual) in isolated_pedigree
+        father = pedigree[ID].father
+        if !isnothing(father)
+            if father.ID ∈ keys(isolated_pedigree)
+                individual.father = isolated_pedigree[father.ID]
+                push!(isolated_pedigree[father.ID].children, individual)
+            end
+        end
+        mother = pedigree[ID].mother
+        if !isnothing(mother)
+            if mother.ID ∈ keys(isolated_pedigree)
+                individual.mother = isolated_pedigree[mother.ID]
+                push!(isolated_pedigree[mother.ID].children, individual)
+            end
+        end
+    end
+    for (_, individual) in pedigree
+        individual.ancestor = false
+        individual.descendant = false
+    end
+    isolated_pedigree
 end

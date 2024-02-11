@@ -1,19 +1,15 @@
 """
-    phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
+    phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
 
 Return the kinship coefficient between two individuals.
 The diagonal corresponds to inbreedings.
 
 A matrix of the founders' kinships may optionally be provided.
 """
-function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndividual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
+function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
     # Adapted from GENLIB and Kirkpatrick et al., 2019.
     if (individualᵢ.sort != 0) && (individualⱼ.sort != 0) # They are both founders
-        if individualᵢ.sort == individualⱼ.sort # Same individual
-            return (1 + Ψ[individualᵢ.sort, individualᵢ.sort]) / 2
-        else # Two different founders
-            return Ψ[individualᵢ.sort, individualⱼ.sort]
-        end
+        return Ψ[individualᵢ.sort, individualⱼ.sort]
     else # At least one of the individuals is not a founder
         value = 0.
         if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
@@ -44,18 +40,17 @@ function phi(individualᵢ::ReferenceIndividual, individualⱼ::ReferenceIndivid
 end
 
 """
-    phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 Return a square matrix of the pairwise kinship coefficients between all probands
 provided a matrix of the founders' kinships.
 The diagonal corresponds to inbreedings.
 """
-function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
-    reference = refer(genealogy)
-    probandIDs = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
-    probands = [reference[ID] for ID in probandIDs]
-    founderIDs = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
-    founders = [reference[ID] for ID in founderIDs]
+function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
+    probands = [pedigree[ID] for ID in probandIDs]
+    founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
+    founders = [pedigree[ID] for ID in founderIDs]
     if probandIDs == founderIDs
         return Ψ # The founders' kinships
     else
@@ -75,77 +70,73 @@ function phi(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
                 end
             end
         end
-        for i in eachindex(probandIDs)
-            Φ[i, i] = (2 * Φ[i, i]) - 1 # Transform diagonal into inbreedings
-        end
         return Φ
     end
 end
 
 """
-    phi(genealogy::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+    phi(pedigree::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(pedigree); verbose::Bool = false)
 
 Return a square matrix of the pairwise kinship coefficients
 between the provided probands.
 The diagonal corresponds to inbreedings.
 
-If no probands are provided, kinships for all of the genealogy's probands are computed.
+If no probands are provided, kinships for all of the pedigree's probands are computed.
 """
-function phi(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
-    founderIDs = founder(genealogy)
+function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+    founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs)) # Initialize the top founders' kinships
-    upperIDs = cut_vertices(genealogy)
+    for f in eachindex(founderIDs)
+        Ψ[f, f] = 0.5
+    end
+    upperIDs = cut_vertices(pedigree)
     lowerIDs = probandIDs
     levels = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
         # Cut the pedigree into several sub-pedigrees
-        isolated_genealogy = branching(genealogy, pro = upperIDs)
+        isolated_pedigree = branching(pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
-        upperIDs = cut_vertices(isolated_genealogy)
+        upperIDs = cut_vertices(isolated_pedigree)
         pushfirst!(levels, upperIDs)
     end
     for i in 1:length(levels)-1
         # For each sub-pedigree, calculate the kinships using the previous founders' kinships
         upperIDs = levels[i]
         lowerIDs = levels[i+1]
-        Vᵢ = branching(genealogy, pro = lowerIDs, ancestors = upperIDs)
+        Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
         Ψ = phi(Vᵢ, Ψ)
         if verbose
-            println("Kinships for generation ", i, "/", length(levels)-1, " completed.")
+            println("Kinships for segment ", i, "/", length(levels)-1, " completed.")
         end
     end
     # In GENLIB, the kinship matrix is in alphabetical ID order
-    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(genealogy)))
+    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(pedigree)))
     order = sortperm(probandIDs)
     Ψ[order, order]
 end
 
 """
-    phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+    phi(pedigree::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
 
 Return a rectangle matrix of kinship coefficients between row IDs and column IDs.
 The kinship of someone with themself is replaced with their inbreeding.
 """
-function phi(genealogy::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-    reference = refer(genealogy)
+function phi(pedigree::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     Φ = zeros(length(rowIDs), length(columnIDs)) # Initialize the kinship matrix
     Threads.@threads for i in eachindex(rowIDs)
         Threads.@threads for j in eachindex(columnIDs)
             IDᵢ = rowIDs[i]
             IDⱼ = columnIDs[j]
-            individualᵢ = reference[IDᵢ]
-            individualⱼ = reference[IDⱼ]
+            individualᵢ = pedigree[IDᵢ]
+            individualⱼ = pedigree[IDⱼ]
             Φ[i, j] = phi(individualᵢ, individualⱼ)
-            if IDᵢ == IDⱼ # For the individual with themself
-                Φ[i, j] = (2 * Φ[i, j]) - 1 # Transform kinship to inbreeding
-            end
         end
     end
     Φ
 end
 
 """
-    cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
+    cut_vertex(individual::Individual, candidateID::Int64)
 
 Return whether an individual can be used as a cut vertex.
 
@@ -153,7 +144,7 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" (Kirkpatrick et al., 2019).
 """
-function cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
+function cut_vertex(individual::Individual, candidateID::Int64)
     value = true
     for child in individual.children
         # Check if going down the pedigree
@@ -169,33 +160,31 @@ function cut_vertex(individual::ReferenceIndividual, candidateID::Int64)
 end
 
 """
-    cut_vertices(genealogy::OrderedDict{Int64, Individual})
+    cut_vertices(pedigree::OrderedDict{Int64, Individual})
 
-Given a `genealogy` dictionary, returns the IDs of the cut vertices
-as defined in Kirkpatrick et al., 2019.
+Return the IDs of the cut vertices as defined in Kirkpatrick et al., 2019.
 
 A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" (Kirkpatrick et al., 2019).
 """
-function cut_vertices(genealogy::OrderedDict{Int64, Individual})
+function cut_vertices(pedigree::OrderedDict{Int64, Individual})
     vertices = Int64[]
-    reference = refer(genealogy)
-    probandIDs = pro(genealogy)
+    probandIDs = pro(pedigree)
     for ID in probandIDs # Mark the probands
-        reference[ID].state = PROBAND
+        pedigree[ID].state = PROBAND
     end
-    founderIDs = founder(genealogy)
-    candidateIDs = [ID for ID in collect(keys(genealogy))]
+    founderIDs = founder(pedigree)
+    candidateIDs = [ID for ID in collect(keys(pedigree))]
     for candidateID in candidateIDs
         # Check if avoiding paths from a "source" (founder)
         # down the pedigree through the candidate ID
         # never reaches a "sink" (proband) individual
-        ancestorIDs = ancestor(genealogy, candidateID)
+        ancestorIDs = ancestor(pedigree, candidateID)
         sourceIDs = filter(x -> x ∈ founderIDs, ancestorIDs)
         candidate = true
         for sourceID in sourceIDs
-            if !cut_vertex(reference[sourceID], candidateID)
+            if !cut_vertex(pedigree[sourceID], candidateID)
                 candidate = false
                 break
             end
@@ -204,53 +193,55 @@ function cut_vertices(genealogy::OrderedDict{Int64, Individual})
             push!(vertices, candidateID)
         end
     end
+    for ID in probandIDs # Unmark the probands
+        pedigree[ID].state = UNEXPLORED
+    end
     # Keep only the lowest candidates
-    ancestorIDs = union([ancestor(genealogy, vertex) for vertex in vertices]...)
+    ancestorIDs = union([ancestor(pedigree, vertex) for vertex in vertices]...)
     vertices = filter(x -> (x ∈ vertices && x ∉ ancestorIDs) || (x ∈ founderIDs && x ∉ ancestorIDs), candidateIDs)
     vertices
 end
 
 """
-    set_ancestors(genealogy::OrderedDict{Int64, Individual})
+    set_ancestors(pedigree::OrderedDict{Int64, Individual})
 
 Return a lookup table of the individuals' ancestors.
 
 As defined in Kirkpatrick et al., 2019.
 """
-function set_ancestors(genealogy::OrderedDict{Int64, Individual})
+function set_ancestors(pedigree::OrderedDict{Int64, Individual})
     ancestors = Dict()
-    for (ID, individual) in genealogy
+    for (ID, individual) in pedigree
         ancestors[ID] = [ID]
         mother = individual.mother
         father = individual.father
-        if (mother != 0)
-            ancestors[ID] = union(ancestors[mother], ancestors[ID])
+        if !isnothing(mother)
+            ancestors[ID] = union(ancestors[mother.ID], ancestors[ID])
         end
-        if (father != 0)
-            ancestors[ID] = union(ancestors[father], ancestors[ID])
+        if !isnothing(father)
+            ancestors[ID] = union(ancestors[father.ID], ancestors[ID])
         end
     end
     ancestors
 end
 
 """
-    ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 """
-function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
-    reference = refer(genealogy)
-    probandIDs = filter(x -> isempty(genealogy[x].children), collect(keys(genealogy)))
-    probands = [reference[ID] for ID in probandIDs]
-    founderIDs = filter(x -> (genealogy[x].father == 0) && (genealogy[x].mother == 0), collect(keys(genealogy)))
-    founders = [reference[ID] for ID in founderIDs]
+function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
+    probands = [pedigree[ID] for ID in probandIDs]
+    founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
+    founders = [pedigree[ID] for ID in founderIDs]
     if probandIDs == founderIDs
         return Matrix{Float64}(undef, length(founderIDs), length(founderIDs))
     end
-    n = length(genealogy)
+    n = length(pedigree)
     Φ = zeros(n, n) * -1
     for (f, founder) in enumerate(founders)
         Φ[founder.index, founder.index] = (1 + Ψ[f, f]) / 2
@@ -260,8 +251,8 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
             Φ[founder₁.index, founder₂.index] = Φ[founder₂.index, founder₁.index] = Ψ[f, g]
         end
     end
-    ancestors = set_ancestors(genealogy)
-    for (ID, individual) in reference
+    ancestors = set_ancestors(pedigree)
+    for (ID, individual) in pedigree
         i = individual.index
         for founder in founders
             f = founder.index
@@ -270,7 +261,7 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
             end
         end
     end
-    for (IDᵢ, individualᵢ) in reference, (IDⱼ, individualⱼ) in reference
+    for (IDᵢ, individualᵢ) in pedigree, (IDⱼ, individualⱼ) in pedigree
         i = individualᵢ.index
         j = individualⱼ.index
         coefficient = 0.
@@ -307,7 +298,7 @@ function ϕ(genealogy::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-    ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
+    ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
 
 
 Return the square matrix of the pairwise kinship coefficients of a set of probands.
@@ -316,28 +307,28 @@ If no probands are given, return the square matrix for all probands in the pedig
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 """
-function ϕ(genealogy::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy); verbose::Bool = false)
-    founders = founder(genealogy)
-    Ψ = zeros(length(founders), length(founders))
-    upperIDs = cut_vertices(genealogy)
+function ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+    founderIDs = founder(pedigree)
+    Ψ = zeros(length(founderIDs), length(founderIDs))
+    upperIDs = cut_vertices(pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
-        isolated_genealogy = branching(genealogy, pro = upperIDs)
+        isolated_pedigree = branching(pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
-        upperIDs = cut_vertices(isolated_genealogy)
+        upperIDs = cut_vertices(isolated_pedigree)
         pushfirst!(C, upperIDs)
     end
     for i in 1:length(C)-1
         upperIDs = C[i]
         lowerIDs = C[i+1]
-        Vᵢ = branching(genealogy, pro = lowerIDs, ancestors = upperIDs)
+        Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
         Ψ = ϕ(Vᵢ, Ψ)
         if verbose
-            println("Kinships for generation ", i, "/", length(C)-1, " completed.")
+            println("Kinships for segment ", i, "/", length(C)-1, " completed.")
         end
     end
-    probands = filter(x -> x ∈ probandIDs, collect(keys(genealogy)))
-    order = sortperm(probands)
+    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(pedigree)))
+    order = sortperm(probandIDs)
     Ψ[order, order]
 end
