@@ -39,81 +39,6 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
 end
 
 """
-    phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
-
-Return a square matrix of the pairwise kinship coefficients between all probands
-provided a matrix of the founders' kinships.
-"""
-function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
-    probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
-    probands = [pedigree[ID] for ID in probandIDs]
-    founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
-    founders = [pedigree[ID] for ID in founderIDs]
-    if probandIDs == founderIDs
-        return Ψ # The founders' kinships
-    else
-        Φ = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
-        for f in eachindex(founders)
-            founders[f].sort = f # To later access values in the Ψ matrix
-        end
-        Threads.@threads for i in eachindex(probandIDs)
-            Threads.@threads for j in eachindex(probandIDs)
-                if i == j # Calculate only once
-                    individualᵢ = probands[i]
-                    Φ[i, i] = phi(individualᵢ, individualᵢ, Ψ)
-                elseif i < j # Calculate only once
-                    individualᵢ = probands[i]
-                    individualⱼ = probands[j]
-                    Φ[i, j] = Φ[j, i] = phi(individualᵢ, individualⱼ, Ψ)
-                end
-            end
-        end
-        return Φ
-    end
-end
-
-"""
-    phi(pedigree::OrderedDict{Int64, Individual}, pro::Vector{Int64} = pro(pedigree); verbose::Bool = false)
-
-Return a square matrix of the pairwise kinship coefficients
-between the provided probands.
-
-If no probands are provided, kinships for all of the pedigree's probands are computed.
-"""
-function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
-    founderIDs = founder(pedigree)
-    Ψ = zeros(length(founderIDs), length(founderIDs)) # Initialize the top founders' kinships
-    for f in eachindex(founderIDs)
-        Ψ[f, f] = 0.5
-    end
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    upperIDs = cut_vertices(isolated_pedigree)
-    lowerIDs = probandIDs
-    levels = [upperIDs, lowerIDs]
-    while upperIDs != lowerIDs
-        # Cut the pedigree into several sub-pedigrees
-        isolated_pedigree = branching(isolated_pedigree, pro = upperIDs)
-        lowerIDs = copy(upperIDs)
-        upperIDs = cut_vertices(isolated_pedigree)
-        pushfirst!(levels, upperIDs)
-    end
-    for i in 1:length(levels)-1
-        # For each sub-pedigree, calculate the kinships using the previous founders' kinships
-        upperIDs = levels[i]
-        lowerIDs = levels[i+1]
-        Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
-        Ψ = phi(Vᵢ, Ψ)
-        if verbose
-            println("Kinships for segment ", i, "/", length(levels)-1, " completed.")
-        end
-    end
-    # In GENLIB, the kinship matrix is in alphabetical ID order
-    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(pedigree)))
-    order = sortperm(probandIDs)
-    Ψ[order, order]
-end
-
-"""
     phi(pedigree::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
 
 Return a rectangle matrix of kinship coefficients between row IDs and column IDs.
@@ -213,37 +138,14 @@ function cut_vertices(pedigree::OrderedDict{Int64, Individual})
 end
 
 """
-    set_ancestors(pedigree::OrderedDict{Int64, Individual})
-
-Return a lookup table of the individuals' ancestors.
-
-As defined in Kirkpatrick et al., 2019.
-"""
-function set_ancestors(pedigree::OrderedDict{Int64, Individual})
-    ancestors = Dict()
-    for (ID, individual) in pedigree
-        ancestors[ID] = [ID]
-        mother = individual.mother
-        father = individual.father
-        if !isnothing(mother)
-            ancestors[ID] = union(ancestors[mother.ID], ancestors[ID])
-        end
-        if !isnothing(father)
-            ancestors[ID] = union(ancestors[father.ID], ancestors[ID])
-        end
-    end
-    ancestors
-end
-
-"""
-    ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 """
-function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
     probands = [pedigree[ID] for ID in probandIDs]
     founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
@@ -309,7 +211,7 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-    ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+    phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
 
 Return the square matrix of the pairwise kinship coefficients of a set of probands.
 
@@ -317,7 +219,7 @@ If no probands are given, return the square matrix for all probands in the pedig
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 """
-function ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
