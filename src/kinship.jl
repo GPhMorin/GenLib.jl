@@ -86,12 +86,13 @@ function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64}
     for f in eachindex(founderIDs)
         Ψ[f, f] = 0.5
     end
-    upperIDs = cut_vertices(pedigree)
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
+    upperIDs = cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     levels = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
         # Cut the pedigree into several sub-pedigrees
-        isolated_pedigree = branching(pedigree, pro = upperIDs)
+        isolated_pedigree = branching(isolated_pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
         upperIDs = cut_vertices(isolated_pedigree)
         pushfirst!(levels, upperIDs)
