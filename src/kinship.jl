@@ -254,7 +254,7 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
         return Ψ
     end
     n = length(pedigree)
-    Φ = ones(n, n) * -1
+    Φ = Matrix{Float64}(undef, n, n)
     for (f, founder) in enumerate(founders)
         Φ[founder.index, founder.index] = (1 + Ψ[f, f]) / 2
     end
