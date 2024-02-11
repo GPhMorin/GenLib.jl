@@ -263,44 +263,39 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
             Φ[founder₁.index, founder₂.index] = Φ[founder₂.index, founder₁.index] = Ψ[f, g]
         end
     end
-    ancestors = set_ancestors(pedigree)
-    for (ID, individual) in pedigree
-        i = individual.index
-        for founder in founders
-            f = founder.index
-            if (ID != founder.ID) && (founder.ID ∉ ancestors[ID])
-                Φ[i, f] = Φ[f, i] = 0
-            end
-        end
-    end
-    for (IDᵢ, individualᵢ) in pedigree, (IDⱼ, individualⱼ) in pedigree
+    for (_, individualᵢ) in pedigree
         i = individualᵢ.index
-        j = individualⱼ.index
-        coefficient = 0.
-        if i == j
-            coefficient += 0.5
-            father = individualᵢ.father
-            mother = individualᵢ.mother
-            if !isnothing(father)
+        for (_, individualⱼ) in pedigree
+            j = individualⱼ.index
+            coefficient = 0.
+            if i > j # i cannot be an ancestor of j
+                father = individualᵢ.father
+                if !isnothing(father)
+                    coefficient += Φ[father.index, individualⱼ.index] / 2
+                end
+                mother = individualᵢ.mother
                 if !isnothing(mother)
-                    m = mother.index
-                    f = father.index
-                    coefficient += Φ[m, f] / 2
+                    coefficient += Φ[mother.index, individualⱼ.index] / 2
+                end
+            elseif j > i # j cannot be an ancestor of i
+                father = individualⱼ.father
+                if !isnothing(father)
+                    coefficient += Φ[father.index, individualᵢ.index] / 2
+                end
+                mother = individualⱼ.mother
+                if !isnothing(mother)
+                    coefficient += Φ[mother.index, individualᵢ.index] / 2
+                end
+            else # i.index == j.index, same individual
+                coefficient += 0.5
+                father = individualᵢ.father
+                mother = individualᵢ.mother
+                if !isnothing(father) && !isnothing(mother)
+                    coefficient += Φ[mother.index, father.index] / 2
                 end
             end
-        elseif IDᵢ ∉ ancestors[IDⱼ]
-            father = individualᵢ.father
-            if !isnothing(father)
-                f = father.index
-                coefficient += Φ[f, j] / 2
-            end
-            mother = individualᵢ.mother
-            if !isnothing(mother)
-                m = mother.index
-                coefficient += Φ[m, j] / 2
-            end
+            Φ[i, j] = Φ[j, i] = coefficient
         end
-        Φ[i, j] = Φ[j, i] = coefficient
     end
     for i in 1:n
         Φ[i, i] = (2 * Φ[i, i]) - 1
@@ -311,7 +306,6 @@ end
 
 """
     ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
-
 
 Return the square matrix of the pairwise kinship coefficients of a set of probands.
 
@@ -324,7 +318,8 @@ The diagonal corresponds to inbreedings.
 function ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
-    upperIDs = cut_vertices(pedigree)
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
+    upperIDs = cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
