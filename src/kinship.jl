@@ -2,7 +2,6 @@
     phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
 
 Return the kinship coefficient between two individuals.
-The diagonal corresponds to inbreedings.
 
 A matrix of the founders' kinships may optionally be provided.
 """
@@ -44,7 +43,6 @@ end
 
 Return a square matrix of the pairwise kinship coefficients between all probands
 provided a matrix of the founders' kinships.
-The diagonal corresponds to inbreedings.
 """
 function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
@@ -79,7 +77,6 @@ end
 
 Return a square matrix of the pairwise kinship coefficients
 between the provided probands.
-The diagonal corresponds to inbreedings.
 
 If no probands are provided, kinships for all of the pedigree's probands are computed.
 """
@@ -240,10 +237,12 @@ end
 """
     ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 
-An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
-
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
+
+An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
+
+The diagonal corresponds to inbreedings.
 """
 function ϕ(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
@@ -318,6 +317,8 @@ Return the square matrix of the pairwise kinship coefficients of a set of proban
 If no probands are given, return the square matrix for all probands in the pedigree.
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
+
+The diagonal corresponds to inbreedings.
 """
 function ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
     founderIDs = founder(pedigree)
