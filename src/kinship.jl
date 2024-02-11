@@ -328,6 +328,15 @@ function ϕ(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} 
         upperIDs = cut_vertices(isolated_pedigree)
         pushfirst!(C, upperIDs)
     end
+    if verbose
+        for i in 1:length(C)-1
+            upperIDs = C[i]
+            lowerIDs = C[i+1]
+            Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
+            println("Segment ", i, "/", length(C)-1, " contains ", length(Vᵢ),
+                    " individuals and ", length(upperIDs), " founders.")
+        end
+    end
     for i in 1:length(C)-1
         upperIDs = C[i]
         lowerIDs = C[i+1]
