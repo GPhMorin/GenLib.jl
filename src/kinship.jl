@@ -183,7 +183,7 @@ function cut_vertices(pedigree::OrderedDict{Int64, Individual})
     stack = probands
     while !isempty(stack)
         candidate = pop!(stack)
-        # Check if avoiding paths from a "source" (founder)
+        # Check if avoiding paths from a "source" (ancestor)
         # down the pedigree through the candidate ID
         # never reaches a "sink" (proband) individual
         sourceIDs = ancestor(pedigree, candidate.ID)
