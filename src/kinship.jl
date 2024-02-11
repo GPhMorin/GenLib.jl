@@ -219,7 +219,7 @@ If no probands are given, return the square matrix for all probands in the pedig
 
 An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
 """
-function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
@@ -235,13 +235,16 @@ function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64}
         upperIDs = cut_vertices(isolated_pedigree)
         pushfirst!(C, upperIDs)
     end
-    if verbose
+    if verbose || estimate
         for i in 1:length(C)-1
             upperIDs = C[i]
             lowerIDs = C[i+1]
             Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
             println("Segment ", i, "/", length(C)-1, " contains ", length(Vᵢ),
                     " individuals and ", length(upperIDs), " founders.")
+        end
+        if estimate
+            return
         end
     end
     for i in 1:length(C)-1
