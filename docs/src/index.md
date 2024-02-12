@@ -6,8 +6,8 @@ A pure Julia port of [R's GENLIB](https://cran.r-project.org/web/packages/GENLIB
 ## Package Features
 - Basic functions that use the same syntax as R's GENLIB, sometimes faster than the original implementations;
 - A function that computes the most recent common ancestors several magnitudes faster than `gen.findMRCA` in R's GENLIB;
-- The fastest available implementation to compute pairwise kinship coefficients, based on the algorithm by [Karigl, 1981](https://onlinelibrary.wiley.com/doi/10.1111/j.1469-1809.1981.tb00341.x);
-- The fastest available implementation to compute a square matrix of kinship coefficients, based on the algorithm by [Kirkpatrick et al., 2019](https://www.sfu.ca/~lwa68/publications/Kirkpatrick_Ge_Wang2019_bty725.pdf).
+- The fastest available implementation to compute pairwise kinship coefficients, based on the algorithm by [Karigl, 1981](@ref);
+- The fastest available implementation to compute a square matrix of kinship coefficients, based on the algorithm by [Kirkpatrick et al., 2019](@ref)
 
 The [Tutorials](@ref) explain how to get started using GenLib.
 
