@@ -164,3 +164,22 @@ function genout(pedigree::OrderedDict{Int64, Individual}; sorted::Bool = false)
     df = DataFrame([inds, fathers, mothers, sexes], ["ind", "father", "mother", "sex"])
     df
 end
+
+"""
+    max_depth(individual::Individual)
+
+Return the maximum depth of an individual's pedigree.
+"""
+function max_depth(individual::Individual)
+    depth = 1
+    father = individual.father
+    mother = individual.mother
+    if !isnothing(father) && !isnothing(mother)
+        depth += max(max_depth(father), max_depth(mother))
+    elseif !isnothing(father)
+        depth += max_depth(father)
+    elseif !isnothing(mother)
+        depth += max_depth(mother)
+    end
+    depth
+end
