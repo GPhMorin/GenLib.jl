@@ -1,7 +1,7 @@
 name = "GenLib"
 uuid = "e0fdd441-59bc-4b30-afdc-19bed4d9eb49"
 authors = ["Gilles-Philippe Morin <gphmorin@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
