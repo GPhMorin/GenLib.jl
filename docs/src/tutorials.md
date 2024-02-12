@@ -54,7 +54,7 @@ ped = gen.genealogy(geneaJi)
 ## Accessing an Individual
 
 A pedigree is an ordered dictionary where the key is the ID
-and the values correspond to the [`Individual`](@ref).
+and the value corresponds to the [`Individual`](@ref).
 
 The individual's parents and children are accessed by reference.
 
@@ -113,7 +113,7 @@ This is done using one of the [`phi`](@ref) functions.
 
 ### Pairwise Coefficient
 
-Let's take one of the siblings above for example.
+Let's take the two siblings above for example.
 
 ```@example
 import GenLib as gen
