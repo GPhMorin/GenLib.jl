@@ -1,4 +1,4 @@
-using Documenter, GenLib, DataFrames
+using Documenter, DataFrames, DataStructures, GenLib
 
 makedocs(sitename="GenLib.jl",
          pages = [

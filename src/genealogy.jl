@@ -1,9 +1,36 @@
+"""
+    @enum STATE begin
+        PROBAND
+        FOUNDER
+        UNEXPLORED
+    end
+
+An enumeration of the [`Individual`](@ref)'s state.
+"""
 @enum STATE begin
     PROBAND
     FOUNDER
     UNEXPLORED
 end
 
+"""
+    mutable struct Individual
+        ID::Int64
+        father::Union{Nothing, Individual}
+        mother::Union{Nothing, Individual}
+        index::Int64
+        children::Vector{Individual}
+        sex::Int64
+        state::STATE
+        probability::Float64
+        sort::Int64
+        ancestor::Bool
+        descendant::Bool
+        occurrence::Int64
+    end
+
+The unit structure of a pedigree.
+"""
 mutable struct Individual
     ID::Int64
     father::Union{Nothing, Individual}

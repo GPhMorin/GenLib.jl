@@ -1,6 +1,6 @@
 # Tutorials
 
-## Installation
+## Installing this Package
 
 To install, using REPL:
 
@@ -49,4 +49,88 @@ ped = gen.genealogy(genea140)
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)
+```
+
+## Accessing an Individual
+
+A pedigree is an ordered dictionary where the key is the ID
+and the values correspond to the [`Individual`](@ref).
+
+The individual's parents and children are accessed by reference.
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+ped[33724]
+ped[33724].mother
+ped[33724].father
+ped[33724].children
+ped[33724].children[2].father
+```
+
+## Getting Founders and Probands
+
+This is done using the [`founder`](@ref) and [`pro`](@ref) functions, respectively.
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+founder = gen.founder(ped)
+pro = gen.pro(ped)
+```
+
+## Finding Most Recent Common Ancestors
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+pro = gen.pro(ped);
+pro1 = pro[1]
+pro2 = pro[2]
+mrcas, meioses = gen.findMRCA(ped, [pro1, pro2]);
+mrcas
+meioses
+```
+
+## Computing Genetic Contributions
+
+This is done with the [`gc`](@ref) function.
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+contributions = gen.gc(ped)
+sum(contributions, dims=2)
+```
+
+## Computing Kinship Coefficients
+
+This is done using one of the [`phi`](@ref) functions.
+
+### Pairwise Coefficient
+
+Let's take one of the siblings above for example.
+
+```@example
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+pro1 = 10033
+pro2 = 113470
+pro1 = ped[pro1]
+pro2 = ped[pro2]
+gen.phi(pro1, pro2)
+```
+
+### Square Matrix
+
+```@example
+import GenLib as gen
+geneaJi = gen.geneaJi;
+ped = gen.genealogy(geneaJi);
+gen.phi(ped)
 ```

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorials · GenLib.jl</title><meta name="title" content="Tutorials · GenLib.jl"/><meta property="og:title" content="Tutorials · GenLib.jl"/><meta property="twitter:title" content="Tutorials · GenLib.jl"/><meta name="description" content="Documentation for GenLib.jl."/><meta property="og:description" content="Documentation for GenLib.jl."/><meta property="twitter:description" content="Documentation for GenLib.jl."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">GenLib.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="index.html">Home</a></li><li class="is-active"><a class="tocitem" href="tutorials.html">Tutorials</a><ul class="internal"><li><a class="tocitem" href="#Installation"><span>Installation</span></a></li><li><a class="tocitem" href="#Loading-a-Pedigree"><span>Loading a Pedigree</span></a></li></ul></li><li><a class="tocitem" href="reference.html">Reference</a></li><li><a class="tocitem" href="bibliography.html">Bibliography</a></li><li><a class="tocitem" href="release.html">Release Notes</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="tutorials.html">Tutorials</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="tutorials.html">Tutorials</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/GPhMorin/GenLib.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/GPhMorin/GenLib.jl/blob/main/docs/src/tutorials.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorials"><a class="docs-heading-anchor" href="#Tutorials">Tutorials</a><a id="Tutorials-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorials" title="Permalink"></a></h1><h2 id="Installation"><a class="docs-heading-anchor" href="#Installation">Installation</a><a id="Installation-1"></a><a class="docs-heading-anchor-permalink" href="#Installation" title="Permalink"></a></h2><p>To install, using REPL:</p><pre><code class="language-julia-repl hljs">julia&gt; using Pkg; Pkg.add(url=&quot;https://github.com/GPhMorin/GenLib.jl&quot;)</code></pre><p>Or in the Pkg REPL mode (<code>]</code>):</p><pre><code class="language-pkg hljs">add https://github.com/GPhMorin/GenLib.jl</code></pre><p>You may then use the library with using GenLib or import GenLib.</p><h2 id="Loading-a-Pedigree"><a class="docs-heading-anchor" href="#Loading-a-Pedigree">Loading a Pedigree</a><a id="Loading-a-Pedigree-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-a-Pedigree" title="Permalink"></a></h2><h3 id="From-a-DataFrame"><a class="docs-heading-anchor" href="#From-a-DataFrame">From a DataFrame</a><a id="From-a-DataFrame-1"></a><a class="docs-heading-anchor-permalink" href="#From-a-DataFrame" title="Permalink"></a></h3><p>Here is a pedigree with full first-degree cousins.</p><pre><code class="language-julia hljs">import GenLib as gen
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorials · GenLib.jl</title><meta name="title" content="Tutorials · GenLib.jl"/><meta property="og:title" content="Tutorials · GenLib.jl"/><meta property="twitter:title" content="Tutorials · GenLib.jl"/><meta name="description" content="Documentation for GenLib.jl."/><meta property="og:description" content="Documentation for GenLib.jl."/><meta property="twitter:description" content="Documentation for GenLib.jl."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">GenLib.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="index.html">Home</a></li><li class="is-active"><a class="tocitem" href="tutorials.html">Tutorials</a><ul class="internal"><li><a class="tocitem" href="#Installing-this-Package"><span>Installing this Package</span></a></li><li><a class="tocitem" href="#Loading-a-Pedigree"><span>Loading a Pedigree</span></a></li><li><a class="tocitem" href="#Accessing-an-Individual"><span>Accessing an Individual</span></a></li><li><a class="tocitem" href="#Getting-Founders-and-Probands"><span>Getting Founders and Probands</span></a></li><li><a class="tocitem" href="#Finding-Most-Recent-Common-Ancestors"><span>Finding Most Recent Common Ancestors</span></a></li><li><a class="tocitem" href="#Computing-Genetic-Contributions"><span>Computing Genetic Contributions</span></a></li><li><a class="tocitem" href="#Computing-Kinship-Coefficients"><span>Computing Kinship Coefficients</span></a></li></ul></li><li><a class="tocitem" href="reference.html">Reference</a></li><li><a class="tocitem" href="bibliography.html">Bibliography</a></li><li><a class="tocitem" href="release.html">Release Notes</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="tutorials.html">Tutorials</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="tutorials.html">Tutorials</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/GPhMorin/GenLib.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/GPhMorin/GenLib.jl/blob/main/docs/src/tutorials.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorials"><a class="docs-heading-anchor" href="#Tutorials">Tutorials</a><a id="Tutorials-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorials" title="Permalink"></a></h1><h2 id="Installing-this-Package"><a class="docs-heading-anchor" href="#Installing-this-Package">Installing this Package</a><a id="Installing-this-Package-1"></a><a class="docs-heading-anchor-permalink" href="#Installing-this-Package" title="Permalink"></a></h2><p>To install, using REPL:</p><pre><code class="language-julia-repl hljs">julia&gt; using Pkg; Pkg.add(url=&quot;https://github.com/GPhMorin/GenLib.jl&quot;)</code></pre><p>Or in the Pkg REPL mode (<code>]</code>):</p><pre><code class="language-pkg hljs">add https://github.com/GPhMorin/GenLib.jl</code></pre><p>You may then use the library with <code>using GenLib</code> or, to mimic the behavior of R&#39;s GENLIB, <code>import GenLib as gen</code>.</p><h2 id="Loading-a-Pedigree"><a class="docs-heading-anchor" href="#Loading-a-Pedigree">Loading a Pedigree</a><a id="Loading-a-Pedigree-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-a-Pedigree" title="Permalink"></a></h2><h3 id="From-a-DataFrame"><a class="docs-heading-anchor" href="#From-a-DataFrame">From a DataFrame</a><a id="From-a-DataFrame-1"></a><a class="docs-heading-anchor-permalink" href="#From-a-DataFrame" title="Permalink"></a></h3><p>Here is a pedigree with full first-degree cousins.</p><pre><code class="language-julia hljs">import GenLib as gen
 using DataFrames
 inds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 fathers = [0, 0, 0, 1, 1, 0, 3, 3, 6, 6]
 mothers = [0, 0, 0, 2, 2, 0, 4, 4, 5, 5]
 sexes = [1, 2, 1, 2, 2, 1, 2, 1, 1, 2]
 df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
-ped = gen.genealogy(df)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OrderedCollections.OrderedDict{Int64, GenLib.Individual} with 10 entries:
+ped = gen.genealogy(df)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OrderedDict{Int64, Individual} with 10 entries:
   1  =&gt; ind: 1…
   2  =&gt; ind: 2…
   3  =&gt; ind: 3…
@@ -18,7 +18,7 @@ ped = gen.genealogy(df)</code></pre><pre class="documenter-example-output"><code
   9  =&gt; ind: 9…
   10 =&gt; ind: 10…</code></pre><h3 id="From-a-CSV-File"><a class="docs-heading-anchor" href="#From-a-CSV-File">From a CSV File</a><a id="From-a-CSV-File-1"></a><a class="docs-heading-anchor-permalink" href="#From-a-CSV-File" title="Permalink"></a></h3><p>The original GENLIB package for R contains two sample pedigrees. They are also available in GenLib.jl as <a href="reference.html#GenLib.genea140"><code>genea140</code></a> and <a href="reference.html#GenLib.geneaJi"><code>geneaJi</code></a>.</p><pre><code class="language-julia hljs">import GenLib as gen
 genea140 = gen.genea140
-ped = gen.genealogy(genea140)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OrderedCollections.OrderedDict{Int64, GenLib.Individual} with 41523 entries:
+ped = gen.genealogy(genea140)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OrderedDict{Int64, Individual} with 41523 entries:
   10086 =&gt; ind: 10086…
   10087 =&gt; ind: 10087…
   10102 =&gt; ind: 10102…
@@ -40,7 +40,7 @@ ped = gen.genealogy(genea140)</code></pre><pre class="documenter-example-output"
   10202 =&gt; ind: 10202…
   ⋮     =&gt; ⋮</code></pre><pre><code class="language-julia hljs">import GenLib as gen
 geneaJi = gen.geneaJi
-ped = gen.genealogy(geneaJi)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OrderedCollections.OrderedDict{Int64, GenLib.Individual} with 29 entries:
+ped = gen.genealogy(geneaJi)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">OrderedDict{Int64, Individual} with 29 entries:
   17 =&gt; ind: 17…
   19 =&gt; ind: 19…
   20 =&gt; ind: 20…
@@ -60,4 +60,139 @@ ped = gen.genealogy(geneaJi)</code></pre><pre class="documenter-example-output">
   22 =&gt; ind: 22…
   24 =&gt; ind: 24…
   28 =&gt; ind: 28…
-  ⋮  =&gt; ⋮</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="index.html">« Home</a><a class="docs-footer-nextpage" href="reference.html">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Sunday 11 February 2024 20:51">Sunday 11 February 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  ⋮  =&gt; ⋮</code></pre><h2 id="Accessing-an-Individual"><a class="docs-heading-anchor" href="#Accessing-an-Individual">Accessing an Individual</a><a id="Accessing-an-Individual-1"></a><a class="docs-heading-anchor-permalink" href="#Accessing-an-Individual" title="Permalink"></a></h2><p>A pedigree is an ordered dictionary where the key is the ID and the values correspond to the <a href="reference.html#GenLib.Individual"><code>Individual</code></a>.</p><p>The individual&#39;s parents and children are accessed by reference.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; import GenLib as gen</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; genea140 = gen.genea140;</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped = gen.genealogy(genea140);</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped[33724]</code><code class="nohighlight hljs ansi" style="display:block;">ind: 33724
+father: 10086
+mother: 10087
+sex: 1</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped[33724].mother</code><code class="nohighlight hljs ansi" style="display:block;">ind: 10087
+father: 0
+mother: 0
+sex: 2</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped[33724].father</code><code class="nohighlight hljs ansi" style="display:block;">ind: 10086
+father: 0
+mother: 0
+sex: 1</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped[33724].children</code><code class="nohighlight hljs ansi" style="display:block;">2-element Vector{Individual}:
+ ind: 10033
+father: 33724
+mother: 35178
+sex: 2
+ ind: 113470
+father: 33724
+mother: 35178
+sex: 1</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped[33724].children[2].father</code><code class="nohighlight hljs ansi" style="display:block;">ind: 33724
+father: 10086
+mother: 10087
+sex: 1</code></pre><h2 id="Getting-Founders-and-Probands"><a class="docs-heading-anchor" href="#Getting-Founders-and-Probands">Getting Founders and Probands</a><a id="Getting-Founders-and-Probands-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Founders-and-Probands" title="Permalink"></a></h2><p>This is done using the <a href="reference.html#GenLib.founder"><code>founder</code></a> and <a href="reference.html#GenLib.pro"><code>pro</code></a> functions, respectively.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; import GenLib as gen</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; genea140 = gen.genea140;</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped = gen.genealogy(genea140);</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; founder = gen.founder(ped)</code><code class="nohighlight hljs ansi" style="display:block;">7399-element Vector{Int64}:
+  10086
+  10087
+  10102
+  10103
+  10128
+  10129
+  10136
+  10137
+  10150
+  10151
+      ⋮
+ 870618
+ 870619
+ 871681
+ 872039
+ 872040
+ 872102
+ 872103
+ 872106
+ 872107</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; pro = gen.pro(ped)</code><code class="nohighlight hljs ansi" style="display:block;">140-element Vector{Int64}:
+ 217891
+ 218089
+ 219947
+ 288708
+ 288764
+ 302710
+ 302711
+ 302716
+ 302717
+ 302718
+      ⋮
+ 676521
+ 677273
+ 717537
+ 717634
+ 717709
+ 718567
+ 802424
+ 868387
+ 868572</code></pre><h2 id="Finding-Most-Recent-Common-Ancestors"><a class="docs-heading-anchor" href="#Finding-Most-Recent-Common-Ancestors">Finding Most Recent Common Ancestors</a><a id="Finding-Most-Recent-Common-Ancestors-1"></a><a class="docs-heading-anchor-permalink" href="#Finding-Most-Recent-Common-Ancestors" title="Permalink"></a></h2><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; import GenLib as gen</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; genea140 = gen.genea140;</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped = gen.genealogy(genea140);</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; pro = gen.pro(ped);</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; pro1 = pro[1]</code><code class="nohighlight hljs ansi" style="display:block;">217891</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; pro2 = pro[2]</code><code class="nohighlight hljs ansi" style="display:block;">218089</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; mrcas, meioses = gen.findMRCA(ped, [pro1, pro2]);</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; mrcas</code><code class="nohighlight hljs ansi" style="display:block;">108-element Vector{Int64}:
+  11171
+  11601
+  11602
+  13234
+  13235
+  16910
+  16911
+  17060
+  17087
+  18215
+      ⋮
+  65345
+  68161
+  68162
+  70305
+  70306
+  77206
+ 203641
+ 253080
+ 253081</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; meioses</code><code class="nohighlight hljs ansi" style="display:block;">2×108 Matrix{Int64}:
+ 11   9   9   9   9  11  11  8   9   9  …  11  11  11  10  10   9  9  10  10
+ 12  11  11  10  10  11  11  8  10  13     10  11  11  10  10  11  9  10  10</code></pre><h2 id="Computing-Genetic-Contributions"><a class="docs-heading-anchor" href="#Computing-Genetic-Contributions">Computing Genetic Contributions</a><a id="Computing-Genetic-Contributions-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-Genetic-Contributions" title="Permalink"></a></h2><p>This is done with the <a href="reference.html#GenLib.gc"><code>gc</code></a> function.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; import GenLib as gen</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; genea140 = gen.genea140;</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ped = gen.genealogy(genea140);</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; contributions = gen.gc(ped)</code><code class="nohighlight hljs ansi" style="display:block;">140×7399 Matrix{Float64}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.015625  0.015625  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ ⋮                        ⋮              ⋱       ⋮
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0       0.0       0.0  0.0</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; sum(contributions, dims=2)</code><code class="nohighlight hljs ansi" style="display:block;">140×1 Matrix{Float64}:
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ ⋮
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0
+ 1.0</code></pre><h2 id="Computing-Kinship-Coefficients"><a class="docs-heading-anchor" href="#Computing-Kinship-Coefficients">Computing Kinship Coefficients</a><a id="Computing-Kinship-Coefficients-1"></a><a class="docs-heading-anchor-permalink" href="#Computing-Kinship-Coefficients" title="Permalink"></a></h2><p>This is done using one of the <a href="reference.html#GenLib.phi"><code>phi</code></a> functions.</p><h3 id="Pairwise-Coefficient"><a class="docs-heading-anchor" href="#Pairwise-Coefficient">Pairwise Coefficient</a><a id="Pairwise-Coefficient-1"></a><a class="docs-heading-anchor-permalink" href="#Pairwise-Coefficient" title="Permalink"></a></h3><p>Let&#39;s take one of the siblings above for example.</p><pre><code class="language-julia hljs">import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+pro1 = 10033
+pro2 = 113470
+pro1 = ped[pro1]
+pro2 = ped[pro2]
+gen.phi(pro1, pro2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">0.25</code></pre><h3 id="Square-Matrix"><a class="docs-heading-anchor" href="#Square-Matrix">Square Matrix</a><a id="Square-Matrix-1"></a><a class="docs-heading-anchor-permalink" href="#Square-Matrix" title="Permalink"></a></h3><pre><code class="language-julia hljs">import GenLib as gen
+geneaJi = gen.geneaJi;
+ped = gen.genealogy(geneaJi);
+gen.phi(ped)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">3×3 Matrix{Float64}:
+ 0.591797   0.371094   0.0722656
+ 0.371094   0.591797   0.0722656
+ 0.0722656  0.0722656  0.535156</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="index.html">« Home</a><a class="docs-footer-nextpage" href="reference.html">Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Sunday 11 February 2024 22:42">Sunday 11 February 2024</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

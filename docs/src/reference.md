@@ -1,20 +1,22 @@
 # Reference
 
 ```@docs
+genea140
+geneaJi
+pop140
+Individual
+STATE
 branching
 children
-findDistance
+findDistance(::OrderedDict{Int64, Individual}, ::Vector{Int64}, ::Int64)
 findFounders
 findMRCA
 founder
 gc
-genea140
-geneaJi
 genealogy
 genout
 occ
 phi
-pop140
 pro
 rec
 ```

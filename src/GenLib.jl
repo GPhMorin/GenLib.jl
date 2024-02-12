@@ -7,6 +7,10 @@ using CSV
 using DataFrames: DataFrame
 using DataStructures: Stack, OrderedDict
 
+# The unit structure for pedigrees
+export Individual,
+       STATE
+
 # GENLIB functions
 export ancestor,
        branching,
