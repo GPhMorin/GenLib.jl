@@ -3,8 +3,8 @@
 
 Return a matrix of ancestors' occurrences.
 
-If `typeOcc` is `:ind` (default), then the matrix corresponds to the occurrence per individual.
-If `typeOcc` is `:total`, then the matrix corresponds to the total occurrence.
+If `typeOcc` is "IND" (default), then the matrix corresponds to the occurrence per individual.
+If `typeOcc` is "TOTAL", then the matrix corresponds to the total occurrence.
 """
 function occ(
     pedigree::OrderedDict{Int64, Individual};

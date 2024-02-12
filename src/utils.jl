@@ -107,7 +107,7 @@ end
 """
     genout(pedigree::OrderedDict{Int64, Individual}, sorted::Bool = false)
 
-Return a pedigree as a DataFrame.
+Return a pedigree as a `DataFrame`.
 
 If `sorted` is `false` (the default), then the individuals
 will appear in the same order as in the pedigree.

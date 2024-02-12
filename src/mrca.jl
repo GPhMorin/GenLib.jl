@@ -38,7 +38,7 @@ end
 
 Return a tuple of type `::Tuple{::Vector{Int64}, ::Matrix{Int64}}` consisting in
 the vector of individuals' most recent common ancestors (MRCAs)
-the matrix of meioses between each proband and each MRCA.
+and the matrix of meioses between each proband and each MRCA.
 """
 function findMRCA(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64})
     ancestorIDs = [ancestor(pedigree, ID) for ID in probandIDs]
