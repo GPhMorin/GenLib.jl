@@ -5,6 +5,15 @@ Return a matrix of ancestors' occurrences.
 
 If `typeOcc` is "IND" (default), then the matrix corresponds to the occurrence per individual.
 If `typeOcc` is "TOTAL", then the matrix corresponds to the total occurrence.
+
+# Example
+
+```@example
+import GenLib as gen
+geneaJi = gen.geneaJi
+ped = gen.genealogy(geneaJi)
+occ = gen.occ(ped, typeOcc = "TOTAL")
+```
 """
 function occ(
     pedigree::OrderedDict{Int64, Individual};

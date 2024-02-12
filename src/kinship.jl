@@ -6,6 +6,17 @@ Return the kinship coefficient between two individuals.
 A matrix of the founders' kinships may optionally be provided.
 
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+
+# Example
+
+```@example
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+pro1 = ped[10033]
+pro2 = ped[113470]
+gen.phi(pro1, pro2)
+```
 """
 function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
     if (individualᵢ.sort != 0) && (individualⱼ.sort != 0) # They are both founders
@@ -219,6 +230,15 @@ Return the square matrix of the pairwise kinship coefficients of a set of proban
 If no probands are given, return the square matrix for all probands in the pedigree.
 
 An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
+
+# Example
+
+```@example
+import GenLib as gen
+geneaJi = gen.geneaJi
+ped = gen.genealogy(geneaJi)
+gen.phi(ped)
+```
 """
 function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false)
     founderIDs = founder(pedigree)

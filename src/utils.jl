@@ -2,6 +2,15 @@
     pro(pedigree::OrderedDict{Int64, Individual})
 
 Return a vector of proband IDs in alphabetical order.
+
+# Example
+
+```@example
+import GenLib as gen
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
+probands = gen.pro(ped)
+```
 """
 function pro(pedigree::OrderedDict{Int64, Individual})
     probands = [individual.ID for (_, individual) in pedigree if isempty(individual.children)]
@@ -12,6 +21,15 @@ end
     founder(pedigree::OrderedDict{Int64, Individual})
 
 Return a vector of founder IDs in alphabetical order.
+
+# Example
+
+```@example
+import GenLib as gen
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
+founders = gen.founder(ped)
+```
 """
 function founder(pedigree::OrderedDict{Int64, Individual})
     founders = [individual.ID for (_, individual) in pedigree if isnothing(individual.father) && isnothing(individual.mother)]
@@ -114,6 +132,13 @@ will appear in the same order as in the pedigree.
 
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
+
+```@example
+import GenLib as gen
+geneaJi = gen.geneaJi
+ped = gen.genealogy(geneaJi)
+gen.genout(ped)
+```
 """
 function genout(pedigree::OrderedDict{Int64, Individual}; sorted::Bool = false)
     inds = Int64[]

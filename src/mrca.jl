@@ -39,6 +39,20 @@ end
 Return a tuple of type `::Tuple{::Vector{Int64}, ::Matrix{Int64}}` consisting in
 the vector of individuals' most recent common ancestors (MRCAs)
 and the matrix of meioses between each proband and each MRCA.
+
+# Example
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+pro = gen.pro(ped);
+pro1 = pro[1]
+pro2 = pro[2]
+mrcas, meioses = gen.findMRCA(ped, [pro1, pro2]);
+mrcas
+meioses
+```
 """
 function findMRCA(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64})
     ancestorIDs = [ancestor(pedigree, ID) for ID in probandIDs]

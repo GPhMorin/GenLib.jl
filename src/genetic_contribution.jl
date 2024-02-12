@@ -3,6 +3,16 @@
 
 Return a matrix of the genetic contribution
 of each ancestor (columns) to each proband (rows).
+
+# Example
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140;
+ped = gen.genealogy(genea140);
+contributions = gen.gc(ped)
+sum(contributions, dims=2)
+```
 """
 function gc(
     pedigree::OrderedDict{Int64, Individual};

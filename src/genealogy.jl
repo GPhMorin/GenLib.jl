@@ -57,6 +57,19 @@ end
     genealogy(dataframe::DataFrame)
 
 Return an ordered pedigree of individuals from a `DataFrame`.
+
+# Example
+
+```@example
+import GenLib as gen
+using DataFrames
+inds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+fathers = [0, 0, 0, 1, 1, 0, 3, 3, 6, 6]
+mothers = [0, 0, 0, 2, 2, 0, 4, 4, 5, 5]
+sexes = [1, 2, 1, 2, 2, 1, 2, 1, 1, 2]
+df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
+ped = gen.genealogy(df)
+```
 """
 function genealogy(dataframe::DataFrame)
     pedigree::OrderedDict{Int64, Individual} = Dict()
@@ -99,6 +112,14 @@ end
     genealogy(filename::String)
 
 Return an ordered pedigree of individuals from a CSV file.
+
+# Example
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
+```
 """
 function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))

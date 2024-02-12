@@ -39,13 +39,13 @@ ped = gen.genealogy(df)
 The original GENLIB package for R contains two sample pedigrees.
 They are also available in GenLib.jl as [`genea140`](@ref) and [`geneaJi`](@ref).
 
-```@example
+```@repl
 import GenLib as gen
 genea140 = gen.genea140
 ped = gen.genealogy(genea140)
 ```
 
-```@example
+```@repl
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)
@@ -119,10 +119,8 @@ Let's take the two siblings above for example.
 import GenLib as gen
 genea140 = gen.genea140;
 ped = gen.genealogy(genea140);
-pro1 = 10033
-pro2 = 113470
-pro1 = ped[pro1]
-pro2 = ped[pro2]
+pro1 = ped[10033]
+pro2 = ped[113470]
 gen.phi(pro1, pro2)
 ```
 
@@ -130,7 +128,7 @@ gen.phi(pro1, pro2)
 
 ```@example
 import GenLib as gen
-geneaJi = gen.geneaJi;
-ped = gen.genealogy(geneaJi);
+geneaJi = gen.geneaJi
+ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
