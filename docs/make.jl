@@ -12,3 +12,6 @@ makedocs(sitename="GenLib.jl",
             prettyurls = get(ENV, "CI", nothing) == "true"
             )
         )
+deploydocs(
+   repo = "github.com/GPhMorin/GenLib.jl.git"
+)
