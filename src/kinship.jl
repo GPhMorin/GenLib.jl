@@ -4,9 +4,10 @@
 Return the kinship coefficient between two individuals.
 
 A matrix of the founders' kinships may optionally be provided.
+
+Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
-    # Adapted from GENLIB and Kirkpatrick et al., 2019.
     if (individualᵢ.sort != 0) && (individualⱼ.sort != 0) # They are both founders
         return Ψ[individualᵢ.sort, individualⱼ.sort]
     else # At least one of the individuals is not a founder
@@ -65,7 +66,7 @@ Return whether an individual can be used as a cut vertex.
 
 A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
-to any sink [proband]" (Kirkpatrick et al., 2019).
+to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
 function cut_vertex(individual::Individual, candidateID::Int64)
     value = true
@@ -85,11 +86,11 @@ end
 """
     cut_vertices(pedigree::OrderedDict{Int64, Individual})
 
-Return the IDs of the cut vertices as defined in Kirkpatrick et al., 2019.
+Return the IDs of the cut vertices as defined in [Kirkpatrick et al., 2019](@ref).
 
 A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
-to any sink [proband]" (Kirkpatrick et al., 2019).
+to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
 function cut_vertices(pedigree::OrderedDict{Int64, Individual})
     vertices = Int64[]
@@ -143,7 +144,7 @@ end
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
-An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
+An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
 function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
     probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
@@ -217,7 +218,7 @@ Return the square matrix of the pairwise kinship coefficients of a set of proban
 
 If no probands are given, return the square matrix for all probands in the pedigree.
 
-An implementation of the recursive-cut algorithm presented in Kirkpatrick et al., 2019.
+An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
 function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false)
     founderIDs = founder(pedigree)
