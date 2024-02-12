@@ -32,7 +32,7 @@ function findFounders(pedigree::OrderedDict{Int64}, IDs::Vector{Int64})
 end
 
 """
-    get_paths(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
+    get_paths(pedigree::OrderedDict{Int64, Individual}, individual::Individual)
 
 Return the paths from an individual to their ancestors.
 """
@@ -46,7 +46,7 @@ function get_paths(pedigree::OrderedDict{Int64, Individual}, individual::Individ
         append!(paths, fathers_paths)
     end
     if !isnothing(individual.mother)
-        mothers_paths = get_paths(genealogy, individual.mother)
+        mothers_paths = get_paths(pedigree, individual.mother)
         for path in mothers_paths
             push!(path, individual.ID)
         end

@@ -8,7 +8,8 @@ function findDistances(
     descendantID::Int64,
     ancestorID::Int64)
     
-    paths = get_paths(pedigree, descendantID)
+    descendant = pedigree[descendantID]
+    paths = get_paths(pedigree, descendant)
     lengths = Vector{Int8}()
     for path in paths
         if path[1] ≡ ancestorID
@@ -29,12 +30,12 @@ function findDistance(pedigree::OrderedDict{Int64, Individual}, descendantID::In
 end
 
 """
-    findDistance(genealogy::OrderedDict{Int64, Individual}, ID₁::Int64, ID₂::Int64, ancestorID::Int64)
+    findDistance(pedigree::OrderedDict{Int64, Individual}, IDs::Vector{Int64}, ancestorID::Int64)
 
 Return the distance between two individuals and their ancestor.
 """
-function findDistance(pedigree::OrderedDict{Int64, Individual}, ID₁::Int64, ID₂::Int64, ancestorID::Int64)
-    distance₁ = findDistance(pedigree, ID₁, ancestorID)
-    distance₂ = findDistance(pedigree, ID₂, ancestorID)
+function findDistance(pedigree::OrderedDict{Int64, Individual}, IDs::Vector{Int64}, ancestorID::Int64)
+    distance₁ = findDistance(pedigree, IDs[1], ancestorID)
+    distance₂ = findDistance(pedigree, IDs[2], ancestorID)
     distance₁ + distance₂
 end
