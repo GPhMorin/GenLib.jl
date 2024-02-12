@@ -48,6 +48,14 @@ of Quebec, Canada. A total of 140 individuals have been sampled in
 seven sub-populations, listed in pop140, and their genealogies
 were reconstructed as far back as possible using the BALSAC population
 register and the Early Quebec Population Register."
+
+# Loading the Dataset
+
+```@repl
+import GenLib as gen
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
+```
 """
 const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
 
@@ -57,6 +65,14 @@ A highly inbred pedigree.
 According to the R GENLIB documentation, `geneaJi` corresponds to
 "a modified version of a pedigree of two Jicaque Indians studied by
 Chapman & Jacquard (1971)."
+
+# Loading the Dataset
+
+```@repl
+import GenLib as gen
+geneaJi = gen.geneaJi
+ped = gen.genealogy(geneaJi)
+```
 """
 const geneaJi = "$(chop(pathof(GenLib), tail=13))data/geneaJi.asc"
 
@@ -68,6 +84,14 @@ According to the R GENLIB documentation, `pop140` corresponds to
 from 7 different opulations from 5 regions: Quebec City, Montreal, Saguenay,
 North Shore, Gaspesia. In Gaspesia we find 3 different populations:
 French-Canadians, Acadians and Loyalists."
+
+# Loading the Dataset
+
+```@repl
+import GenLib as gen
+pop140 = gen.pop140
+pop = gen.population(pop140)
+```
 """
 const pop140 = "$(chop(pathof(GenLib), tail=13))data/pop140.csv"
 
