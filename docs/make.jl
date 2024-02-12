@@ -5,9 +5,8 @@ makedocs(sitename="GenLib.jl",
             "Home" => "index.md",
             "tutorials.md",
             "reference.md",
-            "bibliography.md",
-            "release.md"
-         ],
+            "bibliography.md"
+            ],
          format = Documenter.HTML(
             prettyurls = get(ENV, "CI", nothing) == "true"
             )
