@@ -9,10 +9,10 @@ Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 
 # Example
 
-```@example
+```julia
 import GenLib as gen
-genea140 = gen.genea140;
-ped = gen.genealogy(genea140);
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
 pro1 = ped[10033]
 pro2 = ped[113470]
 gen.phi(pro1, pro2)
@@ -233,7 +233,7 @@ An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al
 
 # Example
 
-```@example
+```julia
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)

@@ -5,7 +5,7 @@ Return a vector of proband IDs in alphabetical order.
 
 # Example
 
-```@example
+```julia
 import GenLib as gen
 genea140 = gen.genea140
 ped = gen.genealogy(genea140)
@@ -24,7 +24,7 @@ Return a vector of founder IDs in alphabetical order.
 
 # Example
 
-```@example
+```julia
 import GenLib as gen
 genea140 = gen.genea140
 ped = gen.genealogy(genea140)
@@ -133,7 +133,7 @@ will appear in the same order as in the pedigree.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 
-```@example
+```julia
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)

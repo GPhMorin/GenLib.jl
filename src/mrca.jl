@@ -42,16 +42,14 @@ and the matrix of meioses between each proband and each MRCA.
 
 # Example
 
-```@repl
+```julia
 import GenLib as gen
-genea140 = gen.genea140;
-ped = gen.genealogy(genea140);
-pro = gen.pro(ped);
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
+pro = gen.pro(ped)
 pro1 = pro[1]
 pro2 = pro[2]
-mrcas, meioses = gen.findMRCA(ped, [pro1, pro2]);
-mrcas
-meioses
+mrcas, meioses = gen.findMRCA(ped, [pro1, pro2])
 ```
 """
 function findMRCA(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64})

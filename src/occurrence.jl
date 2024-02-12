@@ -8,7 +8,7 @@ If `typeOcc` is "TOTAL", then the matrix corresponds to the total occurrence.
 
 # Example
 
-```@example
+```julia
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)

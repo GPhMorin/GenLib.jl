@@ -60,7 +60,7 @@ Return an ordered pedigree of individuals from a `DataFrame`.
 
 # Example
 
-```@example
+```julia
 import GenLib as gen
 using DataFrames
 inds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
@@ -115,7 +115,7 @@ Return an ordered pedigree of individuals from a CSV file.
 
 # Example
 
-```@repl
+```julia
 import GenLib as gen
 genea140 = gen.genea140
 ped = gen.genealogy(genea140)

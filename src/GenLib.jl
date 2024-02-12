@@ -51,7 +51,7 @@ register and the Early Quebec Population Register."
 
 # Loading the Dataset
 
-```@repl
+```julia
 import GenLib as gen
 genea140 = gen.genea140
 ped = gen.genealogy(genea140)
@@ -68,7 +68,7 @@ Chapman & Jacquard (1971)."
 
 # Loading the Dataset
 
-```@repl
+```julia
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)
@@ -87,7 +87,7 @@ French-Canadians, Acadians and Loyalists."
 
 # Loading the Dataset
 
-```@repl
+```julia
 import GenLib as gen
 pop140 = gen.pop140
 pop = gen.population(pop140)

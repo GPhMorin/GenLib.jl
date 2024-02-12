@@ -6,12 +6,11 @@ of each ancestor (columns) to each proband (rows).
 
 # Example
 
-```@repl
+```julia
 import GenLib as gen
-genea140 = gen.genea140;
-ped = gen.genealogy(genea140);
+genea140 = gen.genea140
+ped = gen.genealogy(genea140)
 contributions = gen.gc(ped)
-sum(contributions, dims=2)
 ```
 """
 function gc(
