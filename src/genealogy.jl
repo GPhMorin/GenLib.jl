@@ -72,7 +72,7 @@ ped = gen.genealogy(df)
 ```
 """
 function genealogy(dataframe::DataFrame)
-    pedigree::OrderedDict{Int64, Individual} = Dict()
+    pedigree = OrderedDict{Int64, Individual}()
     for (index, row) in enumerate(eachrow(dataframe))
         pedigree[row.ind] = Individual(
             row.ind, # ID
