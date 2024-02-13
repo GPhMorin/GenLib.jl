@@ -13,6 +13,8 @@ using Test
 
     genea140 = gen.genea140
     ped = gen.genealogy(genea140)
+    @test repr(MIME("text/plain"), ped) == "A pedigree with:\n41523 individuals;\n68248 parent-child relations;\n20773 men;\n20750 women;\n140 subjects;\n18 generations."
+    @test repr(MIME("text/plain"), ped[33724]) == "ind: 33724\nfather: 10086\nmother: 10087\nsex: 1"
     @test ped[33724].children[2].father.ID == 33724
     @test sum(gen.gc(ped)) == 140
 
