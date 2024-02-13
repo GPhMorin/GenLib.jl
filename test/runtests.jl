@@ -18,6 +18,10 @@ using Test
     @test gen.children(ped, 33724) == [10033, 113470]
     @test ped[33724].children[2].father.ID == 33724
     @test sum(gen.gc(ped)) == 140
+    @test gen.descendant(ped, 10086) == [10009, 10018, 10033, 33724, 105379, 113470,
+                                         408065, 408069, 408075, 408375, 408937, 409808,
+                                         623919, 712249, 712256, 860834, 860838, 868738,
+                                         868740, 868743]
 
     geneaJi = gen.geneaJi
     ped = gen.genealogy(geneaJi)
