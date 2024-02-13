@@ -45,6 +45,13 @@ using Test
     @test gen.findFounders(ped, [1, 2, 29]) == [17, 19, 20, 25, 26]
     @test gen.rec(ped) == [3, 3, 3, 1, 3, 3]
     @test gen.findDistance(ped, [1, 2], 25) == 12
+    @test gen.occ(ped) == [6 6 2;
+                           8 8 2;
+                           1 1 2;
+                           0 0 1;
+                           8 8 3;
+                           8 8 3]
+    @test gen.occ(ped, typeOcc = "TOTAL") == [14; 18; 4; 1; 19; 19;;]
 
     gen.save_genealogy(ped, "test.asc")
     ped = gen.genealogy("test.asc")

@@ -21,14 +21,14 @@ function occ(
     ancestors::Vector{Int64} = founder(pedigree),
     typeOcc::String = "IND")
     
-    occurrence_matrix = Matrix{Int64}(undef, length(pro), length(ancestors))
+    occurrence_matrix = Matrix{Int64}(undef, length(ancestors), length(pro))
     for ID in ancestors
         pedigree[ID].ancestor = true
     end
-    for (i, probandID) in enumerate(pro)
+    for (j, probandID) in enumerate(pro)
         proband = pedigree[probandID]
         occur!(proband)
-        for (j, ancestorID) in enumerate(ancestors)
+        for (i, ancestorID) in enumerate(ancestors)
             ancestor = pedigree[ancestorID]
             occurrence_matrix[i, j] = ancestor.occurrence
             ancestor.occurrence = 0
@@ -41,7 +41,7 @@ function occ(
     if typeOcc == "IND"
         return occurrence_matrix
     elseif typeOcc == "TOTAL"
-        return sum(occurrence_matrix, dims=1)'
+        return sum(occurrence_matrix, dims=2)
     end
 end
 
