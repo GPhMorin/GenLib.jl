@@ -3,9 +3,9 @@
 ```@docs
 genea140
 geneaJi
-Pedigree
 pop140
 Individual
+Pedigree
 STATE
 branching
 children
