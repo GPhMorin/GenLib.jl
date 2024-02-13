@@ -27,17 +27,6 @@ export ancestor,
        pro,
        rec
 
-# Custom functions
-export check_order,
-       descendant,
-       findDistances,
-       get_paths,
-       population,
-       refer,
-       remove_relatives!,
-       save_genealogy,
-       ϕ
-
 # GENLIB datasets
 """
 Genealogical information for 140 individuals from the Quebec Reference Sample.

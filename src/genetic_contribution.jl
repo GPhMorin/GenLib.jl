@@ -1,5 +1,5 @@
 """
-    gc(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
+    gc(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
 
 Return a matrix of the genetic contribution
 of each ancestor (columns) to each proband (rows).
@@ -14,7 +14,7 @@ contributions = gen.gc(ped)
 ```
 """
 function gc(
-    pedigree::OrderedDict{Int64, Individual};
+    pedigree::Pedigree;
     probandIDs::Vector{Int64} = pro(pedigree),
     ancestorIDs::Vector{Int64} = founder(pedigree))
     

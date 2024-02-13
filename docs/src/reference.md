@@ -3,12 +3,13 @@
 ```@docs
 genea140
 geneaJi
+Pedigree
 pop140
 Individual
 STATE
 branching
 children
-findDistance(::OrderedDict{Int64, Individual}, ::Vector{Int64}, ::Int64)
+findDistance(::Pedigree, ::Vector{Int64}, ::Int64)
 findFounders
 findMRCA
 founder

@@ -51,12 +51,12 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
 end
 
 """
-    phi(pedigree::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+    phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
 
 Return a rectangle matrix of kinship coefficients between row IDs and column IDs.
 The kinship of someone with themself is replaced with their inbreeding.
 """
-function phi(pedigree::OrderedDict{Int64, Individual}, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     Φ = zeros(length(rowIDs), length(columnIDs)) # Initialize the kinship matrix
     Threads.@threads for i in eachindex(rowIDs)
         Threads.@threads for j in eachindex(columnIDs)
@@ -95,7 +95,7 @@ function cut_vertex(individual::Individual, candidateID::Int64)
 end
 
 """
-    cut_vertices(pedigree::OrderedDict{Int64, Individual})
+    cut_vertices(pedigree::Pedigree)
 
 Return the IDs of the cut vertices as defined in [Kirkpatrick et al., 2019](@ref).
 
@@ -103,7 +103,7 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function cut_vertices(pedigree::OrderedDict{Int64, Individual})
+function cut_vertices(pedigree::Pedigree)
     vertices = Int64[]
     probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
@@ -150,14 +150,14 @@ function cut_vertices(pedigree::OrderedDict{Int64, Individual})
 end
 
 """
-    phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+    phi(pedigree::Pedigree, Ψ::Matrix{Float64})
 
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
 An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
-function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
+function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
     probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
     probands = [pedigree[ID] for ID in probandIDs]
     founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
@@ -223,7 +223,7 @@ function phi(pedigree::OrderedDict{Int64, Individual}, Ψ::Matrix{Float64})
 end
 
 """
-    phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
 
 Return the square matrix of the pairwise kinship coefficients of a set of probands.
 
@@ -240,7 +240,7 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)

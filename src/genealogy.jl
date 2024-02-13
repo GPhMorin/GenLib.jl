@@ -54,6 +54,48 @@ function Base.show(io::IO, individual::Individual)
 end
 
 """
+    Pedigree = OrderedDict{Int64, Individual}
+
+A particular case of an `OrderedDict` containing individuals accessed by ID.
+"""
+Pedigree = OrderedDict{Int64, Individual}
+
+function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
+    n = 0
+    parent_child = 0
+    men = 0
+    women = 0
+    probands = 0
+    depth = 0
+    for (_, individual) in pedigree
+        n += 1
+        children = length(individual.children)
+        if children > 0
+            parent_child += children
+        else
+            probands += 1
+        end
+        if individual.sex == 1
+            men += 1
+        else
+            women += 1
+        end
+        depth = max(depth, max_depth(individual))
+    end
+    println(io, "A pedigree with:")
+    println(io, n, " individuals;")
+    println(io, parent_child, " parent-child relations;")
+    man = men == 1 ? "man" : "men"
+    println(io, men, " ", man, ";")
+    woman = women == 1 ? "woman" : "women"
+    println(io, women, " ", woman, ";")
+    s = probands == 1 ? "" : "s"
+    println(io, probands, " subject", s, ";")
+    s = depth == 1 ? "" : "s"
+    print(io, depth, " generation", s, ".")
+end
+
+"""
     genealogy(dataframe::DataFrame)
 
 Return an ordered pedigree of individuals from a `DataFrame`.
@@ -72,7 +114,7 @@ ped = gen.genealogy(df)
 ```
 """
 function genealogy(dataframe::DataFrame)
-    pedigree = OrderedDict{Int64, Individual}()
+    pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataframe))
         pedigree[row.ind] = Individual(
             row.ind, # ID
@@ -118,7 +160,7 @@ ped = gen.genealogy(genea140)
 """
 function genealogy(filename::String)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
-    pedigree = OrderedDict{Int64, Individual}()
+    pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataset))
         pedigree[row.ind] = Individual(
             row.ind, # ID
@@ -150,12 +192,12 @@ function genealogy(filename::String)
 end
 
 """
-    order_pedigree(genealogy::OrderedDict{Int64, Individual})
+    order_pedigree(pedigree::Pedigree)
 
 Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
-function order_pedigree!(pedigree::OrderedDict{Int64, Individual})
+function order_pedigree!(pedigree::Pedigree)
     individuals = [individual for (ID, individual) in pedigree]
     depths = [max_depth(individual) for individual in individuals]
     order = sortperm(depths)
@@ -169,7 +211,7 @@ function order_pedigree!(pedigree::OrderedDict{Int64, Individual})
 end
 
 """
-    save_genealogy(genealogy::OrderedDict{Int64, Individual}, path::String, sorted::Bool = false)
+    save_genealogy(pedigree::Pedigree, path::String, sorted::Bool = false)
 
 Export the pedigree as a CSV file at a given `path`.
 
@@ -179,7 +221,7 @@ will appear in the same order as in the genealogy.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
-function save_genealogy(genealogy::OrderedDict{Int64, Individual}, path::String, sorted::Bool = false)
-    df = genout(genealogy, sorted = sorted)
+function save_genealogy(pedigree::Pedigree, path::String, sorted::Bool = false)
+    df = genout(pedigree, sorted = sorted)
     CSV.write(path, df, delim="\t")
 end

@@ -1,9 +1,9 @@
 """
-    remove_relatives!(probandIDs::Vector{Int64}, pedigree::OrderedDict{Int64, Individual})
+    remove_relatives!(probandIDs::Vector{Int64}, pedigree::Pedigree)
 
 Remove IDs of individuals who are first cousins or closer in the genealogy.
 """
-function remove_relatives!(probandIDs::Vector{Int64}, pedigree::OrderedDict{Int64, Individual})
+function remove_relatives!(probandIDs::Vector{Int64}, pedigree::Pedigree)
     candidateIDs = copy(probandIDs)
     empty!(probandIDs)
     for probandID in candidateIDs

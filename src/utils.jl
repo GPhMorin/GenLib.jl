@@ -1,5 +1,5 @@
 """
-    pro(pedigree::OrderedDict{Int64, Individual})
+    pro(pedigree::Pedigree)
 
 Return a vector of proband IDs in alphabetical order.
 
@@ -12,13 +12,13 @@ ped = gen.genealogy(genea140)
 probands = gen.pro(ped)
 ```
 """
-function pro(pedigree::OrderedDict{Int64, Individual})
+function pro(pedigree::Pedigree)
     probands = [individual.ID for (_, individual) in pedigree if isempty(individual.children)]
     sort(probands)
 end
 
 """
-    founder(pedigree::OrderedDict{Int64, Individual})
+    founder(pedigree::Pedigree)
 
 Return a vector of founder IDs in alphabetical order.
 
@@ -31,7 +31,7 @@ ped = gen.genealogy(genea140)
 founders = gen.founder(ped)
 ```
 """
-function founder(pedigree::OrderedDict{Int64, Individual})
+function founder(pedigree::Pedigree)
     founders = [individual.ID for (_, individual) in pedigree if isnothing(individual.father) && isnothing(individual.mother)]
     sort(founders)
 end
@@ -50,11 +50,11 @@ function findFounders(pedigree::OrderedDict{Int64}, IDs::Vector{Int64})
 end
 
 """
-    get_paths(pedigree::OrderedDict{Int64, Individual}, individual::Individual)
+    get_paths(pedigree::Pedigree, individual::Individual)
 
 Return the paths from an individual to their ancestors.
 """
-function get_paths(pedigree::OrderedDict{Int64, Individual}, individual::Individual)
+function get_paths(pedigree::Pedigree, individual::Individual)
     paths = Vector{Vector{Int64}}([[individual.ID]])
     if !isnothing(individual.father)
         fathers_paths = get_paths(pedigree, individual.father)
@@ -74,21 +74,21 @@ function get_paths(pedigree::OrderedDict{Int64, Individual}, individual::Individ
 end
 
 """
-    children(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
+    children(pedigree::Pedigree, ID::Int64)
 
 Return the children of an individual.
 """
-function children(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
+function children(pedigree::Pedigree, ID::Int64)
     individual = pedigree[ID]
     sort([child.ID for child in individual.children])
 end
 
 """
-    descendant(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
+    descendant(pedigree::Pedigree, ID::Int64)
 
 Return the descendants of an individual.
 """
-function descendant(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
+function descendant(pedigree::Pedigree, ID::Int64)
     descendantIDs = Set{Int64}()
     stack = Stack{Int64}()
     push!(stack, ID)
@@ -104,12 +104,12 @@ function descendant(pedigree::OrderedDict{Int64, Individual}, ID::Int64)
 end
 
 """
-    rec(pedigree::OrderedDict{Int64, Individual}, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
+    rec(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
 
 Return the number of descendants of each ancestor.
 """
 function rec(
-    pedigree::OrderedDict{Int64, Individual},
+    pedigree::Pedigree,
     probandIDs::Vector{Int64} = pro(pedigree),
     ancestorIDs::Vector{Int64} = founder(pedigree))
     
@@ -123,7 +123,7 @@ function rec(
 end
 
 """
-    genout(pedigree::OrderedDict{Int64, Individual}, sorted::Bool = false)
+    genout(pedigree::Pedigree, sorted::Bool = false)
 
 Return a pedigree as a `DataFrame`.
 
@@ -140,7 +140,7 @@ ped = gen.genealogy(geneaJi)
 gen.genout(ped)
 ```
 """
-function genout(pedigree::OrderedDict{Int64, Individual}; sorted::Bool = false)
+function genout(pedigree::Pedigree; sorted::Bool = false)
     inds = Int64[]
     fathers = Int64[]
     mothers = Int64[]

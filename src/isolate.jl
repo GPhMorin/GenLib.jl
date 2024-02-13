@@ -26,13 +26,13 @@ function mark_descendants!(individual::Individual)
 end
 
 """
-    branching(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
+    branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
 
 Return a pedigree that filters individuals who are in the paths
 between select probands and ancestors.
 """
-function branching(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
-    isolated_pedigree = OrderedDict{Int64, Individual}()
+function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
+    isolated_pedigree = Pedigree()
     for ID in pro
         proband = pedigree[ID]
         mark_ancestors!(proband)

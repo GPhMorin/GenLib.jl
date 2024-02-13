@@ -1,5 +1,5 @@
 """
-    occ(pedigree::OrderedDict{Int64, Individual}; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy), typeOcc::String = "IND")
+    occ(pedigree::Pedigree; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy), typeOcc::String = "IND")
 
 Return a matrix of ancestors' occurrences.
 
@@ -16,7 +16,7 @@ occ = gen.occ(ped, typeOcc = "TOTAL")
 ```
 """
 function occ(
-    pedigree::OrderedDict{Int64, Individual};
+    pedigree::Pedigree;
     pro::Vector{Int64} = pro(pedigree),
     ancestors::Vector{Int64} = founder(pedigree),
     typeOcc::String = "IND")
