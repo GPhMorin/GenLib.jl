@@ -64,4 +64,8 @@ using Test
     order = sort(IDs)
     @test IDs == IDs[order]
     rm("test.asc")
+
+    pop140 = gen.pop140
+    pop = gen.population(pop140)
+    @test pop[217891] == "Saguenay"
 end
