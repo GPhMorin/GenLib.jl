@@ -25,13 +25,11 @@ Recursively add IDs of individuals who are first cousins or closer.
 function add_relatives!(relativeIDs::Vector{Int64}, individual::Individual, depth::Int64)
     push!(relativeIDs, individual.ID)
     if depth < 5
-        """
-        Self = 0
-        Parent/child = 1
-        Grandparent/grandchild = 2
-        Oncle/aunt/nephew/niece = 3
-        Cousin/great-grandparent/great-grandchild/grand-nephew/grand-niece = 4
-        """
+    # Self = 0
+    # Parent/child = 1
+    # Grandparent/grandchild = 2
+    # Oncle/aunt/nephew/niece = 3
+    # Cousin/great-grandparent/great-grandchild/grand-nephew/grand-niece = 4
         if !isnothing(individual.father)
             add_relatives!(relativeIDs, individual.father, depth += 1)
         end
