@@ -223,7 +223,7 @@ will appear in the same order as in the genealogy.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
-function save_genealogy(pedigree::Pedigree, path::String, sorted::Bool = false)
+function save_genealogy(pedigree::Pedigree, path::String; sorted::Bool = false)
     df = genout(pedigree, sorted = sorted)
     CSV.write(path, df, delim="\t")
 end

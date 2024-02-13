@@ -50,4 +50,11 @@ using Test
     ped = gen.genealogy("test.asc")
     @test length(ped) == 29
     rm("test.asc")
+
+    gen.save_genealogy(ped, "test.asc", sorted=true)
+    ped = gen.genealogy("test.asc")
+    IDs = [ID for ID in collect(keys(ped))]
+    order = sort(IDs)
+    @test IDs == IDs[order]
+    rm("test.asc")
 end
