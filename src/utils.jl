@@ -45,7 +45,7 @@ function findFounders(pedigree::Pedigree, IDs::Vector{Int64})
     ancestorIDs = [ancestor(pedigree, ID) for ID in IDs]
     common_ancestorIDs = ∩(ancestorIDs...)
     founderIDs = [ancestorID for ancestorID in common_ancestorIDs
-                  if isnothing(pedigree[ancestorID].father) && isnothing([ancestorID].mother)]
+                  if isnothing(pedigree[ancestorID].father) && isnothing(pedigree[ancestorID].mother)]
     sort(founderIDs)
 end
 
