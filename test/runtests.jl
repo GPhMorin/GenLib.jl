@@ -34,6 +34,7 @@ using Test
                            0.072265625 0.072265625 0.53515625]
     @test gen.findFounders(ped, [1, 2, 29]) == [17, 19, 20, 25, 26]
     @test gen.rec(ped) == [3, 3, 3, 1, 3, 3]
+    @test gen.findDistance(ped, [1, 2], 25) == 12
 
     gen.save_genealogy(ped, "test.asc")
     ped = gen.genealogy("test.asc")
