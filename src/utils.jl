@@ -37,11 +37,11 @@ function founder(pedigree::Pedigree)
 end
 
 """
-    findFounders(pedigree::OrderedDict{Int64}, IDs::Vector{Int64})
+    findFounders(pedigree::Pedigree, IDs::Vector{Int64})
 
 Return a vector of founders from whom the `IDs` descend.
 """
-function findFounders(pedigree::OrderedDict{Int64}, IDs::Vector{Int64})
+function findFounders(pedigree::Pedigree, IDs::Vector{Int64})
     ancestorIDs = [ancestor(pedigree, ID) for ID in IDs]
     common_ancestorIDs = ∩(ancestorIDs...)
     founderIDs = [ancestorID for ancestorID in common_ancestorIDs
