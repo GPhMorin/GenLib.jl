@@ -29,9 +29,19 @@ using Test
     @test gen.founder(ped) == [17, 19, 20, 23, 25, 26]
     @test gen.findMRCA(ped, [1, 2, 29]) == ([14, 20], [4 4; 4 4; 3 3])
     @test gen.phi(ped[1], ped[2]) == 0.37109375
-    @test gen.phi(ped) == [0.591796875 0.37109375 0.072265625;
+    @test gen.phi(ped, verbose=true) == [0.591796875 0.37109375 0.072265625;
                            0.37109375 0.591796875 0.072265625;
                            0.072265625 0.072265625 0.53515625]
+    @test gen.phi(ped, [1, 2], [1, 2, 29]) == [0.591796875 0.37109375 0.072265625; 
+                                               0.37109375 0.591796875 0.072265625]
+    founder1 = ped[17]
+    founder1.sort = 1
+    founder2 = ped[19]
+    founder2.sort = 2
+    Ψ = [0.5 0; 0 0.5]
+    @test gen.phi(founder1, founder2, Ψ) == 0
+    probands = gen.pro(ped)
+    @test all(ped[proband].state == gen.UNEXPLORED for proband in probands)
     @test gen.findFounders(ped, [1, 2, 29]) == [17, 19, 20, 25, 26]
     @test gen.rec(ped) == [3, 3, 3, 1, 3, 3]
     @test gen.findDistance(ped, [1, 2], 25) == 12
