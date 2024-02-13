@@ -83,8 +83,10 @@ function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
         depth = max(depth, max_depth(individual))
     end
     println(io, "A pedigree with:")
-    println(io, n, " individuals;")
-    println(io, parent_child, " parent-child relations;")
+    s = n == 1 ? "" : "s"
+    println(io, n, " individual", s, ";")
+    s = parent_child == 1 ? "" : "s"
+    println(io, parent_child, " parent-child relation", s, ";")
     man = men == 1 ? "man" : "men"
     println(io, men, " ", man, ";")
     woman = women == 1 ? "woman" : "women"
