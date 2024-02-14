@@ -12,8 +12,9 @@ export Individual,
        Pedigree,
        STATE
 
-# GENLIB functions
-export ancestor,
+# GENLIB types and functions
+export GenMatrix,
+       ancestor,
        branching,
        children,
        findDistance,
