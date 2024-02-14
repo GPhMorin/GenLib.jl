@@ -97,7 +97,6 @@ include("kinship.jl")
 include("mrca.jl")
 include("meioses.jl")
 include("population.jl")
-include("remove_relatives.jl")
 include("occurrence.jl")
 
 end
