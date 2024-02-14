@@ -51,26 +51,6 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
 end
 
 """
-    phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-
-Return a rectangle matrix of kinship coefficients between row IDs and column IDs.
-The kinship of someone with themself is replaced with their inbreeding.
-"""
-function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-    Φ = zeros(length(rowIDs), length(columnIDs)) # Initialize the kinship matrix
-    Threads.@threads for i in eachindex(rowIDs)
-        Threads.@threads for j in eachindex(columnIDs)
-            IDᵢ = rowIDs[i]
-            IDⱼ = columnIDs[j]
-            individualᵢ = pedigree[IDᵢ]
-            individualⱼ = pedigree[IDⱼ]
-            Φ[i, j] = phi(individualᵢ, individualⱼ)
-        end
-    end
-    Φ
-end
-
-"""
     cut_vertex(individual::Individual, candidateID::Int64)
 
 Return whether an individual can be used as a cut vertex.

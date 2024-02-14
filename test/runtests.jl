@@ -33,8 +33,6 @@ using Test
                                          0.37109375 0.591796875 0.072265625;
                                          0.072265625 0.072265625 0.53515625]
     @test isnothing(gen.phi(ped, estimate=true))
-    @test gen.phi(ped, [1, 2], [1, 2, 29]) == [0.591796875 0.37109375 0.072265625; 
-                                               0.37109375 0.591796875 0.072265625]
     founder1 = ped[17]
     founder1.sort = 1
     founder2 = ped[19]
