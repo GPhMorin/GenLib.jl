@@ -1,7 +1,7 @@
 # GenLib.jl
 
-[![Build Status](https://github.com/GPhMorin/GenLib.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/GPhMorin/GenLib.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gphmorin.github.io/GenLib.jl/dev)
+[![Build Status](https://github.com/GPhMorin/GenLib.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/GPhMorin/GenLib.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![codecov](https://codecov.io/gh/GPhMorin/GenLib.jl/graph/badge.svg?token=3A5C7F4H87)](https://codecov.io/gh/GPhMorin/GenLib.jl)
 
 A pure Julia port of R's GENLIB genetics and genealogical library.
