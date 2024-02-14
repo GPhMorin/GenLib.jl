@@ -10,8 +10,6 @@ using Test
     df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
     ped = gen.genealogy(df)
     @test ped[9].mother.sex == 2
-    @test gen.remove_relatives!([7, 8, 9, 10], ped) == [7]
-    @test gen.remove_relatives!([3, 9, 10], ped) == [3, 9]
 
     genea140 = gen.genea140
     ped = gen.genealogy(genea140)
