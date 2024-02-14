@@ -2,7 +2,7 @@
     struct GenMatrix
         individuals::Vector{Int64}
         ancestors::Vector{Int64}
-        matrix::Matrix{Int64}
+        meioses::Matrix{Int64}
     end
 
 A matrix that goes with individuals as rows and ancestors as columns.
