@@ -140,11 +140,8 @@ function cut_vertices(pedigree::Pedigree)
             end
         end
     end
-    for proband in probands # Unmark the probands
-        proband.state = UNEXPLORED
-    end
-    for founder in founders # Unmark the founders
-        founder.state = UNEXPLORED
+    for (_, individual) in pedigree # Unmark the individuals
+        individual.state = UNEXPLORED
     end
     sort(collect(Set(vertices)))
 end
