@@ -144,7 +144,7 @@ function genealogy(dataframe::DataFrame)
             push!(pedigree[mother].children, pedigree[row.ind])
         end
     end
-    order_pedigree!(pedigree)
+    _order_pedigree!(pedigree)
 end
 
 """
@@ -190,16 +190,16 @@ function genealogy(filename::String)
             push!(pedigree[mother].children, pedigree[row.ind])
         end
     end
-    order_pedigree!(pedigree)
+    _order_pedigree!(pedigree)
 end
 
 """
-    order_pedigree(pedigree::Pedigree)
+    _order_pedigree(pedigree::Pedigree)
 
 Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
-function order_pedigree!(pedigree::Pedigree)
+function _order_pedigree!(pedigree::Pedigree)
     individuals = [individual for (ID, individual) in pedigree]
     depths = [max_depth(individual) for individual in individuals]
     order = sortperm(depths)

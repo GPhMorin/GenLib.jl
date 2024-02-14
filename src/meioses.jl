@@ -1,9 +1,9 @@
 """
-    findDistances(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
+    _findDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
 
 Return a vector of distances between an individual and their ancestor.
 """
-function findDistances(
+function _findDistance(
     pedigree::Pedigree,
     descendantID::Int64,
     ancestorID::Int64)
@@ -20,12 +20,12 @@ function findDistances(
 end
 
 """
-    findDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
+    _findMinDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
 
 Return the minimum distance between an individual and their ancestor.
 """
-function findDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
-    lengths = findDistances(pedigree, descendantID, ancestorID)
+function _findMinDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
+    lengths = _findDistance(pedigree, descendantID, ancestorID)
     minimum(lengths)
 end
 
@@ -35,7 +35,7 @@ end
 Return the distance between two individuals and their ancestor.
 """
 function findDistance(pedigree::Pedigree, IDs::Vector{Int64}, ancestorID::Int64)
-    distance₁ = findDistance(pedigree, IDs[1], ancestorID)
-    distance₂ = findDistance(pedigree, IDs[2], ancestorID)
+    distance₁ = _findMinDistance(pedigree, IDs[1], ancestorID)
+    distance₂ = _findMinDistance(pedigree, IDs[2], ancestorID)
     distance₁ + distance₂
 end

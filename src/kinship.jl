@@ -51,7 +51,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
 end
 
 """
-    cut_vertex(individual::Individual, candidateID::Int64)
+    _cut_vertex(individual::Individual, candidateID::Int64)
 
 Return whether an individual can be used as a cut vertex.
 
@@ -59,7 +59,7 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function cut_vertex(individual::Individual, candidateID::Int64)
+function _cut_vertex(individual::Individual, candidateID::Int64)
     value = true
     for child in individual.children
         # Check if going down the pedigree
@@ -68,14 +68,14 @@ function cut_vertex(individual::Individual, candidateID::Int64)
         if child.state == PROBAND
             return false
         elseif child.ID != candidateID
-            value = value && cut_vertex(child, candidateID)
+            value = value && _cut_vertex(child, candidateID)
         end
     end
     value
 end
 
 """
-    cut_vertices(pedigree::Pedigree)
+    _cut_vertices(pedigree::Pedigree)
 
 Return the IDs of the cut vertices as defined in [Kirkpatrick et al., 2019](@ref).
 
@@ -83,7 +83,7 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function cut_vertices(pedigree::Pedigree)
+function _cut_vertices(pedigree::Pedigree)
     vertices = Int64[]
     probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
@@ -104,7 +104,7 @@ function cut_vertices(pedigree::Pedigree)
         sourceIDs = ancestor(pedigree, candidate.ID)
         is_candidate = true
         for sourceID in sourceIDs
-            if !cut_vertex(pedigree[sourceID], candidate.ID)
+            if !_cut_vertex(pedigree[sourceID], candidate.ID)
                 is_candidate = false
                 break
             end
@@ -224,13 +224,13 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verb
         Ψ[f, f] = 0.5
     end
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    upperIDs = cut_vertices(isolated_pedigree)
+    upperIDs = _cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
     while upperIDs != lowerIDs
         isolated_pedigree = branching(pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
-        upperIDs = cut_vertices(isolated_pedigree)
+        upperIDs = _cut_vertices(isolated_pedigree)
         pushfirst!(C, upperIDs)
     end
     if verbose || estimate

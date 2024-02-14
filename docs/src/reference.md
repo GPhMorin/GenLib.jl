@@ -4,6 +4,7 @@
 genea140
 geneaJi
 pop140
+GenMatrix
 Individual
 Pedigree
 STATE

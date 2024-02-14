@@ -1,27 +1,27 @@
 """
-    mark_ancestors!(individual::Individual)
+    _mark_ancestors!(individual::Individual)
 
 Recursively mark the ancestors of an `individual`.
 """
-function mark_ancestors!(individual::Individual)
+function _mark_ancestors!(individual::Individual)
     individual.ancestor = true
     if !isnothing(individual.father)
-        mark_ancestors!(individual.father)
+        _mark_ancestors!(individual.father)
     end
     if !isnothing(individual.mother)
-        mark_ancestors!(individual.mother)
+        _mark_ancestors!(individual.mother)
     end
 end
 
 """
-    mark_descendants!(individual::Individual)
+    _mark_descendants!(individual::Individual)
 
 Recursively mark the descendants of an `individual`.
 """
-function mark_descendants!(individual::Individual)
+function _mark_descendants!(individual::Individual)
     individual.descendant = true
     for child in individual.children
-        mark_descendants!(child)
+        _mark_descendants!(child)
     end
 end
 
@@ -35,11 +35,11 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ances
     isolated_pedigree = Pedigree()
     for ID in pro
         proband = pedigree[ID]
-        mark_ancestors!(proband)
+        _mark_ancestors!(proband)
     end
     for ID in ancestors
         ancestor = pedigree[ID]
-        mark_descendants!(ancestor)
+        _mark_descendants!(ancestor)
     end
     index = 0
     for (ID, individual) in pedigree

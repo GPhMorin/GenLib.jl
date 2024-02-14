@@ -15,20 +15,21 @@ contributions = gen.gc(ped)
 """
 function gc(
     pedigree::Pedigree;
-    probandIDs::Vector{Int64} = pro(pedigree),
-    ancestorIDs::Vector{Int64} = founder(pedigree))
+    pro::Vector{Int64} = pro(pedigree),
+    ancestors::Vector{Int64} = founder(pedigree))
     
     # Ported from GENLIB's Congen
-    matrix = zeros(length(probandIDs), length(ancestorIDs))
-    probands = [pedigree[ID] for ID in probandIDs]
-    ancestors = [pedigree[ID] for ID in ancestorIDs]
-    for proband in probands
+    matrix = zeros(length(pro), length(ancestors))
+    for ID in pro
+        proband = pedigree[ID]
         proband.probability = 0.
         proband.state = PROBAND
     end
-    for (index₁, ancestor) in enumerate(ancestors)
-        contribute!(ancestor)
-        for (index₂, proband) in enumerate(probands)
+    for (index₁, ancestorID) in enumerate(ancestors)
+        ancestor = pedigree[ancestorID]
+        _contribute!(ancestor)
+        for (index₂, probandID) in enumerate(pro)
+            proband = pedigree[probandID]
             matrix[index₂, index₁] = proband.probability
             proband.probability = 0.
         end
@@ -41,16 +42,16 @@ function gc(
 end
 
 """
-    contribute!(individual::Individual, depth::Int64 = 0)
+    _contribute!(individual::Individual, depth::Int64 = 0)
 
 Recursively compute the genetic contributions of an individual.
 """
-function contribute!(individual::Individual, depth::Int64 = 0)
+function _contribute!(individual::Individual, depth::Int64 = 0)
     # Ported from GENLIB's ExploreConGenProposant
     if individual.state == PROBAND
         individual.probability += 0.5 ^ depth
     end
     for child in individual.children
-        contribute!(child, depth + 1)
+        _contribute!(child, depth + 1)
     end
 end

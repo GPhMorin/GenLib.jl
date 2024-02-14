@@ -27,7 +27,10 @@ using Test
     ped = gen.genealogy(geneaJi)
     @test gen.pro(ped) == [1, 2, 29]
     @test gen.founder(ped) == [17, 19, 20, 23, 25, 26]
-    @test gen.findMRCA(ped, [1, 2, 29]) == ([14, 20], [4 4; 4 4; 3 3])
+    genMatrix = gen.findMRCA(ped, [1, 2, 29])
+    @test genMatrix.individuals == [1, 2, 29]
+    @test genMatrix.ancestors == [14, 20]
+    @test genMatrix.meioses == [4 4; 4 4; 3 3]
     @test gen.phi(ped[1], ped[2]) == 0.37109375
     @test gen.phi(ped, verbose=true) == [0.591796875 0.37109375 0.072265625;
                                          0.37109375 0.591796875 0.072265625;
@@ -50,6 +53,7 @@ using Test
                            8 8 3;
                            8 8 3]
     @test gen.occ(ped, typeOcc = "TOTAL") == [14; 18; 4; 1; 19; 19;;]
+    @test gen._findMinDistanceMRCA(ped, [2, 29]) == 7
 
     gen.save_genealogy(ped, "test.asc")
     ped = gen.genealogy("test.asc")
