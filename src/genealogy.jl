@@ -33,7 +33,7 @@ mutable struct Individual
     children::Vector{Individual}
     sex::Int64
     index::Int64
-    stats::Vector{Any}
+    stats::Dict{String, Any}
 end
 
 function Base.show(io::IO, individual::Individual)
@@ -108,7 +108,7 @@ ped = gen.genealogy(df)
 function genealogy(dataframe::DataFrame; sort::Bool = true)
     pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataframe))
-        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index, [])
+        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index, Dict{String, Any}())
     end
     for row in eachrow(dataframe)
         father = row.father
@@ -145,7 +145,7 @@ function genealogy(filename::String; sort = true)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataset))
-        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index, [])
+        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index, Dict{String, Any}())
     end
     for row in eachrow(dataset)
         father = row.father

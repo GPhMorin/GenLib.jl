@@ -37,9 +37,9 @@ using Test
                                          0.072265625 0.072265625 0.53515625]
     @test isnothing(gen.phi(ped, estimate=true))
     founder1 = ped[17]
-    push!(founder1.stats, 1)
+    founder1.stats["index"] = 1
     founder2 = ped[19]
-    push!(founder2.stats, 2)
+    founder2.stats["index"] = 2
     Ψ = [0.5 0; 0 0.5]
     @test gen.phi(founder1, founder2, Ψ) == 0
     empty!(founder1.stats)

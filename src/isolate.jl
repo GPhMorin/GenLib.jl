@@ -4,7 +4,7 @@
 Recursively mark the ancestors of an `individual`.
 """
 function _mark_ancestors!(individual::Individual)
-    individual.stats[1] = true
+    individual.stats["is_ancestor"] = true
     if !isnothing(individual.father)
         _mark_ancestors!(individual.father)
     end
@@ -19,7 +19,7 @@ end
 Recursively mark the descendants of an `individual`.
 """
 function _mark_descendants!(individual::Individual)
-    individual.stats[2] = true
+    individual.stats["is_descendant"] = true
     for child in individual.children
         _mark_descendants!(child)
     end
@@ -34,7 +34,8 @@ between select probands and ancestors.
 function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
     isolated_pedigree = Pedigree()
     for (_, individual) in pedigree
-        individual.stats = [false, false]
+        individual.stats["is_ancestor"] = false
+        individual.stats["is_descendant"] = false
     end
     for ID in pro
         proband = pedigree[ID]
@@ -46,9 +47,9 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ances
     end
     index = 0
     for (ID, individual) in pedigree
-        if (individual.stats[1] && individual.stats[2])
+        if (individual.stats["is_ancestor"] && individual.stats["is_descendant"])
             index += 1
-            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, index, [])
+            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, index, Dict{String, Any}())
         end
     end
     for (ID, individual) in isolated_pedigree
