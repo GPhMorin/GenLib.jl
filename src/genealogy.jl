@@ -18,15 +18,10 @@ end
         ID::Int64
         father::Union{Nothing, Individual}
         mother::Union{Nothing, Individual}
-        index::Int64
         children::Vector{Individual}
         sex::Int64
-        state::STATE
-        probability::Float64
-        sort::Int64
-        ancestor::Bool
-        descendant::Bool
-        occurrence::Int64
+        index::Int64
+        stats::Vector{Any}
     end
 
 The unit structure of a pedigree.
@@ -35,15 +30,10 @@ mutable struct Individual
     ID::Int64
     father::Union{Nothing, Individual}
     mother::Union{Nothing, Individual}
-    index::Int64
     children::Vector{Individual}
     sex::Int64
-    state::STATE
-    probability::Float64
-    sort::Int64
-    ancestor::Bool
-    descendant::Bool
-    occurrence::Int64
+    index::Int64
+    stats::Dict{String, Any}
 end
 
 function Base.show(io::IO, individual::Individual)
@@ -118,19 +108,7 @@ ped = gen.genealogy(df)
 function genealogy(dataframe::DataFrame; sort::Bool = true)
     pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataframe))
-        pedigree[row.ind] = Individual(
-            row.ind, # ID
-            nothing, # father
-            nothing, # mother
-            index, # index in the genealogy
-            [], # children
-            row.sex, # sex (1 for male, 2 for female)
-            UNEXPLORED, # status
-            0., # probability
-            0, # sort
-            false, # whether the individual is an ancestor
-            false, # whether the individual is a descendant
-            0) # occurrence
+        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index, Dict{String, Any}())
     end
     for row in eachrow(dataframe)
         father = row.father
@@ -167,19 +145,7 @@ function genealogy(filename::String; sort = true)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataset))
-        pedigree[row.ind] = Individual(
-            row.ind, # ID
-            nothing, # father
-            nothing, # mother
-            index, # index in the genealogy
-            [], # children
-            row.sex, # sex (1 for male, 2 for female)
-            UNEXPLORED, # status
-            0., # probability
-            0, # sort
-            false, # whether the individual is an ancestor
-            false, # whether the individual is a descendant
-            0) # occurrence
+        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index, Dict{String, Any}())
     end
     for row in eachrow(dataset)
         father = row.father
@@ -206,7 +172,7 @@ Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
 function _order_pedigree!(pedigree::Pedigree)
-    individuals = [individual for (ID, individual) in pedigree]
+    individuals = [individual for (_, individual) in pedigree]
     depths = [max_depth(individual) for individual in individuals]
     order = sortperm(depths)
     sorted_individuals = individuals[order]

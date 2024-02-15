@@ -19,8 +19,8 @@ gen.phi(pro1, pro2)
 ```
 """
 function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
-    if (individualᵢ.sort != 0) && (individualⱼ.sort != 0) # They are both founders
-        return Ψ[individualᵢ.sort, individualⱼ.sort]
+    if !isempty(individualᵢ.stats) && !isempty(individualⱼ.stats) # They are both founders
+        return Ψ[individualᵢ.stats["index"], individualⱼ.stats["index"]]
     else # At least one of the individuals is not a founder
         value = 0.
         if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
@@ -65,7 +65,7 @@ function _cut_vertex(individual::Individual, candidateID::Int64)
         # Check if going down the pedigree
         # while avoiding the candidate ID
         # reaches a proband (sink) anyway
-        if child.state == PROBAND
+        if child.stats["state"] == PROBAND
             return false
         elseif child.ID != candidateID
             value = value && _cut_vertex(child, candidateID)
@@ -87,15 +87,18 @@ function _cut_vertices(pedigree::Pedigree)
     vertices = Int64[]
     probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
-    for proband in probands # Mark the probands
-        proband.state = PROBAND
-    end
     founderIDs = founder(pedigree)
-    founders = [pedigree[ID] for ID in founderIDs]
-    for founder in founders # Mark the founders
-        founder.state = FOUNDER
+    for (ID, individual) in pedigree
+        if ID in probandIDs
+            individual.stats["state"] = PROBAND
+        elseif ID in founderIDs
+            individual.stats["state"] = FOUNDER
+        else
+            individual.stats["state"] = UNEXPLORED
+        end
     end
-    stack = probands
+    stack = Stack{Individual}()
+    push!(stack, probands...)
     while !isempty(stack)
         candidate = pop!(stack)
         # Check if avoiding paths from a "source" (ancestor)
@@ -121,7 +124,7 @@ function _cut_vertices(pedigree::Pedigree)
         end
     end
     for (_, individual) in pedigree # Unmark the individuals
-        individual.state = UNEXPLORED
+        empty!(individual.stats)
     end
     sort(collect(Set(vertices)))
 end
@@ -145,7 +148,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
     n = length(pedigree)
     Φ = Matrix{Float64}(undef, n, n)
     for (index, founder) in enumerate(founders)
-        founder.sort = index
+        founder.stats["index"] = index
     end
     for (_, individualᵢ) in pedigree
         i = individualᵢ.index
@@ -155,8 +158,8 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
             if i > j # i cannot be an ancestor of j
                 father = individualᵢ.father
                 mother = individualᵢ.mother
-                if individualᵢ.sort != 0 && individualⱼ.sort != 0 # Both i and j are founders
-                    coefficient += Ψ[individualᵢ.sort, individualⱼ.sort]
+                if !isempty(individualᵢ.stats) && !isempty(individualⱼ.stats) # Both i and j are founders
+                    coefficient += Ψ[individualᵢ.stats["index"], individualⱼ.stats["index"]]
                 else
                     if !isnothing(father)
                         coefficient += Φ[father.index, individualⱼ.index] / 2
@@ -168,8 +171,8 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
             elseif j > i # j cannot be an ancestor of i
                 father = individualⱼ.father
                 mother = individualⱼ.mother
-                if individualⱼ.sort != 0 && individualᵢ.sort != 0 # Both i and j are founders
-                    coefficient += Ψ[individualⱼ.sort, individualᵢ.sort]
+                if !isempty(individualⱼ.stats) && !isempty(individualᵢ.stats) # Both i and j are founders
+                    coefficient += Ψ[individualⱼ.stats["index"], individualᵢ.stats["index"]]
                 else
                     if !isnothing(father)
                         coefficient += Φ[father.index, individualᵢ.index] / 2
@@ -181,8 +184,8 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
             else # i.index == j.index, same individual
                 father = individualᵢ.father
                 mother = individualᵢ.mother
-                if individualᵢ.sort != 0 # i is a founder
-                    coefficient += Ψ[individualᵢ.sort, individualᵢ.sort]
+                if !isempty(individualᵢ.stats) # i is a founder
+                    coefficient += Ψ[individualᵢ.stats["index"], individualᵢ.stats["index"]]
                 elseif !isnothing(father) && !isnothing(mother)
                     coefficient += (1 + Φ[mother.index, father.index]) / 2
                 else
@@ -193,7 +196,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
         end
     end
     for founder in founders
-        founder.sort = 0
+        empty!(founder.stats)
     end
     indices = [proband.index for proband in probands]
     Φ[indices, indices]
