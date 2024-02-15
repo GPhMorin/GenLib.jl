@@ -98,7 +98,7 @@ function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
 end
 
 """
-    genealogy(dataframe::DataFrame)
+    genealogy(dataframe::DataFrame; sort::Bool = true)
 
 Return an ordered pedigree of individuals from a `DataFrame`.
 
@@ -115,7 +115,7 @@ df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
 ped = gen.genealogy(df)
 ```
 """
-function genealogy(dataframe::DataFrame)
+function genealogy(dataframe::DataFrame; sort::Bool = true)
     pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataframe))
         pedigree[row.ind] = Individual(
@@ -144,7 +144,10 @@ function genealogy(dataframe::DataFrame)
             push!(pedigree[mother].children, pedigree[row.ind])
         end
     end
-    _order_pedigree!(pedigree)
+    if sort
+        _order_pedigree!(pedigree)
+    end
+    pedigree
 end
 
 """
@@ -160,7 +163,7 @@ genea140 = gen.genea140
 ped = gen.genealogy(genea140)
 ```
 """
-function genealogy(filename::String)
+function genealogy(filename::String; sort = true)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     pedigree = Pedigree()
     for (index, row) in enumerate(eachrow(dataset))
@@ -190,7 +193,10 @@ function genealogy(filename::String)
             push!(pedigree[mother].children, pedigree[row.ind])
         end
     end
-    _order_pedigree!(pedigree)
+    if sort
+        _order_pedigree!(pedigree)
+    end
+    pedigree
 end
 
 """
