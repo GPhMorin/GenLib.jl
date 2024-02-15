@@ -21,7 +21,7 @@ end
         children::Vector{Individual}
         sex::Int64
         index::Int64
-        stats::Any
+        stats::Vector{Any}
     end
 
 The unit structure of a pedigree.
