@@ -37,11 +37,13 @@ using Test
                                          0.072265625 0.072265625 0.53515625]
     @test isnothing(gen.phi(ped, estimate=true))
     founder1 = ped[17]
-    founder1.sort = 1
+    founder1.stats = 1
     founder2 = ped[19]
-    founder2.sort = 2
+    founder2.stats = 2
     Ψ = [0.5 0; 0 0.5]
     @test gen.phi(founder1, founder2, Ψ) == 0
+    founder1.stats = nothing
+    founder2.stats = nothing
     probands = gen.pro(ped)
     @test gen.findFounders(ped, [1, 2, 29]) == [17, 19, 20, 25, 26]
     @test gen.rec(ped) == [3, 3, 3, 1, 3, 3]
