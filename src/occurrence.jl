@@ -38,7 +38,7 @@ function occ(
         end
     end
     for (_, individual) in pedigree
-        individual.stats = nothing
+        empty!(individual.stats)
     end
     if typeOcc == "IND"
         return occurrence_matrix

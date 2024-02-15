@@ -48,7 +48,7 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ances
     for (ID, individual) in pedigree
         if (individual.stats[1] && individual.stats[2])
             index += 1
-            isolated_pedigree[ID] = Individual(ID, nothing, nothing, [], individual.sex, index, nothing)
+            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, index, [])
         end
     end
     for (ID, individual) in isolated_pedigree
@@ -68,7 +68,7 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ances
         end
     end
     for (_, individual) in pedigree
-        individual.stats = nothing
+        empty!(individual.stats)
     end
     isolated_pedigree
 end
