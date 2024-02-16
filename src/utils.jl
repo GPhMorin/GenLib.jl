@@ -13,7 +13,7 @@ probands = gen.pro(ped)
 ```
 """
 function pro(pedigree::Pedigree)
-    probands = [individual.ID for (_, individual) in pedigree if isempty(individual.children)]
+    probands = [individual.ID for individual in values(pedigree) if isempty(individual.children)]
     sort(probands)
 end
 
@@ -32,7 +32,7 @@ founders = gen.founder(ped)
 ```
 """
 function founder(pedigree::Pedigree)
-    founders = [individual.ID for (_, individual) in pedigree if isnothing(individual.father) && isnothing(individual.mother)]
+    founders = [individual.ID for individual in values(pedigree) if isnothing(individual.father) && isnothing(individual.mother)]
     sort(founders)
 end
 
