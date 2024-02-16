@@ -7,7 +7,7 @@ pop140
 GenMatrix
 Individual
 Pedigree
-STATE
+State
 branching
 children
 findDistance(::Pedigree, ::Vector{Int64}, ::Int64)
