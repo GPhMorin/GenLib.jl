@@ -59,16 +59,16 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertex(individual::Individual, candidateID::Int64)
+function _cut_vertex(individual::Individual, candidateID::Int64, probandIDs::Vector{Int64})
     value = true
     for child in individual.children
         # Check if going down the pedigree
         # while avoiding the candidate ID
         # reaches a proband (sink) anyway
-        if child.stats["state"] == PROBAND
+        if child.ID ∈ probandIDs
             return false
         elseif child.ID != candidateID
-            value = value && _cut_vertex(child, candidateID)
+            value = value && _cut_vertex(child, candidateID, probandIDs)
         end
     end
     value
@@ -87,16 +87,6 @@ function _cut_vertices(pedigree::Pedigree)
     vertices = Int64[]
     probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
-    founderIDs = founder(pedigree)
-    for (ID, individual) in pedigree
-        if ID in probandIDs
-            individual.stats["state"] = PROBAND
-        elseif ID in founderIDs
-            individual.stats["state"] = FOUNDER
-        else
-            individual.stats["state"] = UNEXPLORED
-        end
-    end
     stack = Stack{Individual}()
     push!(stack, probands...)
     while !isempty(stack)
@@ -107,7 +97,7 @@ function _cut_vertices(pedigree::Pedigree)
         sourceIDs = ancestor(pedigree, candidate.ID)
         is_candidate = true
         for sourceID in sourceIDs
-            if !_cut_vertex(pedigree[sourceID], candidate.ID)
+            if !_cut_vertex(pedigree[sourceID], candidate.ID, probandIDs)
                 is_candidate = false
                 break
             end
@@ -122,9 +112,6 @@ function _cut_vertices(pedigree::Pedigree)
                 push!(stack, candidate.mother)
             end
         end
-    end
-    for (_, individual) in pedigree # Unmark the individuals
-        empty!(individual.stats)
     end
     sort(collect(Set(vertices)))
 end
