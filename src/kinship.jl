@@ -63,16 +63,16 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertex(individual::Individual, candidateID::Int64, probandIDs::Vector{Int64})
+function _cut_vertex(individual::Individual, candidateID::Int64)
     value = true
     for child in individual.children
         # Check if going down the pedigree
         # while avoiding the candidate ID
         # reaches a proband (sink) anyway
-        if child.ID ∈ probandIDs
+        if isempty(child.children) # The child is a proband
             return false
         elseif child.ID != candidateID
-            value = value && _cut_vertex(child, candidateID, probandIDs)
+            value = value && _cut_vertex(child, candidateID)
         end
     end
     value
@@ -101,7 +101,7 @@ function _cut_vertices(pedigree::Pedigree)
         sourceIDs = ancestor(pedigree, candidate.ID)
         is_candidate = true
         for sourceID in sourceIDs
-            if !_cut_vertex(pedigree[sourceID], candidate.ID, probandIDs)
+            if !_cut_vertex(pedigree[sourceID], candidate.ID)
                 is_candidate = false
                 break
             end
