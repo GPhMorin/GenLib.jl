@@ -20,24 +20,20 @@ function gc(
     
     # Ported from GENLIB's Congen
     matrix = zeros(length(pro), length(ancestors))
-    for (ID, individual) in pedigree
-        individual.stats["contribution"] = 0.
-        individual.stats["state"] = UNEXPLORED
-        if ID in pro
-            individual.stats["state"] = PROBAND
-        end
+    contributions = fill(0., length(pedigree))
+    states = fill(UNEXPLORED, length(pedigree))
+    for ID in pro
+        proband = pedigree[ID]
+        states[proband.index] = PROBAND
     end
     for (index₁, ancestorID) in enumerate(ancestors)
         ancestor = pedigree[ancestorID]
-        _contribute!(ancestor)
+        _contribute!(ancestor, contributions, states)
         for (index₂, probandID) in enumerate(pro)
             proband = pedigree[probandID]
-            matrix[index₂, index₁] = proband.stats["contribution"]
-            proband.stats["contribution"] = 0.
+            matrix[index₂, index₁] = contributions[proband.index]
+            contributions[proband.index] = 0.
         end
-    end
-    for (_, individual) in pedigree
-        empty!(individual.stats)
     end
     matrix
 end
@@ -47,12 +43,12 @@ end
 
 Recursively compute the genetic contributions of an individual.
 """
-function _contribute!(individual::Individual, depth::Int64 = 0)
+function _contribute!(individual::Individual, contributions::Vector{Float64}, states::Vector{STATE}, depth::Int64 = 0)
     # Ported from GENLIB's ExploreConGenProposant
-    if individual.stats["state"] == PROBAND
-        individual.stats["contribution"] += 0.5 ^ depth
+    if states[individual.index] == PROBAND
+        contributions[individual.index] += 0.5 ^ depth
     end
     for child in individual.children
-        _contribute!(child, depth + 1)
+        _contribute!(child, contributions, states, depth + 1)
     end
 end
