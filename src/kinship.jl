@@ -140,7 +140,9 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
     for (index₁, founder₁) in enumerate(founders)
         for (index₂, founder₂) in enumerate(founders)
             if index₁ ≤ index₂
-                Φ[founder₁.index, founder₂.index] = Φ[founder₂.index, founder₁.index] = Ψ[index₁, index₂]
+                coefficient = Ψ[index₁, index₂]
+                Φ[founder₁.index, founder₂.index] = coefficient
+                Φ[founder₂.index, founder₁.index] = coefficient
             end
         end
     end
