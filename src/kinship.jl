@@ -154,30 +154,35 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father)
-                    Φ[i, j] += Φ[father.index, individualⱼ.index] / 2
-                    Φ[j, i] += Φ[father.index, individualⱼ.index] / 2
+                    coefficient = Φ[father.index, individualⱼ.index] / 2
+                    Φ[i, j] += coefficient
+                    Φ[j, i] += coefficient
                 end
                 if !isnothing(mother)
-                    Φ[i, j] += Φ[mother.index, individualⱼ.index] / 2
-                    Φ[j, i] += Φ[mother.index, individualⱼ.index] / 2
+                    coefficient = Φ[mother.index, individualⱼ.index] / 2
+                    Φ[i, j] += coefficient
+                    Φ[j, i] += coefficient
                 end
             elseif j > i # j cannot be an ancestor of i
                 father = individualⱼ.father
                 mother = individualⱼ.mother
                 if !isnothing(father)
-                    Φ[i, j] += Φ[father.index, individualᵢ.index] / 2
-                    Φ[j, i] += Φ[father.index, individualᵢ.index] / 2
+                    coefficient = Φ[father.index, individualᵢ.index] / 2
+                    Φ[i, j] += coefficient
+                    Φ[j, i] += coefficient
                 end
                 if !isnothing(mother)
-                    Φ[i, j] += Φ[mother.index, individualᵢ.index] / 2
-                    Φ[j, i] += Φ[mother.index, individualᵢ.index] / 2
+                    coefficient = Φ[mother.index, individualᵢ.index] / 2
+                    Φ[i, j] += coefficient
+                    Φ[j, i] += coefficient
                 end
             else # i == j, same individual
-                Φ[i, i] += 0.5
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father) && !isnothing(mother)
-                    Φ[i, i] += Φ[mother.index, father.index] / 2
+                    Φ[i, i] += (1 + Φ[mother.index, father.index]) / 2
+                else
+                    Φ[i, i] += 0.5
                 end
             end
         end
