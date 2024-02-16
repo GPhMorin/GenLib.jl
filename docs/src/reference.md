@@ -10,7 +10,7 @@ Pedigree
 State
 branching
 children
-findDistance(::Pedigree, ::Vector{Int64}, ::Int64)
+findDistance
 findFounders
 findMRCA
 founder
