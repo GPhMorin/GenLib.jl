@@ -35,6 +35,9 @@ using Test
     @test gen.phi(ped, verbose=true) == [0.591796875 0.37109375 0.072265625;
                                          0.37109375 0.591796875 0.072265625;
                                          0.072265625 0.072265625 0.53515625]
+    @test gen.phi(ped, MT=true) == [0.591796875 0.37109375 0.072265625;
+                                    0.37109375 0.591796875 0.072265625;
+                                    0.072265625 0.072265625 0.53515625]
     @test isnothing(gen.phi(ped, estimate=true))
     founder_indices = fill(0, length(ped))
     founder1 = ped[17]

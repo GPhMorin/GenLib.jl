@@ -25,33 +25,32 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
         if fᵢ != 0 && fⱼ != 0 # They are both founders
             return Ψ[fᵢ, fⱼ]
         end
-    else # At least one of the individuals is not a founder
-        value = 0.
-        if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
-            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
-            if !isnothing(individualᵢ.father)
-                value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
-            end
-            if !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
-            end
-        elseif individualⱼ.index > individualᵢ.index # Reverse the order since a > b
-            # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
-            if !isnothing(individualⱼ.father)
-                value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
-            end
-            if !isnothing(individualⱼ.mother)
-                value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
-            end
-        elseif individualᵢ.index == individualⱼ.index # Same individual
-            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
-            value += 1/2
-            if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
-            end
-        end
-        return value
     end
+    value = 0.
+    if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
+        # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
+        if !isnothing(individualᵢ.father)
+            value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
+        end
+        if !isnothing(individualᵢ.mother)
+            value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
+        end
+    elseif individualⱼ.index > individualᵢ.index # Reverse the order since a > b
+        # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
+        if !isnothing(individualⱼ.father)
+            value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
+        end
+        if !isnothing(individualⱼ.mother)
+            value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
+        end
+    elseif individualᵢ.index == individualⱼ.index # Same individual
+        # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
+        value += 1/2
+        if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
+            value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
+        end
+    end
+    return value
 end
 
 """
@@ -204,7 +203,7 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false, MT::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
@@ -236,7 +235,25 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verb
         upperIDs = C[i]
         lowerIDs = C[i+1]
         Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
-        Ψ = phi(Vᵢ, Ψ)
+        if MT
+            probands = filter(x -> isempty(x.children), collect(values(Vᵢ)))
+            founders = filter(x -> isnothing(x.father) && isnothing(x.mother), collect(values(Vᵢ)))
+            founder_indices = fill(0, length(Vᵢ))
+            for (index, founder) in enumerate(founders)
+                founder_indices[founder.index] = index
+            end
+            Φ = Matrix{Float64}(undef, length(probands), length(probands))
+            Threads.@threads for i in eachindex(probands)
+                Threads.@threads for j in eachindex(probands)
+                    if i ≤ j
+                        Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ, founder_indices)
+                    end
+                end
+            end
+            Ψ = copy(Φ)
+        else
+            Ψ = phi(Vᵢ, Ψ)
+        end
         if verbose
             println("Kinships for segment ", i, "/", length(C)-1, " completed.")
         end
