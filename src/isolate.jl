@@ -47,7 +47,7 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ances
     for ((ID, individual), is_ancestor, is_descendant) in zip(pedigree, is_ancestors, is_descendants)
         if is_ancestor && is_descendant
             index += 1
-            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, index, Dict{String, Any}())
+            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, index)
         end
     end
     for (ID, individual) in isolated_pedigree

@@ -18,9 +18,13 @@ pro2 = ped[113470]
 gen.phi(pro1, pro2)
 ```
 """
-function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
-    if !isempty(individualᵢ.stats) && !isempty(individualⱼ.stats) # They are both founders
-        return Ψ[individualᵢ.stats["index"], individualⱼ.stats["index"]]
+function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing, founder_indices::Union{Nothing, Vector{Int64}} = nothing)
+    if !isnothing(founder_indices)
+        fᵢ = founder_indices[individualᵢ.index]
+        fⱼ = founder_indices[individualⱼ.index]
+        if fᵢ != 0 && fⱼ != 0 # They are both founders
+            return Ψ[fᵢ, fⱼ]
+        end
     else # At least one of the individuals is not a founder
         value = 0.
         if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
