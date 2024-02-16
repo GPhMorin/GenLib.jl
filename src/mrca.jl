@@ -20,7 +20,7 @@ Return a vector of an individual's ancestors.
 """
 function ancestor(pedigree::Pedigree, ID::Int64)
     ancestorIDs = Set{Int64}()
-    stack = Stack{Int64}()
+    stack = Int64[]
     push!(stack, ID)
     while !isempty(stack)
         ID = pop!(stack)

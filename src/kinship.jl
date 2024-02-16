@@ -91,22 +91,15 @@ function _cut_vertices(pedigree::Pedigree)
     vertices = Int64[]
     probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
-    stack = Stack{Individual}()
+    stack = Individual[]
     push!(stack, probands...)
     while !isempty(stack)
         candidate = pop!(stack)
-        # Check if avoiding paths from a "source" (ancestor)
+        # Check if avoiding paths from a "source" (founder)
         # down the pedigree through the candidate ID
         # never reaches a "sink" (proband) individual
-        sourceIDs = ancestor(pedigree, candidate.ID)
-        is_candidate = true
-        for sourceID in sourceIDs
-            if !_cut_vertex(pedigree[sourceID], candidate.ID)
-                is_candidate = false
-                break
-            end
-        end
-        if is_candidate
+        sourceIDs = findFounders(pedigree, [candidate.ID])
+        if all(_cut_vertex(pedigree[sourceID], candidate.ID) for sourceID in sourceIDs)
             push!(vertices, candidate.ID)
         else
             if !isnothing(candidate.father)

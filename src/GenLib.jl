@@ -5,7 +5,7 @@ module GenLib
 
 using CSV
 using DataFrames: DataFrame
-using DataStructures: Stack, OrderedDict
+using DataStructures: OrderedDict
 
 # The unit structure for pedigrees
 export Individual,

@@ -90,7 +90,7 @@ Return the descendants of an individual.
 """
 function descendant(pedigree::Pedigree, ID::Int64)
     descendantIDs = Set{Int64}()
-    stack = Stack{Int64}()
+    stack = Int64[]
     push!(stack, ID)
     while !isempty(stack)
         ID = pop!(stack)
