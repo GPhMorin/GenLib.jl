@@ -145,58 +145,51 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
     if probandIDs == founderIDs
         return Ψ
     end
-    n = length(pedigree)
-    Φ = Matrix{Float64}(undef, n, n)
-    for (index, founder) in enumerate(founders)
-        founder.stats["index"] = index
+    Φ = zeros(length(pedigree), length(pedigree))
+    for (index₁, founder₁) in enumerate(founders)
+        for (index₂, founder₂) in enumerate(founders)
+            if index₁ ≤ index₂
+                Φ[founder₁.index, founder₂.index] = Φ[founder₂.index, founder₁.index] = Ψ[index₁, index₂]
+            end
+        end
     end
-    for (_, individualᵢ) in pedigree
+    for individualᵢ in values(pedigree)
         i = individualᵢ.index
-        for (_, individualⱼ) in pedigree
+        for individualⱼ in values(pedigree)
             j = individualⱼ.index
-            coefficient = 0.
-            if i > j # i cannot be an ancestor of j
+            if Φ[i, j] > 0
+                continue
+            elseif i > j # i cannot be an ancestor of j
                 father = individualᵢ.father
                 mother = individualᵢ.mother
-                if !isempty(individualᵢ.stats) && !isempty(individualⱼ.stats) # Both i and j are founders
-                    coefficient += Ψ[individualᵢ.stats["index"], individualⱼ.stats["index"]]
-                else
-                    if !isnothing(father)
-                        coefficient += Φ[father.index, individualⱼ.index] / 2
-                    end
-                    if !isnothing(mother)
-                        coefficient += Φ[mother.index, individualⱼ.index] / 2
-                    end
+                if !isnothing(father)
+                    Φ[i, j] += Φ[father.index, individualⱼ.index] / 2
+                    Φ[j, i] += Φ[father.index, individualⱼ.index] / 2
+                end
+                if !isnothing(mother)
+                    Φ[i, j] += Φ[mother.index, individualⱼ.index] / 2
+                    Φ[j, i] += Φ[mother.index, individualⱼ.index] / 2
                 end
             elseif j > i # j cannot be an ancestor of i
                 father = individualⱼ.father
                 mother = individualⱼ.mother
-                if !isempty(individualⱼ.stats) && !isempty(individualᵢ.stats) # Both i and j are founders
-                    coefficient += Ψ[individualⱼ.stats["index"], individualᵢ.stats["index"]]
-                else
-                    if !isnothing(father)
-                        coefficient += Φ[father.index, individualᵢ.index] / 2
-                    end
-                    if !isnothing(mother)
-                        coefficient += Φ[mother.index, individualᵢ.index] / 2
-                    end
+                if !isnothing(father)
+                    Φ[i, j] += Φ[father.index, individualᵢ.index] / 2
+                    Φ[j, i] += Φ[father.index, individualᵢ.index] / 2
                 end
-            else # i.index == j.index, same individual
+                if !isnothing(mother)
+                    Φ[i, j] += Φ[mother.index, individualᵢ.index] / 2
+                    Φ[j, i] += Φ[mother.index, individualᵢ.index] / 2
+                end
+            else # i == j, same individual
+                Φ[i, i] += 0.5
                 father = individualᵢ.father
                 mother = individualᵢ.mother
-                if !isempty(individualᵢ.stats) # i is a founder
-                    coefficient += Ψ[individualᵢ.stats["index"], individualᵢ.stats["index"]]
-                elseif !isnothing(father) && !isnothing(mother)
-                    coefficient += (1 + Φ[mother.index, father.index]) / 2
-                else
-                    coefficient += 0.5
+                if !isnothing(father) && !isnothing(mother)
+                    Φ[i, i] += Φ[mother.index, father.index] / 2
                 end
             end
-            Φ[i, j] = Φ[j, i] = coefficient
         end
-    end
-    for founder in founders
-        empty!(founder.stats)
     end
     indices = [proband.index for proband in probands]
     Φ[indices, indices]
