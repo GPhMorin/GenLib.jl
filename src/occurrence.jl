@@ -22,25 +22,20 @@ function occ(
     typeOcc::String = "IND")
     
     occurrence_matrix = Matrix{Int64}(undef, length(ancestors), length(pro))
-    for (ID, individual) in pedigree
-        if ID in ancestors
-            individual.stats["is_ancestor"] = true
-            individual.stats["occurrence"] = 0
-        else
-            individual.stats["is_ancestor"] = false
-        end
+    is_ancestors = fill(false, length(pedigree))
+    occurrences = fill(0, length(pedigree))
+    for ID in ancestors
+        ancestor = pedigree[ID]
+        is_ancestors[ancestor.index] = true
     end
     for (j, probandID) in enumerate(pro)
         proband = pedigree[probandID]
-        occur!(proband)
+        occur!(proband, is_ancestors, occurrences)
         for (i, ancestorID) in enumerate(ancestors)
             ancestor = pedigree[ancestorID]
-            occurrence_matrix[i, j] = ancestor.stats["occurrence"]
-            ancestor.stats["occurrence"] = 0
+            occurrence_matrix[i, j] = occurrences[ancestor.index]
+            occurrences[ancestor.index] = 0
         end
-    end
-    for (_, individual) in pedigree
-        empty!(individual.stats)
     end
     if typeOcc == "IND"
         return occurrence_matrix
@@ -54,14 +49,14 @@ end
 
 Recursively increment the occurrence of an `individual` if they are an ancestor.
 """
-function occur!(individual::Individual)
-    if individual.stats["is_ancestor"] == true # is an ancestor
-        individual.stats["occurrence"] += 1
+function occur!(individual::Individual, is_ancestors::Vector{Bool}, occurrences::Vector{Int64})
+    if is_ancestors[individual.index]
+        occurrences[individual.index] += 1
     end
     if !isnothing(individual.father)
-        occur!(individual.father)
+        occur!(individual.father, is_ancestors, occurrences)
     end
     if !isnothing(individual.mother)
-        occur!(individual.mother)
+        occur!(individual.mother, is_ancestors, occurrences)
     end
 end
