@@ -90,9 +90,10 @@ ped = gen.genealogy(genea140);
 pro = gen.pro(ped);
 pro1 = pro[1]
 pro2 = pro[2]
-mrcas, meioses = gen.findMRCA(ped, [pro1, pro2]);
-mrcas
-meioses
+genMatrix = gen.findMRCA(ped, [pro1, pro2]);
+genMatrix.individuals
+genMatrix.ancestors
+genMatrix.meioses
 ```
 
 ## Computing Genetic Contributions
