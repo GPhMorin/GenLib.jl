@@ -23,7 +23,7 @@ end
         index::Int64
     end
 
-The unit structure of a pedigree.
+The unit structure of a [Pedigree](@ref).
 """
 mutable struct Individual
     ID::Int64
