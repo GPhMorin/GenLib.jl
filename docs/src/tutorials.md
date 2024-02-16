@@ -5,13 +5,13 @@
 To install, using REPL:
 
 ```julia-repl
-julia> using Pkg; Pkg.add(url="https://github.com/GPhMorin/GenLib.jl")
+julia> using Pkg; Pkg.add("GenLib")
 ```
 
 Or in the Pkg REPL mode (`]`):
 
 ```pkg
-add https://github.com/GPhMorin/GenLib.jl
+add GenLib
 ```
 
 You may then use the library with `using GenLib` or, to mimic
