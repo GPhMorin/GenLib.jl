@@ -10,7 +10,7 @@ using DataStructures: Stack, OrderedDict
 # The unit structure for pedigrees
 export Individual,
        Pedigree,
-       STATE
+       State
 
 # GENLIB types and functions
 export GenMatrix,
