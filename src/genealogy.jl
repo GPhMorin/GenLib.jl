@@ -1,5 +1,5 @@
 """
-    @enum STATE begin
+    @enum State begin
         PROBAND
         FOUNDER
         UNEXPLORED
@@ -7,7 +7,7 @@
 
 An enumeration of the [`Individual`](@ref)'s state.
 """
-@enum STATE begin
+@enum State begin
     PROBAND
     FOUNDER
     UNEXPLORED

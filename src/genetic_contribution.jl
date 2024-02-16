@@ -43,7 +43,7 @@ end
 
 Recursively compute the genetic contributions of an individual.
 """
-function _contribute!(individual::Individual, contributions::Vector{Float64}, states::Vector{STATE}, depth::Int64 = 0)
+function _contribute!(individual::Individual, contributions::Vector{Float64}, states::Vector{State}, depth::Int64 = 0)
     # Ported from GENLIB's ExploreConGenProposant
     if states[individual.index] == PROBAND
         contributions[individual.index] += 0.5 ^ depth
