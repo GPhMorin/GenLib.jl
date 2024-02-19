@@ -20,14 +20,14 @@ gen.phi(pro1, pro2)
 """
 function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing, founder_indices::Union{Nothing, Vector{Int64}} = nothing)
     if !isnothing(founder_indices)
-        fᵢ = founder_indices[individualᵢ.index]
-        fⱼ = founder_indices[individualⱼ.index]
+        fᵢ = founder_indices[individualᵢ.rank]
+        fⱼ = founder_indices[individualⱼ.rank]
         if fᵢ != 0 && fⱼ != 0 # They are both founders
             return Ψ[fᵢ, fⱼ]
         end
     end
     value = 0.
-    if individualᵢ.index > individualⱼ.index # From the genealogical order, i cannot be an ancestor of j
+    if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
         # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
         if !isnothing(individualᵢ.father)
             value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
@@ -35,7 +35,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
         if !isnothing(individualᵢ.mother)
             value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
         end
-    elseif individualⱼ.index > individualᵢ.index # Reverse the order since a > b
+    elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
         # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
         if !isnothing(individualⱼ.father)
             value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
@@ -43,7 +43,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
         if !isnothing(individualⱼ.mother)
             value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
         end
-    elseif individualᵢ.index == individualⱼ.index # Same individual
+    elseif individualᵢ.rank == individualⱼ.rank # Same individual
         # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
         value += 1/2
         if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
@@ -133,27 +133,27 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
         for (index₂, founder₂) in enumerate(founders)
             if index₁ ≤ index₂
                 coefficient = Ψ[index₁, index₂]
-                Φ[founder₁.index, founder₂.index] = coefficient
-                Φ[founder₂.index, founder₁.index] = coefficient
+                Φ[founder₁.rank, founder₂.rank] = coefficient
+                Φ[founder₂.rank, founder₁.rank] = coefficient
             end
         end
     end
     for individualᵢ in values(pedigree)
-        i = individualᵢ.index
+        i = individualᵢ.rank
         for individualⱼ in values(pedigree)
-            j = individualⱼ.index
+            j = individualⱼ.rank
             if Φ[i, j] > 0
                 continue
             elseif i > j # i cannot be an ancestor of j
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father)
-                    coefficient = Φ[father.index, individualⱼ.index] / 2
+                    coefficient = Φ[father.rank, individualⱼ.rank] / 2
                     Φ[i, j] += coefficient
                     Φ[j, i] += coefficient
                 end
                 if !isnothing(mother)
-                    coefficient = Φ[mother.index, individualⱼ.index] / 2
+                    coefficient = Φ[mother.rank, individualⱼ.rank] / 2
                     Φ[i, j] += coefficient
                     Φ[j, i] += coefficient
                 end
@@ -161,12 +161,12 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
                 father = individualⱼ.father
                 mother = individualⱼ.mother
                 if !isnothing(father)
-                    coefficient = Φ[father.index, individualᵢ.index] / 2
+                    coefficient = Φ[father.rank, individualᵢ.rank] / 2
                     Φ[i, j] += coefficient
                     Φ[j, i] += coefficient
                 end
                 if !isnothing(mother)
-                    coefficient = Φ[mother.index, individualᵢ.index] / 2
+                    coefficient = Φ[mother.rank, individualᵢ.rank] / 2
                     Φ[i, j] += coefficient
                     Φ[j, i] += coefficient
                 end
@@ -174,14 +174,14 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father) && !isnothing(mother)
-                    Φ[i, i] += (1 + Φ[mother.index, father.index]) / 2
+                    Φ[i, i] += (1 + Φ[mother.rank, father.rank]) / 2
                 else
                     Φ[i, i] += 0.5
                 end
             end
         end
     end
-    indices = [proband.index for proband in probands]
+    indices = [proband.rank for proband in probands]
     Φ[indices, indices]
 end
 
@@ -239,8 +239,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verb
             probands = filter(x -> isempty(x.children), collect(values(Vᵢ)))
             founders = filter(x -> isnothing(x.father) && isnothing(x.mother), collect(values(Vᵢ)))
             founder_indices = fill(0, length(Vᵢ))
-            for (index, founder) in enumerate(founders)
-                founder_indices[founder.index] = index
+            for (rank, founder) in enumerate(founders)
+                founder_indices[founder.rank] = rank
             end
             Φ = Matrix{Float64}(undef, length(probands), length(probands))
             Threads.@threads for i in eachindex(probands)

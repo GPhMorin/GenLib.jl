@@ -4,7 +4,7 @@
 Recursively mark the ancestors of an `individual`.
 """
 function _mark_ancestors!(individual::Individual, is_ancestors::Vector{Bool})
-    is_ancestors[individual.index] = true
+    is_ancestors[individual.rank] = true
     if !isnothing(individual.father)
         _mark_ancestors!(individual.father, is_ancestors)
     end
@@ -19,7 +19,7 @@ end
 Recursively mark the descendants of an `individual`.
 """
 function _mark_descendants!(individual::Individual, is_descendants::Vector{Bool})
-    is_descendants[individual.index] = true
+    is_descendants[individual.rank] = true
     for child in individual.children
         _mark_descendants!(child, is_descendants)
     end
@@ -43,11 +43,11 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ances
         ancestor = pedigree[ID]
         _mark_descendants!(ancestor, is_descendants)
     end
-    index = 0
+    rank = 0
     for ((ID, individual), is_ancestor, is_descendant) in zip(pedigree, is_ancestors, is_descendants)
         if is_ancestor && is_descendant
-            index += 1
-            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, index)
+            rank += 1
+            isolated_pedigree[ID] = Individual(ID, nothing, nothing, Int64[], individual.sex, rank)
         end
     end
     for (ID, individual) in isolated_pedigree

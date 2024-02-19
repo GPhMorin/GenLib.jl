@@ -41,9 +41,9 @@ using Test
     @test isnothing(gen.phi(ped, estimate=true))
     founder_indices = fill(0, length(ped))
     founder1 = ped[17]
-    founder_indices[founder1.index] = 1
+    founder_indices[founder1.rank] = 1
     founder2 = ped[19]
-    founder_indices[founder2.index] = 2
+    founder_indices[founder2.rank] = 2
     Ψ = [0.5 0; 0 0.5]
     @test gen.phi(founder1, founder2, Ψ, founder_indices) == 0
     probands = gen.pro(ped)

@@ -26,15 +26,15 @@ function occ(
     occurrences = fill(0, length(pedigree))
     for ID in ancestors
         ancestor = pedigree[ID]
-        is_ancestors[ancestor.index] = true
+        is_ancestors[ancestor.rank] = true
     end
     for (j, probandID) in enumerate(pro)
         proband = pedigree[probandID]
         occur!(proband, is_ancestors, occurrences)
         for (i, ancestorID) in enumerate(ancestors)
             ancestor = pedigree[ancestorID]
-            occurrence_matrix[i, j] = occurrences[ancestor.index]
-            occurrences[ancestor.index] = 0
+            occurrence_matrix[i, j] = occurrences[ancestor.rank]
+            occurrences[ancestor.rank] = 0
         end
     end
     if typeOcc == "IND"
@@ -50,8 +50,8 @@ end
 Recursively increment the occurrence of an `individual` if they are an ancestor.
 """
 function occur!(individual::Individual, is_ancestors::Vector{Bool}, occurrences::Vector{Int64})
-    if is_ancestors[individual.index]
-        occurrences[individual.index] += 1
+    if is_ancestors[individual.rank]
+        occurrences[individual.rank] += 1
     end
     if !isnothing(individual.father)
         occur!(individual.father, is_ancestors, occurrences)

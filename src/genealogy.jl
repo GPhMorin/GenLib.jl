@@ -20,7 +20,7 @@ end
         mother::Union{Nothing, Individual}
         children::Vector{Individual}
         sex::Int64
-        index::Int64
+        rank::Int64
     end
 
 The unit structure of a [`Pedigree`](@ref).
@@ -31,7 +31,7 @@ mutable struct Individual
     mother::Union{Nothing, Individual}
     children::Vector{Individual}
     sex::Int64
-    index::Int64
+    rank::Int64
 end
 
 function Base.show(io::IO, individual::Individual)
@@ -105,8 +105,8 @@ ped = gen.genealogy(df)
 """
 function genealogy(dataframe::DataFrame; sort::Bool = true)
     pedigree = Pedigree()
-    for (index, row) in enumerate(eachrow(dataframe))
-        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index)
+    for (rank, row) in enumerate(eachrow(dataframe))
+        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, rank)
     end
     for row in eachrow(dataframe)
         father = row.father
@@ -142,8 +142,8 @@ ped = gen.genealogy(genea140)
 function genealogy(filename::String; sort = true)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     pedigree = Pedigree()
-    for (index, row) in enumerate(eachrow(dataset))
-        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, index)
+    for (rank, row) in enumerate(eachrow(dataset))
+        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, rank)
     end
     for row in eachrow(dataset)
         father = row.father
@@ -175,8 +175,8 @@ function _order_pedigree!(pedigree::Pedigree)
     order = sortperm(depths)
     sorted_individuals = individuals[order]
     empty!(pedigree)
-    for (index, individual) in enumerate(sorted_individuals)
-        individual.index = index
+    for (rank, individual) in enumerate(sorted_individuals)
+        individual.rank = rank
         pedigree[individual.ID] = individual
     end
     pedigree
