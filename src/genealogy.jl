@@ -42,11 +42,11 @@ function Base.show(io::IO, individual::Individual)
 end
 
 """
-    Pedigree = OrderedDict{Int64, Individual}
+    const Pedigree = OrderedDict{Int64, Individual}
 
 A particular case of an `OrderedDict` containing individuals accessed by ID.
 """
-Pedigree = OrderedDict{Int64, Individual}
+const Pedigree = OrderedDict{Int64, Individual}
 
 function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
     n = 0
