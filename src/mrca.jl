@@ -76,7 +76,7 @@ ped = gen.genealogy(genea140)
 pro = gen.pro(ped)
 pro1 = pro[1]
 pro2 = pro[2]
-mrcas, meioses = gen.findMRCA(ped, [pro1, pro2])
+genMatrix = gen.findMRCA(ped, [pro1, pro2])
 ```
 """
 function findMRCA(pedigree::Pedigree, individuals::Vector{Int64})
