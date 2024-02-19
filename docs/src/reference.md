@@ -7,7 +7,6 @@ pop140
 GenMatrix
 Individual
 Pedigree
-State
 branching
 children
 findDistance
