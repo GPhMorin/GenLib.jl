@@ -1,20 +1,33 @@
 """
-    @enum State begin
-        PROBAND
-        FOUNDER
-        UNEXPLORED
+    abstract type AbstractIndividual end
+
+The abstract type of `Individual` and its subtypes.
+"""
+abstract type AbstractIndividual end
+
+"""
+    mutable struct MutableIndividual <: AbstractIndividual
+        ID::Int64
+        father::Union{Nothing, Individual}
+        mother::Union{Nothing, Individual}
+        children::Vector{Individual}
+        sex::Int64
+        rank::Int64
     end
 
-An enumeration of the [`Individual`](@ref)'s state.
+The temporary unit structure of a [`Pedigree`](@ref).
 """
-@enum State begin
-    PROBAND
-    FOUNDER
-    UNEXPLORED
+mutable struct MutableIndividual <: AbstractIndividual
+    ID::Int64
+    father::Union{Nothing, MutableIndividual}
+    mother::Union{Nothing, MutableIndividual}
+    children::Vector{MutableIndividual}
+    sex::Int64
+    rank::Int64
 end
 
 """
-    mutable struct Individual
+    struct Individual <: AbstractIndividual
         ID::Int64
         father::Union{Nothing, Individual}
         mother::Union{Nothing, Individual}
@@ -25,7 +38,7 @@ end
 
 The unit structure of a [`Pedigree`](@ref).
 """
-mutable struct Individual
+struct Individual <: AbstractIndividual
     ID::Int64
     father::Union{Nothing, Individual}
     mother::Union{Nothing, Individual}
@@ -34,7 +47,7 @@ mutable struct Individual
     rank::Int64
 end
 
-function Base.show(io::IO, individual::Individual)
+function Base.show(io::IO, individual::T) where T <: AbstractIndividual
     println(io, "ind: ", individual.ID)
     println(io, "father: ", !isnothing(individual.father) ? individual.father.ID : 0)
     println(io, "mother: ", !isnothing(individual.mother) ? individual.mother.ID : 0)
@@ -42,11 +55,11 @@ function Base.show(io::IO, individual::Individual)
 end
 
 """
-    const Pedigree = OrderedDict{Int64, Individual}
+    const Pedigree{T} = OrderedDict{Int64, T} where T <: AbstractIndividual
 
 A particular case of an `OrderedDict` containing individuals accessed by ID.
 """
-const Pedigree = OrderedDict{Int64, Individual}
+const Pedigree{T} = OrderedDict{Int64, T} where T <: AbstractIndividual
 
 function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
     n = 0
@@ -104,9 +117,16 @@ ped = gen.genealogy(df)
 ```
 """
 function genealogy(dataframe::DataFrame; sort::Bool = true)
-    pedigree = Pedigree()
+    pedigree = Pedigree{MutableIndividual}()
     for (rank, row) in enumerate(eachrow(dataframe))
-        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, rank)
+        pedigree[row.ind] = MutableIndividual(
+            row.ind,
+            nothing,
+            nothing,
+            Int64[],
+            row.sex,
+            rank
+        )
     end
     for row in eachrow(dataframe)
         father = row.father
@@ -123,7 +143,7 @@ function genealogy(dataframe::DataFrame; sort::Bool = true)
     if sort
         _order_pedigree!(pedigree)
     end
-    pedigree
+    _immutable_struct!(pedigree)
 end
 
 """
@@ -141,9 +161,16 @@ ped = gen.genealogy(genea140)
 """
 function genealogy(filename::String; sort = true)
     dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
-    pedigree = Pedigree()
+    pedigree = Pedigree{MutableIndividual}()
     for (rank, row) in enumerate(eachrow(dataset))
-        pedigree[row.ind] = Individual(row.ind, nothing, nothing, Int64[], row.sex, rank)
+        pedigree[row.ind] = MutableIndividual(
+            row.ind,
+            nothing,
+            nothing,
+            Int64[],
+            row.sex,
+            rank
+        )
     end
     for row in eachrow(dataset)
         father = row.father
@@ -161,6 +188,7 @@ function genealogy(filename::String; sort = true)
         _order_pedigree!(pedigree)
     end
     pedigree
+    _immutable_struct!(pedigree)
 end
 
 """
@@ -178,6 +206,30 @@ function _order_pedigree!(pedigree::Pedigree)
     for (rank, individual) in enumerate(sorted_individuals)
         individual.rank = rank
         pedigree[individual.ID] = individual
+    end
+    pedigree
+end
+
+"""
+"""
+function _immutable_struct!(pedigree::Pedigree)
+    temporary_pedigree = copy(pedigree)
+    pedigree = Pedigree{Individual}()
+    for individual in collect(values(temporary_pedigree))
+        pedigree[individual.ID] = Individual(
+            individual.ID,
+            isnothing(individual.father) ? nothing : pedigree[individual.father.ID],
+            isnothing(individual.mother) ? nothing : pedigree[individual.mother.ID],
+            Individual[],
+            individual.sex,
+            individual.rank
+        )
+        if !isnothing(individual.father)
+            push!(pedigree[individual.father.ID].children, pedigree[individual.ID])
+        end
+        if !isnothing(individual.mother)
+            push!(pedigree[individual.mother.ID].children, pedigree[individual.ID])
+        end
     end
     pedigree
 end

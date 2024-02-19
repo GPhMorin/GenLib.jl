@@ -1,11 +1,32 @@
 """
-    phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing)
+    struct PossibleFounder <: AbstractIndividual
+        ID::Int64
+        father::Union{Nothing, PossibleFounder}
+        mother::Union{Nothing, PossibleFounder}
+        children::Vector{PossibleFounder}
+        sex::Int64
+        rank::Int64
+        index::Int64
+    end
+
+An individual with an index to access the founder's kinships in the Ψ matrix.
+"""
+struct PossibleFounder <: AbstractIndividual
+    ID::Int64
+    father::Union{Nothing, PossibleFounder}
+    mother::Union{Nothing, PossibleFounder}
+    children::Vector{PossibleFounder}
+    sex::Int64
+    rank::Int64
+    index::Int64
+end
+
+"""
+    phi(individualᵢ::T, individualⱼ::T) where T <: AbstractIndividual
 
 Return the kinship coefficient between two individuals.
 
-A matrix of the founders' kinships may optionally be provided.
-
-Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+Adapted from [Karigl, 1981](@ref).
 
 # Example
 
@@ -18,13 +39,44 @@ pro2 = ped[113470]
 gen.phi(pro1, pro2)
 ```
 """
-function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Nothing, Matrix{Float64}} = nothing, founder_indices::Union{Nothing, Vector{Int64}} = nothing)
-    if !isnothing(founder_indices)
-        fᵢ = founder_indices[individualᵢ.rank]
-        fⱼ = founder_indices[individualⱼ.rank]
-        if fᵢ != 0 && fⱼ != 0 # They are both founders
-            return Ψ[fᵢ, fⱼ]
+function phi(individualᵢ::T, individualⱼ::T) where T <: AbstractIndividual
+    value = 0.
+    if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
+        # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
+        if !isnothing(individualᵢ.father)
+            value += phi(individualᵢ.father, individualⱼ) / 2
         end
+        if !isnothing(individualᵢ.mother)
+            value += phi(individualᵢ.mother, individualⱼ) / 2
+        end
+    elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
+        # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
+        if !isnothing(individualⱼ.father)
+            value += phi(individualⱼ.father, individualᵢ) / 2
+        end
+        if !isnothing(individualⱼ.mother)
+            value += phi(individualⱼ.mother, individualᵢ) / 2
+        end
+    elseif individualᵢ.rank == individualⱼ.rank # Same individual
+        # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
+        value += 1/2
+        if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
+            value += phi(individualᵢ.father, individualᵢ.mother) / 2
+        end
+    end
+    return value
+end
+
+"""
+    phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ::Matrix{Float64})
+
+Return the kinship coefficient between two individuals given a matrix of the founders' kinships.
+
+Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+"""
+function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ::Matrix{Float64})
+    if individualᵢ.index != 0 && individualⱼ.index != 0 # They are both founders
+        return Ψ[individualᵢ.index, individualⱼ.index]
     end
     value = 0.
     if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
@@ -54,7 +106,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual, Ψ::Union{Not
 end
 
 """
-    _cut_vertex(individual::Individual, candidateID::Int64)
+    _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
 
 Return whether an individual can be used as a cut vertex.
 
@@ -62,7 +114,7 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertex(individual::Individual, candidateID::Int64)
+function _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
     value = true
     for child in individual.children
         # Check if going down the pedigree
@@ -86,11 +138,11 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertices(pedigree::Pedigree)
+function _cut_vertices(pedigree::Pedigree{T}) where T <: AbstractIndividual
     vertices = Int64[]
     probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
-    stack = Individual[]
+    stack = T[]
     push!(stack, probands...)
     while !isempty(stack)
         candidate = pop!(stack)
@@ -203,7 +255,8 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false, estimate::Bool = false, MT::Bool = false)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+    verbose::Bool = false, estimate::Bool = false, MT::Bool = false)
     founderIDs = founder(pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
@@ -236,17 +289,39 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verb
         lowerIDs = C[i+1]
         Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
         if MT
-            probands = filter(x -> isempty(x.children), collect(values(Vᵢ)))
-            founders = filter(x -> isnothing(x.father) && isnothing(x.mother), collect(values(Vᵢ)))
-            founder_indices = fill(0, length(Vᵢ))
-            for (rank, founder) in enumerate(founders)
-                founder_indices[founder.rank] = rank
+            index_pedigree = Pedigree{PossibleFounder}()
+            index = 0
+            for individual in collect(values(Vᵢ))
+                father = individual.father
+                mother = individual.mother
+                if isnothing(father) && isnothing(mother)
+                    index += 1
+                    individual_index = copy(index)
+                else
+                    individual_index = 0
+                end
+                index_pedigree[individual.ID] = PossibleFounder(
+                    individual.ID,
+                    isnothing(father) ? nothing : index_pedigree[father.ID],
+                    isnothing(mother) ? nothing : index_pedigree[mother.ID],
+                    PossibleFounder[],
+                    individual.sex,
+                    individual.rank,
+                    individual_index
+                )
+                if !isnothing(father)
+                    push!(index_pedigree[father.ID].children, index_pedigree[individual.ID])
+                end
+                if !isnothing(mother)
+                    push!(index_pedigree[mother.ID].children, index_pedigree[individual.ID])
+                end
             end
+            probands = filter(x -> isempty(x.children), collect(values(index_pedigree)))
             Φ = Matrix{Float64}(undef, length(probands), length(probands))
             Threads.@threads for i in eachindex(probands)
                 Threads.@threads for j in eachindex(probands)
                     if i ≤ j
-                        Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ, founder_indices)
+                        Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ)
                     end
                 end
             end

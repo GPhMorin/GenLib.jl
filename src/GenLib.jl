@@ -9,8 +9,7 @@ using DataStructures: OrderedDict
 
 # The unit structure for pedigrees
 export Individual,
-       Pedigree,
-       State
+       Pedigree
 
 # GENLIB types and functions
 export GenMatrix,

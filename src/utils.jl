@@ -50,11 +50,11 @@ function findFounders(pedigree::Pedigree, IDs::Vector{Int64})
 end
 
 """
-    get_paths(pedigree::Pedigree, individual::Individual)
+    get_paths(pedigree::Pedigree{T}, individual::T) where T <: AbstractIndividual
 
 Return the paths from an individual to their ancestors.
 """
-function get_paths(pedigree::Pedigree, individual::Individual)
+function get_paths(pedigree::Pedigree{T}, individual::T) where T <: AbstractIndividual
     paths = Vector{Vector{Int64}}([[individual.ID]])
     if !isnothing(individual.father)
         fathers_paths = get_paths(pedigree, individual.father)
@@ -170,7 +170,7 @@ end
 
 Return the maximum depth of an individual's pedigree.
 """
-function max_depth(individual::Individual)
+function max_depth(individual::T) where T <: AbstractIndividual
     depth = 1
     father = individual.father
     mother = individual.mother
