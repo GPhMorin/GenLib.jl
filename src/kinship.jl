@@ -240,7 +240,7 @@ end
 """
     phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
 
-Return the square matrix of the pairwise kinship coefficients of a set of probands.
+Return a square matrix of pairwise kinship coefficients between probands.
 
 If no probands are given, return the square matrix for all probands in the pedigree.
 
