@@ -272,7 +272,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     upperIDs = _cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
-    segment = 0
+    segment = 1
     while upperIDs != lowerIDs
         segment += 1
         if verbose || estimate
