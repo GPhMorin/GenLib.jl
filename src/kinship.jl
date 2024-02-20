@@ -262,11 +262,22 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     for f in eachindex(founderIDs)
         Ψ[f, f] = 0.5
     end
+    if verbose || estimate
+        println("Isolating the pedigree...")
+    end
     isolated_pedigree = branching(pedigree, pro = probandIDs)
+    if verbose || estimate
+        println("Cutting vertices...")
+    end
     upperIDs = _cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
+    segment = 0
     while upperIDs != lowerIDs
+        segment += 1
+        if verbose || estimate
+            println("Vertices cut for segment ", segment, ".")
+        end
         isolated_pedigree = branching(pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
         upperIDs = _cut_vertices(isolated_pedigree)
