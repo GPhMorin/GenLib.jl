@@ -265,10 +265,10 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     if verbose || estimate
         println("Isolating the pedigree...")
     end
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
     if verbose || estimate
         println("Cutting vertices...")
     end
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
     upperIDs = _cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
@@ -278,7 +278,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         if verbose || estimate
             println("Vertices cut for segment ", segment, ".")
         end
-        isolated_pedigree = branching(pedigree, pro = upperIDs)
+        isolated_pedigree = branching(isolated_pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
         upperIDs = _cut_vertices(isolated_pedigree)
         pushfirst!(C, upperIDs)
@@ -347,4 +347,54 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     probandIDs = filter(x -> x ∈ probandIDs, collect(keys(pedigree)))
     order = sortperm(probandIDs)
     Ψ[order, order]
+end
+
+"""
+    phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+
+Return a rectangle matrix of kinship coefficients,
+as defined by a list or row IDs and column IDs.
+"""
+function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
+    Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
+    probandIDs = union(rowIDs, columnIDs)
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
+    cut_vertices = _cut_vertices(isolated_pedigree)
+    isolated_pedigree = branching(isolated_pedigree, ancestors = cut_vertices)
+    Ψ = phi(pedigree, cut_vertices, MT = true)
+    phi_pedigree = Pedigree{PossibleFounder}()
+    founder_index = 1
+    for (rank, individual) in enumerate(collect(values(isolated_pedigree)))
+        father = individual.father
+        mother = individual.mother
+        if isnothing(father) && isnothing(mother)
+            index = copy(founder_index)
+            founder_index += 1
+        else
+            index = 0
+        end
+        phi_pedigree[individual.ID] = PossibleFounder(
+            individual.ID,
+            isnothing(father) ? nothing : phi_pedigree[father.ID],
+            isnothing(mother) ? nothing : phi_pedigree[mother.ID],
+            PossibleFounder[],
+            individual.sex,
+            rank,
+            index
+        )
+        if !isnothing(father)
+            push!(phi_pedigree[father.ID].children, phi_pedigree[individual.ID])
+        end
+        if !isnothing(mother)
+            push!(phi_pedigree[mother.ID].children, phi_pedigree[individual.ID])
+        end
+    end
+    Threads.@threads for i in eachindex(rowIDs)
+        individualᵢ = phi_pedigree[rowIDs[i]]
+        Threads.@threads for j in eachindex(columnIDs)
+            individualⱼ = phi_pedigree[columnIDs[j]]
+            Φ[i, j] = phi(individualᵢ, individualⱼ, Ψ)
+        end
+    end
+    Φ
 end

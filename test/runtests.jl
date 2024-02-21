@@ -38,6 +38,8 @@ using Test
     @test gen.phi(ped, MT=true) == [0.591796875 0.37109375 0.072265625;
                                     0.37109375 0.591796875 0.072265625;
                                     0.072265625 0.072265625 0.53515625]
+    @test gen.phi(ped, [1, 2], [2, 29]) == [0.37109375 0.072265625;
+                                            0.591796875 0.072265625]
     @test isnothing(gen.phi(ped, estimate=true))
     founder1 = ped[17]
     founder2 = ped[19]
