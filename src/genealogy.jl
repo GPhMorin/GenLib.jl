@@ -233,6 +233,9 @@ function _order_pedigree!(pedigree::Pedigree)
 end
 
 """
+    _immutable_struct!(pedigree::Pedigree)
+
+Return a pedigree of immutable individuals.
 """
 function _immutable_struct!(pedigree::Pedigree)
     temporary_pedigree = copy(pedigree)
