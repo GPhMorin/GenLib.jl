@@ -160,28 +160,50 @@ ped = gen.genealogy(genea140)
 ```
 """
 function genealogy(filename::String; sort = true)
-    dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :father => Int64, :mother => Int64, :sex => Int64))
     pedigree = Pedigree{MutableIndividual}()
-    for (rank, row) in enumerate(eachrow(dataset))
-        pedigree[row.ind] = MutableIndividual(
-            row.ind,
+    open(filename) do file
+        rank = 0
+        while !eof(file)
+            line = readline(file)
+            rank += 1
+            if rank == 1
+                continue
+            end
+            (ind, father, mother, sex) = split(line)
+            ind = parse(Int64, ind)
+            father = parse(Int64, father)
+            mother = parse(Int64, mother)
+            sex = parse(Int64, sex)
+            pedigree[ind] = MutableIndividual(
+            ind,
             nothing,
             nothing,
             Int64[],
-            row.sex,
+            sex,
             rank
         )
-    end
-    for row in eachrow(dataset)
-        father = row.father
-        if father != 0
-            pedigree[row.ind].father = pedigree[father]
-            push!(pedigree[father].children, pedigree[row.ind])
         end
-        mother = row.mother
-        if mother != 0
-            pedigree[row.ind].mother = pedigree[mother]
-            push!(pedigree[mother].children, pedigree[row.ind])
+    end
+    open(filename) do file
+        rank = 0
+        while !eof(file)
+            line = readline(file)
+            rank += 1
+            if rank == 1
+                continue
+            end
+            (ind, father, mother, _) = split(line)
+            ind = parse(Int64, ind)
+            father = parse(Int64, father)
+            if father != 0
+                pedigree[ind].father = pedigree[father]
+                push!(pedigree[father].children, pedigree[ind])
+            end
+            mother = parse(Int64, mother)
+            if mother != 0
+                pedigree[ind].mother = pedigree[mother]
+                push!(pedigree[mother].children, pedigree[ind])
+            end
         end
     end
     if sort
@@ -247,5 +269,12 @@ will appear in alphabetical ID order.
 """
 function save_genealogy(pedigree::Pedigree, path::String; sorted::Bool = false)
     df = genout(pedigree, sorted = sorted)
-    CSV.write(path, df, delim="\t")
+    open(path, "w") do file
+        firstline = "ind\tfather\tmother\tsex"
+        println(file, firstline)
+        for row in eachrow(df)
+            line = join(row, "\t")
+            println(file, line)
+        end
+    end
 end

@@ -3,7 +3,6 @@ GenLib.jl: An unofficial, pure Julia port of R's GENLIB genetics and genealogica
 """
 module GenLib
 
-using CSV
 using DataFrames: DataFrame
 using DataStructures: OrderedDict
 

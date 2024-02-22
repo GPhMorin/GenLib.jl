@@ -12,10 +12,19 @@ pop = gen.population(pop140)
 ```
 """
 function population(filename::String)
-    dataset = CSV.read(filename, DataFrame, delim='\t', types=Dict(:ind => Int64, :pop => String))
     population::Dict{Int64, String} = Dict()
-    for row in eachrow(dataset)
-        population[row.ind] = row.pop
+    open(filename) do file
+        rank = 0
+        while !eof(file)
+            line = readline(file)
+            rank += 1
+            if rank == 1
+                continue
+            end
+            (ind, pop) = split(line)
+            ind = parse(Int64, ind)
+            population[ind] = pop
+        end
     end
     population
 end
