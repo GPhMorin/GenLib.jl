@@ -125,7 +125,7 @@ function genealogy(dataframe::DataFrame; sort::Bool = true)
     if sort
         pedigree = _ordered_pedigree(pedigree)
     end
-    _immutable_struct(pedigree)
+    _finalize_pedigree(pedigree)
 end
 
 """
@@ -208,11 +208,11 @@ function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
 end
 
 """
-    _immutable_struct(pedigree::Pedigree)
+    _finalize_pedigree(pedigree::Pedigree)
 
 Return a pedigree of immutable individuals.
 """
-function _immutable_struct(pedigree::Pedigree)
+function _finalize_pedigree(pedigree::Pedigree)
     temporary_pedigree = copy(pedigree)
     pedigree = Pedigree{Individual}()
     for (rank, individual) in enumerate(collect(values(temporary_pedigree)))
