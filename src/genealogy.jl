@@ -6,24 +6,20 @@ The abstract type of `Individual` and its subtypes.
 abstract type AbstractIndividual end
 
 """
-    mutable struct MutableIndividual <: AbstractIndividual
+    struct IntIndividual <: AbstractIndividual
         ID::Int64
-        father::Union{Nothing, Individual}
-        mother::Union{Nothing, Individual}
-        children::Vector{Individual}
+        father::Int64
+        mother::Int64
         sex::Int64
-        rank::Int64
     end
 
 The temporary unit structure of a [`Pedigree`](@ref).
 """
-mutable struct MutableIndividual <: AbstractIndividual
+struct IntIndividual <: AbstractIndividual
     ID::Int64
-    father::Union{Nothing, MutableIndividual}
-    mother::Union{Nothing, MutableIndividual}
-    children::Vector{MutableIndividual}
+    father::Int64
+    mother::Int64
     sex::Int64
-    rank::Int64
 end
 
 """
@@ -117,28 +113,14 @@ ped = gen.genealogy(df)
 ```
 """
 function genealogy(dataframe::DataFrame; sort::Bool = true)
-    pedigree = Pedigree{MutableIndividual}()
-    for (rank, row) in enumerate(eachrow(dataframe))
-        pedigree[row.ind] = MutableIndividual(
-            row.ind,
-            nothing,
-            nothing,
-            Int64[],
-            row.sex,
-            rank
-        )
-    end
+    pedigree = Pedigree{IntIndividual}()
     for row in eachrow(dataframe)
-        father = row.father
-        if father != 0
-            pedigree[row.ind].father = pedigree[father]
-            push!(pedigree[father].children, pedigree[row.ind])
-        end
-        mother = row.mother
-        if mother != 0
-            pedigree[row.ind].mother = pedigree[mother]
-            push!(pedigree[mother].children, pedigree[row.ind])
-        end
+        pedigree[row.ind] = IntIndividual(
+            row.ind,
+            row.father,
+            row.mother,
+            row.sex,
+        )
     end
     if sort
         _order_pedigree!(pedigree)
@@ -160,13 +142,13 @@ ped = gen.genealogy(genea140)
 ```
 """
 function genealogy(filename::String; sort = true)
-    pedigree = Pedigree{MutableIndividual}()
+    pedigree = Pedigree{IntIndividual}()
     open(filename) do file
-        rank = 0
+        is_firstline = true
         while !eof(file)
             line = readline(file)
-            rank += 1
-            if rank == 1
+            if is_firstline
+                is_firstline = false
                 continue
             end
             (ind, father, mother, sex) = split(line)
@@ -174,43 +156,37 @@ function genealogy(filename::String; sort = true)
             father = parse(Int64, father)
             mother = parse(Int64, mother)
             sex = parse(Int64, sex)
-            pedigree[ind] = MutableIndividual(
-            ind,
-            nothing,
-            nothing,
-            Int64[],
-            sex,
-            rank
-        )
-        end
-    end
-    open(filename) do file
-        rank = 0
-        while !eof(file)
-            line = readline(file)
-            rank += 1
-            if rank == 1
-                continue
-            end
-            (ind, father, mother, _) = split(line)
-            ind = parse(Int64, ind)
-            father = parse(Int64, father)
-            if father != 0
-                pedigree[ind].father = pedigree[father]
-                push!(pedigree[father].children, pedigree[ind])
-            end
-            mother = parse(Int64, mother)
-            if mother != 0
-                pedigree[ind].mother = pedigree[mother]
-                push!(pedigree[mother].children, pedigree[ind])
-            end
+            pedigree[ind] = IntIndividual(
+                ind,
+                father,
+                mother,
+                sex
+            )
         end
     end
     if sort
         _order_pedigree!(pedigree)
     end
-    pedigree
     _immutable_struct!(pedigree)
+end
+
+"""
+    _max_depth(pedigree::Pedigree{IntIndividual}, individual::Int64)
+
+Return the maximum depth of an individual's pedigree.
+"""
+function _max_depth(pedigree::Pedigree{IntIndividual}, individual::Int64)
+    depth = 1
+    father = pedigree[individual].father
+    mother = pedigree[individual].mother
+    if father != 0 && mother != 0
+        depth += max(_max_depth(pedigree, father), _max_depth(pedigree, mother))
+    elseif father != 0
+        depth += _max_depth(pedigree, father)
+    elseif mother != 0
+        depth += _max_depth(pedigree, mother)
+    end
+    depth
 end
 
 """
@@ -220,14 +196,14 @@ Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
 function _order_pedigree!(pedigree::Pedigree)
-    individuals = [individual for (_, individual) in pedigree]
-    depths = [max_depth(individual) for individual in individuals]
+    IDs = collect(keys(pedigree))
+    depths = [_max_depth(pedigree, ID) for ID in IDs]
     order = sortperm(depths)
-    sorted_individuals = individuals[order]
+    sortedIDs = IDs[order]
+    temporary_pedigree = copy(pedigree)
     empty!(pedigree)
-    for (rank, individual) in enumerate(sorted_individuals)
-        individual.rank = rank
-        pedigree[individual.ID] = individual
+    for ID in sortedIDs
+        pedigree[ID] = temporary_pedigree[ID]
     end
     pedigree
 end
@@ -240,20 +216,20 @@ Return a pedigree of immutable individuals.
 function _immutable_struct!(pedigree::Pedigree)
     temporary_pedigree = copy(pedigree)
     pedigree = Pedigree{Individual}()
-    for individual in collect(values(temporary_pedigree))
+    for (rank, individual) in enumerate(collect(values(temporary_pedigree)))
         pedigree[individual.ID] = Individual(
             individual.ID,
-            isnothing(individual.father) ? nothing : pedigree[individual.father.ID],
-            isnothing(individual.mother) ? nothing : pedigree[individual.mother.ID],
+            individual.father == 0 ? nothing : pedigree[individual.father],
+            individual.mother == 0 ? nothing : pedigree[individual.mother],
             Individual[],
             individual.sex,
-            individual.rank
+            rank
         )
-        if !isnothing(individual.father)
-            push!(pedigree[individual.father.ID].children, pedigree[individual.ID])
+        if individual.father != 0
+            push!(pedigree[individual.father].children, pedigree[individual.ID])
         end
-        if !isnothing(individual.mother)
-            push!(pedigree[individual.mother.ID].children, pedigree[individual.ID])
+        if individual.mother != 0
+            push!(pedigree[individual.mother].children, pedigree[individual.ID])
         end
     end
     pedigree
