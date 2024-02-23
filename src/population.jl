@@ -14,11 +14,11 @@ pop = gen.population(pop140)
 function population(filename::String)
     population::Dict{Int64, String} = Dict()
     open(filename) do file
-        rank = 0
+        is_firstline = true
         while !eof(file)
             line = readline(file)
-            rank += 1
-            if rank == 1
+            if is_firstline
+                is_firstline = false
                 continue
             end
             (ind, pop) = split(line)
