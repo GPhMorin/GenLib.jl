@@ -123,9 +123,9 @@ function genealogy(dataframe::DataFrame; sort::Bool = true)
         )
     end
     if sort
-        _order_pedigree!(pedigree)
+        pedigree = _ordered_pedigree(pedigree)
     end
-    _immutable_struct!(pedigree)
+    _immutable_struct(pedigree)
 end
 
 """
@@ -165,9 +165,9 @@ function genealogy(filename::String; sort = true)
         end
     end
     if sort
-        _order_pedigree!(pedigree)
+        pedigree = _ordered_pedigree(pedigree)
     end
-    _immutable_struct!(pedigree)
+    _immutable_struct(pedigree)
 end
 
 """
@@ -195,17 +195,16 @@ end
 Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
-function _order_pedigree!(pedigree::Pedigree)
+function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
     IDs = collect(keys(pedigree))
     depths = [_max_depth(pedigree, ID) for ID in IDs]
     order = sortperm(depths)
     sortedIDs = IDs[order]
-    temporary_pedigree = copy(pedigree)
-    empty!(pedigree)
+    ordered_pedigree = Pedigree{IntIndividual}()
     for ID in sortedIDs
-        pedigree[ID] = temporary_pedigree[ID]
+        ordered_pedigree[ID] = pedigree[ID]
     end
-    pedigree
+    ordered_pedigree
 end
 
 """
@@ -213,7 +212,7 @@ end
 
 Return a pedigree of immutable individuals.
 """
-function _immutable_struct!(pedigree::Pedigree)
+function _immutable_struct(pedigree::Pedigree)
     temporary_pedigree = copy(pedigree)
     pedigree = Pedigree{Individual}()
     for (rank, individual) in enumerate(collect(values(temporary_pedigree)))
