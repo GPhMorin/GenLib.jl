@@ -175,29 +175,29 @@ end
 
 Return the maximum depth of an individual's pedigree.
 """
-function _max_depth(pedigree::Pedigree{IntIndividual}, individual::Int64)
+function _max_depth(pedigree::Pedigree{IntIndividual}, individual::IntIndividual)
     depth = 1
-    father = pedigree[individual].father
-    mother = pedigree[individual].mother
+    father = individual.father
+    mother = individual.mother
     if father != 0 && mother != 0
-        depth += max(_max_depth(pedigree, father), _max_depth(pedigree, mother))
+        depth += max(_max_depth(pedigree, pedigree[father]), _max_depth(pedigree, pedigree[mother]))
     elseif father != 0
-        depth += _max_depth(pedigree, father)
+        depth += _max_depth(pedigree, pedigree[father])
     elseif mother != 0
-        depth += _max_depth(pedigree, mother)
+        depth += _max_depth(pedigree, pedigree[mother])
     end
     depth
 end
 
 """
-    _order_pedigree(pedigree::Pedigree)
+    _ordered_pedigree(pedigree::Pedigree)
 
 Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them.
 """
 function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
     IDs = collect(keys(pedigree))
-    depths = [_max_depth(pedigree, ID) for ID in IDs]
+    depths = [_max_depth(pedigree, pedigree[ID]) for ID in IDs]
     order = sortperm(depths)
     sortedIDs = IDs[order]
     ordered_pedigree = Pedigree{IntIndividual}()
@@ -208,7 +208,7 @@ function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
 end
 
 """
-    _immutable_struct!(pedigree::Pedigree)
+    _immutable_struct(pedigree::Pedigree)
 
 Return a pedigree of immutable individuals.
 """
