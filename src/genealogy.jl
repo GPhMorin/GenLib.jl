@@ -167,7 +167,7 @@ function genealogy(filename::String; sort = true)
     if sort
         pedigree = _ordered_pedigree(pedigree)
     end
-    _immutable_struct(pedigree)
+    _finalize_pedigree(pedigree)
 end
 
 """
