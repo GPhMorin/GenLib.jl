@@ -8,7 +8,6 @@ A pure Julia port of R's GENLIB genetics and genealogical library.
 
 ## Installation
 
-GenLib.jl supports <a href="https://julialang.org"><img src="https://julialang.org/assets/infra/julia.ico" width="10em"> Julia</a> v1.8 or later.
 ```julia
 julia> ]
 pkg> add GenLib
