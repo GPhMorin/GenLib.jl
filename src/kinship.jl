@@ -398,3 +398,24 @@ function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64}
     end
     Φ
 end
+
+"""
+    _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.125)
+
+Return a square matrix of pairwise kinship coefficients between probands,
+whose kinships never exceed a minimum `threshold`.
+"""
+function _cleanup(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.125)
+    visited = [false for i ∈ 1:size(kinship_matrix, 1)]
+    to_keep = [true for i ∈ 1:size(kinship_matrix, 1)]
+    for i ∈ eachindex(to_keep)
+        row = kinship_matrix[i, :]
+        row[i] = 0
+        row[visited] .= 0
+        row[.!to_keep] .= 0
+        to_reject = findall(row .≥ threshold)
+        to_keep[to_reject] .= false
+        visited[i] = true
+    end
+    kinship_matrix[to_keep, to_keep]
+end
