@@ -400,12 +400,15 @@ function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64}
 end
 
 """
-    _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.125)
+    _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
 
 Return a square matrix of pairwise kinship coefficients between probands,
 whose kinships never exceed a minimum `threshold`.
+
+For instance, a threshold of 0.0625 (the default) removes individuals
+who are first-degree cousins or closer.
 """
-function _cleanup(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.125)
+function _cleanup(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
     visited = [false for i ∈ 1:size(kinship_matrix, 1)]
     to_keep = [true for i ∈ 1:size(kinship_matrix, 1)]
     for i ∈ eachindex(to_keep)
