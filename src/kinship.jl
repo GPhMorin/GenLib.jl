@@ -402,9 +402,9 @@ end
 """
     _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
 
-Return a square matrix of pairwise kinship coefficients between probands,
-whose kinships never exceed a minimum `threshold`.
-
+Return a vector of booleans of probands whose kinships
+between them never exceed a minimum `threshold`.
+    
 For instance, a threshold of 0.0625 (the default) removes individuals
 who are first-degree cousins or closer.
 """
@@ -420,5 +420,5 @@ function _cleanup(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
         to_keep[to_reject] .= false
         visited[i] = true
     end
-    kinship_matrix[to_keep, to_keep]
+    to_keep
 end
