@@ -138,8 +138,9 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertices(pedigree::Pedigree{T}, probandIDs::Vector{Int64}) where T <: AbstractIndividual
+function _cut_vertices(pedigree::Pedigree{T}) where T <: AbstractIndividual
     vertices = Int64[]
+    probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
     stack = T[]
     push!(stack, probands...)
@@ -262,10 +263,11 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     for f in eachindex(founderIDs)
         Ψ[f, f] = 0.5
     end
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
     if verbose || estimate
         println("Cutting vertices...")
     end
-    upperIDs = _cut_vertices(pedigree, probandIDs)
+    upperIDs = _cut_vertices(isolated_pedigree)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
     segment = 1
@@ -275,7 +277,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             println("Vertices cut for segment ", segment, ".")
         end
         lowerIDs = copy(upperIDs)
-        upperIDs = _cut_vertices(pedigree, lowerIDs)
+        isolated_pedigree = branching(isolated_pedigree, pro = lowerIDs)
+        upperIDs = _cut_vertices(isolated_pedigree)
         pushfirst!(C, upperIDs)
     end
     if verbose || estimate
@@ -283,8 +286,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             upperIDs = C[i]
             lowerIDs = C[i+1]
             Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
-            println("Segment ", i, "/", length(C)-1, " contains ", length(Vᵢ),
-                    " individuals and ", length(upperIDs), " founders.")
+            println("Segment $i/$(length(C)-1) contains $(length(Vᵢ)) individuals, $(length(lowerIDs)) probands and $(length(upperIDs)) founders.")
         end
         if estimate
             return
