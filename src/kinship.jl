@@ -138,9 +138,8 @@ A cut vertex is an individual that "when removed,
 disrupt every path from any source [founder]
 to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertices(pedigree::Pedigree{T}) where T <: AbstractIndividual
+function _cut_vertices(pedigree::Pedigree{T}, probandIDs::Vector{Int64}) where T <: AbstractIndividual
     vertices = Int64[]
-    probandIDs = pro(pedigree)
     probands = [pedigree[ID] for ID in probandIDs]
     stack = T[]
     push!(stack, probands...)
@@ -149,7 +148,8 @@ function _cut_vertices(pedigree::Pedigree{T}) where T <: AbstractIndividual
         # Check if avoiding paths from a "source" (founder)
         # down the pedigree through the candidate ID
         # never reaches a "sink" (proband) individual
-        sourceIDs = findFounders(pedigree, [candidate.ID])
+        ancestors = ancestor(pedigree, candidate.ID)
+        sourceIDs = [ID for ID in ancestors if isnothing(pedigree[ID].father) && isnothing(pedigree[ID].mother)]
         if all(_cut_vertex(pedigree[sourceID], candidate.ID) for sourceID in sourceIDs)
             push!(vertices, candidate.ID)
         else
@@ -263,13 +263,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         Ψ[f, f] = 0.5
     end
     if verbose || estimate
-        println("Isolating the pedigree...")
-    end
-    if verbose || estimate
         println("Cutting vertices...")
     end
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    upperIDs = _cut_vertices(isolated_pedigree)
+    upperIDs = _cut_vertices(pedigree, probandIDs)
     lowerIDs = probandIDs
     C = [upperIDs, lowerIDs]
     segment = 1
@@ -278,9 +274,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         if verbose || estimate
             println("Vertices cut for segment ", segment, ".")
         end
-        isolated_pedigree = branching(isolated_pedigree, pro = upperIDs)
         lowerIDs = copy(upperIDs)
-        upperIDs = _cut_vertices(isolated_pedigree)
+        upperIDs = _cut_vertices(pedigree, lowerIDs)
         pushfirst!(C, upperIDs)
     end
     if verbose || estimate
@@ -359,7 +354,7 @@ function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64}
     Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
     probandIDs = union(rowIDs, columnIDs)
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    cut_vertices = _cut_vertices(isolated_pedigree)
+    cut_vertices = _cut_vertices(isolated_pedigree, probandIDs)
     isolated_pedigree = branching(isolated_pedigree, ancestors = cut_vertices)
     Ψ = phi(pedigree, cut_vertices, MT = true)
     phi_pedigree = Pedigree{PossibleFounder}()
