@@ -353,9 +353,8 @@ as defined by a list or row IDs and column IDs.
 function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
     probandIDs = union(rowIDs, columnIDs)
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    cut_vertices = _cut_vertices(isolated_pedigree, probandIDs)
-    isolated_pedigree = branching(isolated_pedigree, ancestors = cut_vertices)
+    cut_vertices = _cut_vertices(pedigree, probandIDs)
+    isolated_pedigree = branching(pedigree, ancestors = cut_vertices)
     Ψ = phi(pedigree, cut_vertices, MT = true)
     phi_pedigree = Pedigree{PossibleFounder}()
     founder_index = 1
