@@ -106,63 +106,26 @@ function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ:
 end
 
 """
-    _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
+    function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
 
-Return whether an individual can be used as a cut vertex.
+Return the bottleneck ancestors of a given pedigree.
 
-A cut vertex is an individual that "when removed,
-disrupt every path from any source [founder]
-to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
+A bottleneck ancestor is an individual who is the only transmitter of 
+their ancestors' genetic contributions. In graph terms, it may be defined as
+a cut vertex, i. e. an individual that "when removed, disrupt every path from
+any source [founder] to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
 """
-function _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
-    value = true
-    for child in individual.children
-        # Check if going down the pedigree
-        # while avoiding the candidate ID
-        # reaches a proband (sink) anyway
-        if isempty(child.children) # The child is a proband
-            return false
-        elseif child.ID != candidateID
-            value = value && _cut_vertex(child, candidateID)
+function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
+    founderIDs = founder(pedigree)
+    deepestIDs = Int64[]
+    for founderID ∈ founderIDs
+        deepest = pedigree[founderID]
+        while length(deepest.children) == 1
+            deepest = deepest.children[1]
         end
+        push!(deepestIDs, deepest.ID)
     end
-    value
-end
-
-"""
-    _cut_vertices(pedigree::Pedigree)
-
-Return the IDs of the cut vertices as defined in [Kirkpatrick et al., 2019](@ref).
-
-A cut vertex is an individual that "when removed,
-disrupt every path from any source [founder]
-to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
-"""
-function _cut_vertices(pedigree::Pedigree{T}) where T <: AbstractIndividual
-    vertices = Int64[]
-    probandIDs = pro(pedigree)
-    probands = [pedigree[ID] for ID in probandIDs]
-    stack = T[]
-    push!(stack, probands...)
-    while !isempty(stack)
-        candidate = pop!(stack)
-        # Check if avoiding paths from a "source" (founder)
-        # down the pedigree through the candidate ID
-        # never reaches a "sink" (proband) individual
-        ancestors = ancestor(pedigree, candidate.ID)
-        sourceIDs = [ID for ID in ancestors if isnothing(pedigree[ID].father) && isnothing(pedigree[ID].mother)]
-        if all(_cut_vertex(pedigree[sourceID], candidate.ID) for sourceID in sourceIDs)
-            push!(vertices, candidate.ID)
-        else
-            if !isnothing(candidate.father)
-                push!(stack, candidate.father)
-            end
-            if !isnothing(candidate.mother)
-                push!(stack, candidate.mother)
-            end
-        end
-    end
-    sort(collect(Set(vertices)))
+    sort(unique(deepestIDs))
 end
 
 """
@@ -239,7 +202,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
 end
 
 """
-    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); verbose::Bool = false)
+    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
 
 Return a square matrix of pairwise kinship coefficients between probands.
 
@@ -256,94 +219,58 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
-    verbose::Bool = false, estimate::Bool = false, MT::Bool = false)
-    founderIDs = founder(pedigree)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
+    bottleneckIDs = _bottlenecks(isolated_pedigree)
+    isolated_pedigree = branching(pedigree, ancestors = bottleneckIDs)
+    founderIDs = founder(isolated_pedigree)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
         Ψ[f, f] = 0.5
     end
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    if verbose || estimate
-        println("Cutting vertices...")
-    end
-    upperIDs = _cut_vertices(isolated_pedigree)
-    lowerIDs = probandIDs
-    C = [upperIDs, lowerIDs]
-    segment = 1
-    while upperIDs != lowerIDs
-        segment += 1
-        if verbose || estimate
-            println("Vertices cut for segment ", segment, ".")
+    if MT
+        index_pedigree = Pedigree{PossibleFounder}()
+        index = 0
+        for individual in collect(values(isolated_pedigree))
+            father = individual.father
+            mother = individual.mother
+            if isnothing(father) && isnothing(mother)
+                index += 1
+                individual_index = copy(index)
+            else
+                individual_index = 0
+            end
+            index_pedigree[individual.ID] = PossibleFounder(
+                individual.ID,
+                isnothing(father) ? nothing : index_pedigree[father.ID],
+                isnothing(mother) ? nothing : index_pedigree[mother.ID],
+                PossibleFounder[],
+                individual.sex,
+                individual.rank,
+                individual_index
+            )
+            if !isnothing(father)
+                push!(index_pedigree[father.ID].children, index_pedigree[individual.ID])
+            end
+            if !isnothing(mother)
+                push!(index_pedigree[mother.ID].children, index_pedigree[individual.ID])
+            end
         end
-        lowerIDs = copy(upperIDs)
-        isolated_pedigree = branching(isolated_pedigree, pro = lowerIDs)
-        upperIDs = _cut_vertices(isolated_pedigree)
-        pushfirst!(C, upperIDs)
-    end
-    if verbose || estimate
-        for i in 1:length(C)-1
-            upperIDs = C[i]
-            lowerIDs = C[i+1]
-            Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
-            println("Segment $i/$(length(C)-1) contains $(length(Vᵢ)) individuals, $(length(lowerIDs)) probands and $(length(upperIDs)) founders.")
-        end
-        if estimate
-            return
-        end
-    end
-    for i in 1:length(C)-1
-        upperIDs = C[i]
-        lowerIDs = C[i+1]
-        Vᵢ = branching(pedigree, pro = lowerIDs, ancestors = upperIDs)
-        if MT
-            index_pedigree = Pedigree{PossibleFounder}()
-            index = 0
-            for individual in collect(values(Vᵢ))
-                father = individual.father
-                mother = individual.mother
-                if isnothing(father) && isnothing(mother)
-                    index += 1
-                    individual_index = copy(index)
-                else
-                    individual_index = 0
-                end
-                index_pedigree[individual.ID] = PossibleFounder(
-                    individual.ID,
-                    isnothing(father) ? nothing : index_pedigree[father.ID],
-                    isnothing(mother) ? nothing : index_pedigree[mother.ID],
-                    PossibleFounder[],
-                    individual.sex,
-                    individual.rank,
-                    individual_index
-                )
-                if !isnothing(father)
-                    push!(index_pedigree[father.ID].children, index_pedigree[individual.ID])
-                end
-                if !isnothing(mother)
-                    push!(index_pedigree[mother.ID].children, index_pedigree[individual.ID])
+        probands = filter(x -> isempty(x.children), collect(values(index_pedigree)))
+        Φ = Matrix{Float64}(undef, length(probands), length(probands))
+        Threads.@threads for i in eachindex(probands)
+            Threads.@threads for j in eachindex(probands)
+                if i ≤ j
+                    Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ)
                 end
             end
-            probands = filter(x -> isempty(x.children), collect(values(index_pedigree)))
-            Φ = Matrix{Float64}(undef, length(probands), length(probands))
-            Threads.@threads for i in eachindex(probands)
-                Threads.@threads for j in eachindex(probands)
-                    if i ≤ j
-                        Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ)
-                    end
-                end
-            end
-            Ψ = copy(Φ)
-        else
-            Ψ = phi(Vᵢ, Ψ)
         end
-        if verbose
-            println("Kinships for segment ", i, "/", length(C)-1, " completed.")
-        end
+    else
+        Φ = phi(isolated_pedigree, Ψ)
     end
-    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(pedigree)))
+    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(isolated_pedigree)))
     order = sortperm(probandIDs)
-    Ψ[order, order]
+    Φ[order, order]
 end
 
 """
@@ -356,9 +283,13 @@ function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64}
     Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
     probandIDs = union(rowIDs, columnIDs)
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    cut_vertices = _cut_vertices(isolated_pedigree)
-    isolated_pedigree = branching(pedigree, ancestors = cut_vertices)
-    Ψ = phi(pedigree, cut_vertices, MT = true)
+    bottleneckIDs = _bottlenecks(isolated_pedigree)
+    isolated_pedigree = branching(pedigree, ancestors = bottleneckIDs)
+    founderIDs = founder(isolated_pedigree)
+    Ψ = zeros(length(founderIDs), length(founderIDs))
+    for f in eachindex(founderIDs)
+        Ψ[f, f] = 0.5
+    end
     phi_pedigree = Pedigree{PossibleFounder}()
     founder_index = 1
     for (rank, individual) in enumerate(collect(values(isolated_pedigree)))

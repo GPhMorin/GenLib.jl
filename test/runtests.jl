@@ -32,9 +32,9 @@ using Test
     @test genMatrix.ancestors == [14, 20]
     @test genMatrix.meioses == [4 4; 4 4; 3 3]
     @test gen.phi(ped[1], ped[2]) == 0.37109375
-    @test gen.phi(ped, verbose=true) == [0.591796875 0.37109375 0.072265625;
-                                         0.37109375 0.591796875 0.072265625;
-                                         0.072265625 0.072265625 0.53515625]
+    @test gen.phi(ped) == [0.591796875 0.37109375 0.072265625;
+                           0.37109375 0.591796875 0.072265625;
+                           0.072265625 0.072265625 0.53515625]
     phi = gen.phi(ped, MT=true)
     @test phi == [0.591796875 0.37109375 0.072265625;
                   0.37109375 0.591796875 0.072265625;
@@ -44,7 +44,6 @@ using Test
                                     0.072265625 0.53515625]
     @test gen.phi(ped, [1, 2], [2, 29]) == [0.37109375 0.072265625;
                                             0.591796875 0.072265625]
-    @test isnothing(gen.phi(ped, estimate=true))
     founder1 = ped[17]
     founder2 = ped[19]
     @test gen.phi(founder1, founder2) == 0
