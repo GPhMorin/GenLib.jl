@@ -166,20 +166,20 @@ function genout(pedigree::Pedigree; sorted::Bool = false)
 end
 
 """
-    max_depth(individual::Individual)
+    _max_depth(individual::T) where T <: AbstractIndividual
 
 Return the maximum depth of an individual's pedigree.
 """
-function max_depth(individual::T) where T <: AbstractIndividual
+function _max_depth(individual::T) where T <: AbstractIndividual
     depth = 1
     father = individual.father
     mother = individual.mother
     if !isnothing(father) && !isnothing(mother)
-        depth += max(max_depth(father), max_depth(mother))
+        depth += max(_max_depth(father), _max_depth(mother))
     elseif !isnothing(father)
-        depth += max_depth(father)
+        depth += _max_depth(father)
     elseif !isnothing(mother)
-        depth += max_depth(mother)
+        depth += _max_depth(mother)
     end
     depth
 end
