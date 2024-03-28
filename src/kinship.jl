@@ -141,9 +141,6 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
     probands = [pedigree[ID] for ID in probandIDs]
     founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
     founders = [pedigree[ID] for ID in founderIDs]
-    if probandIDs == founderIDs
-        return Ψ
-    end
     Φ = zeros(length(pedigree), length(pedigree))
     for (index₁, founder₁) in enumerate(founders)
         for (index₂, founder₂) in enumerate(founders)
