@@ -171,15 +171,13 @@ end
 Return the maximum depth of an individual's pedigree.
 """
 function _max_depth(individual::T) where T <: AbstractIndividual
-    depth = 1
-    father = individual.father
-    mother = individual.mother
-    if !isnothing(father) && !isnothing(mother)
-        depth += max(_max_depth(father), _max_depth(mother))
-    elseif !isnothing(father)
-        depth += _max_depth(father)
-    elseif !isnothing(mother)
-        depth += _max_depth(mother)
+    father_depth = 1
+    mother_depth = 1
+    if !isnothing(individual.father)
+        father_depth += _max_depth(individual.father)
     end
-    depth
+    if !isnothing(individual.mother)
+        mother_depth += _max_depth(individual.mother)
+    end
+    max(father_depth, mother_depth)
 end
