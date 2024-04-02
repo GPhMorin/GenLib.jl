@@ -106,16 +106,14 @@ function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ:
 end
 
 """
-    function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
+    function _lowest_founders(pedigree::Pedigree{T}) where T <: AbstractIndividual
 
-Return the bottleneck ancestors of a given pedigree.
+Return the lowest founders of a given pedigree.
 
-A bottleneck ancestor is an individual who is the only transmitter of 
-their ancestors' genetic contributions. In graph terms, it may be defined as
-a cut vertex, i. e. an individual that "when removed, disrupt every path from
-any source [founder] to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
+The lowest founder is defined as an only child who is either a
+founder or as the only child of a lineage of only children.
 """
-function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
+function _lowest_founders(pedigree::Pedigree{T}) where T <: AbstractIndividual
     founderIDs = founder(pedigree)
     deepestIDs = Int64[]
     for founderID ∈ founderIDs
@@ -127,6 +125,61 @@ function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
     end
     sort(unique(deepestIDs))
 end
+
+"""
+    _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
+
+Return whether an individual can be used as a cut vertex.
+
+A cut vertex is an individual that "when removed,
+disrupt every path from any source [founder]
+to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
+"""
+function _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
+    value = true
+    for child in individual.children
+        # Check if going down the pedigree
+        # while avoiding the candidate ID
+        # reaches a proband (sink) anyway
+        if isempty(child.children) # The child is a proband
+            return false
+        elseif child.ID != candidateID
+            value = value && _cut_vertex(child, candidateID)
+        end
+    end
+    value
+end
+
+"""
+    _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
+Return the bottleneck ancestors of a given pedigree.
+
+A bottleneck ancestor is an individual who is the only transmitter of 
+their ancestors' genetic contributions. In graph terms, it may be defined as
+a cut vertex, i. e. an individual that "when removed, disrupt every path from
+any source [founder] to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
+"""
+function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
+    bottlenecks = Int64[]
+    probandIDs = pro(pedigree)
+    founderIDs = _lowest_founders(pedigree)
+    isolated_pedigree = branching(pedigree, ancestors=founderIDs)
+    candidateIDs = [ID for ID ∈ keys(isolated_pedigree)
+                    if !isnothing(pedigree[ID].father)
+                    && !isnothing(pedigree[ID].mother)]
+    candidateIDs = [ID for ID ∈ candidateIDs
+                     if length(pedigree[ID].father.children) == 1
+                     && length(pedigree[ID].mother.children) == 1]
+    for candidateID ∈ setdiff(candidateIDs, ∪(probandIDs, founderIDs))
+        ancestors = ancestor(pedigree, candidateID)
+        sourceIDs = ∩(ancestors, founderIDs)
+        if all(_cut_vertex(pedigree[sourceID], candidateID) for sourceID ∈ sourceIDs)
+            push!(bottlenecks, candidateID)
+        end
+    end
+    sort(unique(bottlenecks))
+end
+
 
 """
     phi(pedigree::Pedigree, Ψ::Matrix{Float64})
@@ -218,9 +271,8 @@ gen.phi(ped)
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    bottleneckIDs = _bottlenecks(isolated_pedigree)
-    isolated_pedigree = branching(pedigree, ancestors = bottleneckIDs)
-    founderIDs = founder(isolated_pedigree)
+    founderIDs = _lowest_founders(isolated_pedigree)
+    isolated_pedigree = branching(pedigree, ancestors = founderIDs)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
         Ψ[f, f] = 0.5
@@ -280,9 +332,8 @@ function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64}
     Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
     probandIDs = union(rowIDs, columnIDs)
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    bottleneckIDs = _bottlenecks(isolated_pedigree)
-    isolated_pedigree = branching(pedigree, ancestors = bottleneckIDs)
-    founderIDs = founder(isolated_pedigree)
+    founderIDs = _lowest_founders(isolated_pedigree)
+    isolated_pedigree = branching(pedigree, ancestors = founderIDs)
     Ψ = zeros(length(founderIDs), length(founderIDs))
     for f in eachindex(founderIDs)
         Ψ[f, f] = 0.5
@@ -346,4 +397,19 @@ function _cleanup(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
         visited[i] = true
     end
     to_keep
+end
+
+"""
+    f(pedigree::Pedigree, ID::Int64)
+
+Return the coefficient of inbreeding of an individual.
+"""
+
+function f(pedigree::Pedigree, ID::Int64)
+    individual = pedigree[ID]
+    if isnothing(individual.father) || isnothing(individual.mother)
+        0.
+    else
+        phi(individual.father, individual.mother)
+    end
 end
