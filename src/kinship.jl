@@ -379,7 +379,7 @@ end
     _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
 
 Return a vector of booleans of probands whose kinships
-between them never exceed a minimum `threshold`.
+between them never exceed a given `threshold`.
     
 For instance, a threshold of 0.0625 (the default) removes individuals
 who are first-degree cousins or closer.
