@@ -38,7 +38,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
                     coefficient = 0.5
                     Φ[i, i] += coefficient
                 end
-            elseif i > j # i cannot be an ancestor of j
+            elseif i > j
                 fatherᵢ = individualᵢ.father
                 motherᵢ = individualᵢ.mother
                 coefficientᵢ = 0.
