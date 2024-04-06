@@ -46,7 +46,7 @@ Recursively mark the descendants of an `individual`.
 """
 function _mark_descendants!(individual::Candidate)
     individual.is_descendant = true
-    for child in individual.children
+    for child ∈ individual.children
         _mark_descendants!(child)
     end
 end
@@ -54,14 +54,14 @@ end
 """
     branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
 
-Return a pedigree that filters individuals who are in the paths
+Return a pedigree that filters individuals who are ∈ the paths
 between select probands and ancestors.
 """
 function branching(pedigree::Pedigree{T}; pro::Vector{Int64} = pro(pedigree),
     ancestors::Vector{Int64} = founder(pedigree)) where T <: AbstractIndividual
     isolated_pedigree = Pedigree{T}()
     marking_pedigree = Pedigree{Candidate}()
-    for individual in collect(values(pedigree))
+    for individual ∈ collect(values(pedigree))
         father = isnothing(individual.father) ? nothing : marking_pedigree[individual.father.ID]
         mother = isnothing(individual.mother) ? nothing : marking_pedigree[individual.mother.ID]
         marking_pedigree[individual.ID] = Candidate(
@@ -80,16 +80,16 @@ function branching(pedigree::Pedigree{T}; pro::Vector{Int64} = pro(pedigree),
             push!(marking_pedigree[mother.ID].children, marking_pedigree[individual.ID])
         end
     end
-    for ID in pro
+    for ID ∈ pro
         proband = marking_pedigree[ID]
         _mark_ancestors!(proband)
     end
-    for ID in ancestors
+    for ID ∈ ancestors
         ancestor = marking_pedigree[ID]
         _mark_descendants!(ancestor)
     end
     rank = 0
-    for individual in collect(values(marking_pedigree))
+    for individual ∈ collect(values(marking_pedigree))
         if individual.is_ancestor && individual.is_descendant
             rank += 1
             father = individual.father

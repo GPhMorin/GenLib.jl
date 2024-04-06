@@ -36,7 +36,7 @@ function gc(
     # Ported from GENLIB's Congen
     matrix = zeros(length(pro), length(ancestors))
     contribution_pedigree = Pedigree{PossibleDescendant}()
-    for individual in collect(values(pedigree))
+    for individual ∈ collect(values(pedigree))
         father = individual.father
         mother = individual.mother
         contribution_pedigree[individual.ID] = PossibleDescendant(
@@ -55,10 +55,10 @@ function gc(
             push!(contribution_pedigree[mother.ID].children, contribution_pedigree[individual.ID])
         end
     end
-    for (index₁, ancestorID) in enumerate(ancestors)
+    for (index₁, ancestorID) ∈ enumerate(ancestors)
         ancestor = contribution_pedigree[ancestorID]
         _contribute!(ancestor)
-        for (index₂, probandID) in enumerate(pro)
+        for (index₂, probandID) ∈ enumerate(pro)
             proband = contribution_pedigree[probandID]
             matrix[index₂, index₁] = proband.contribution
             proband.contribution = 0.
@@ -77,7 +77,7 @@ function _contribute!(individual::PossibleDescendant, depth::Int64 = 0)
     if isempty(individual.children)
         individual.contribution += 0.5 ^ depth
     else
-        for child in individual.children
+        for child ∈ individual.children
             _contribute!(child, depth + 1)
         end
     end

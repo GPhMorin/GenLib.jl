@@ -9,7 +9,7 @@
         index::Int64
     end
 
-An individual with an index to access the founder's kinships in the Ψ matrix.
+An individual with an index to access the founder's kinships ∈ the Ψ matrix.
 """
 struct PossibleFounder <: AbstractIndividual
     ID::Int64
@@ -157,15 +157,15 @@ end
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
-An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
+An implementation of the recursive-cut algorithm presented ∈ [Kirkpatrick et al., 2019](@ref).
 """
 function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
     Φ = ones(length(pedigree), length(pedigree)) .* -1
     indices = [pedigree[ID].rank for ID ∈ topIDs]
     Φ[indices, indices] = copy(Ψ)
-    for individualᵢ in values(pedigree)
+    for individualᵢ ∈ values(pedigree)
         i = individualᵢ.rank
-        for individualⱼ in values(pedigree)
+        for individualⱼ ∈ values(pedigree)
             j = individualⱼ.rank
             if Φ[i, j] > -1
                 continue
@@ -214,12 +214,12 @@ end
 Return a square matrix of pairwise kinship coefficients between probands.
 
 If no probands are given, return the square matrix
-for all probands in the pedigree.
+for all probands ∈ the pedigree.
 
 If MT = false: an implementation of the recursive-cut algorithm
-presented in [Kirkpatrick et al., 2019](@ref).
+presented ∈ [Kirkpatrick et al., 2019](@ref).
 
-If MT = true: pairwise kinships in parallel, like in GENLIB.
+If MT = true: pairwise kinships ∈ parallel, like ∈ GENLIB.
 
 # Example
 
@@ -234,8 +234,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
     if MT
         Φ = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
         probands = [pedigree[ID] for ID ∈ probandIDs]
-        Threads.@threads for i in eachindex(probands)
-            Threads.@threads for j in eachindex(probands)
+        Threads.@threads for i ∈ eachindex(probands)
+            Threads.@threads for j ∈ eachindex(probands)
                 if i ≤ j
                     Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j])
                 end
@@ -261,7 +261,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
             next_generation = cut_vertices[i+1]
             if i == 1
                 Ψ = zeros(length(previous_generation), length(previous_generation))
-                for j in eachindex(previous_generation)
+                for j ∈ eachindex(previous_generation)
                     Ψ[j, j] = 0.5
                 end
             end
@@ -282,9 +282,9 @@ as defined by a list or row IDs and column IDs.
 """
 function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
-    Threads.@threads for i in eachindex(rowIDs)
+    Threads.@threads for i ∈ eachindex(rowIDs)
         individualᵢ = pedigree[rowIDs[i]]
-        Threads.@threads for j in eachindex(columnIDs)
+        Threads.@threads for j ∈ eachindex(columnIDs)
             individualⱼ = pedigree[columnIDs[j]]
             Φ[i, j] = phi(individualᵢ, individualⱼ)
         end

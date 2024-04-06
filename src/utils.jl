@@ -1,7 +1,7 @@
 """
     pro(pedigree::Pedigree)
 
-Return a vector of proband IDs in alphabetical order.
+Return a vector of proband IDs ∈ alphabetical order.
 
 # Example
 
@@ -13,14 +13,14 @@ probands = gen.pro(ped)
 ```
 """
 function pro(pedigree::Pedigree)
-    probands = [individual.ID for individual in values(pedigree) if isempty(individual.children)]
+    probands = [individual.ID for individual ∈ values(pedigree) if isempty(individual.children)]
     sort(probands)
 end
 
 """
     founder(pedigree::Pedigree)
 
-Return a vector of founder IDs in alphabetical order.
+Return a vector of founder IDs ∈ alphabetical order.
 
 # Example
 
@@ -32,7 +32,7 @@ founders = gen.founder(ped)
 ```
 """
 function founder(pedigree::Pedigree)
-    founders = [individual.ID for individual in values(pedigree) if isnothing(individual.father) && isnothing(individual.mother)]
+    founders = [individual.ID for individual ∈ values(pedigree) if isnothing(individual.father) && isnothing(individual.mother)]
     sort(founders)
 end
 
@@ -42,9 +42,9 @@ end
 Return a vector of founders from whom the `IDs` descend.
 """
 function findFounders(pedigree::Pedigree, IDs::Vector{Int64})
-    ancestorIDs = [ancestor(pedigree, ID) for ID in IDs]
+    ancestorIDs = [ancestor(pedigree, ID) for ID ∈ IDs]
     common_ancestorIDs = ∩(ancestorIDs...)
-    founderIDs = [ancestorID for ancestorID in common_ancestorIDs
+    founderIDs = [ancestorID for ancestorID ∈ common_ancestorIDs
                   if isnothing(pedigree[ancestorID].father) && isnothing(pedigree[ancestorID].mother)]
     sort(founderIDs)
 end
@@ -58,14 +58,14 @@ function get_paths(pedigree::Pedigree{T}, individual::T) where T <: AbstractIndi
     paths = Vector{Vector{Int64}}([[individual.ID]])
     if !isnothing(individual.father)
         fathers_paths = get_paths(pedigree, individual.father)
-        for path in fathers_paths
+        for path ∈ fathers_paths
             push!(path, individual.ID)
         end
         append!(paths, fathers_paths)
     end
     if !isnothing(individual.mother)
         mothers_paths = get_paths(pedigree, individual.mother)
-        for path in mothers_paths
+        for path ∈ mothers_paths
             push!(path, individual.ID)
         end
         append!(paths, mothers_paths)
@@ -80,7 +80,7 @@ Return the children of an individual.
 """
 function children(pedigree::Pedigree, ID::Int64)
     individual = pedigree[ID]
-    sort([child.ID for child in individual.children])
+    sort([child.ID for child ∈ individual.children])
 end
 
 """
@@ -95,7 +95,7 @@ function descendant(pedigree::Pedigree, ID::Int64)
     while !isempty(stack)
         ID = pop!(stack)
         individual = pedigree[ID]
-        for child in individual.children
+        for child ∈ individual.children
             push!(stack, child.ID)
             push!(descendantIDs, child.ID)
         end
@@ -114,9 +114,9 @@ function rec(
     ancestorIDs::Vector{Int64} = founder(pedigree))
     
     coverage = Vector{Int64}()
-    for ancestorID in ancestorIDs
+    for ancestorID ∈ ancestorIDs
         descendantIDs = descendant(pedigree, ancestorID)
-        descendantIDs = filter!(x -> x in probandIDs, descendantIDs)
+        descendantIDs = filter!(x -> x ∈ probandIDs, descendantIDs)
         append!(coverage, length(descendantIDs))
     end
     coverage
@@ -128,10 +128,10 @@ end
 Return a pedigree as a `DataFrame`.
 
 If `sorted` is `false` (the default), then the individuals
-will appear in the same order as in the pedigree.
+will appear ∈ the same order as ∈ the pedigree.
 
 If `sorted` is `true`, then the individuals
-will appear in alphabetical ID order.
+will appear ∈ alphabetical ID order.
 
 ```julia
 import GenLib as gen
@@ -146,7 +146,7 @@ function genout(pedigree::Pedigree; sorted::Bool = false)
     mothers = Int64[]
     sexes = Int64[]
     if !sorted
-        for (ID, individual) in pedigree
+        for (ID, individual) ∈ pedigree
             push!(inds, ID)
             push!(fathers, !isnothing(individual.father) ? individual.father.ID : 0)
             push!(mothers, !isnothing(individual.mother) ? individual.mother.ID : 0)
@@ -154,7 +154,7 @@ function genout(pedigree::Pedigree; sorted::Bool = false)
         end
     else # if sorted
         inds = sort(collect(keys(pedigree)))
-        for ID in inds
+        for ID ∈ inds
             individual = pedigree[ID]
             push!(fathers, !isnothing(individual.father) ? individual.father.ID : 0)
             push!(mothers, !isnothing(individual.mother) ? individual.mother.ID : 0)

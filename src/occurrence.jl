@@ -48,7 +48,7 @@ function occ(
     
     occurrence_matrix = Matrix{Int64}(undef, length(ancestors), length(pro))
     occurrence_pedigree = Pedigree{Occurrent}()
-    for individual in collect(values(pedigree))
+    for individual ∈ collect(values(pedigree))
         father = individual.father
         mother = individual.mother
         occurrence_pedigree[individual.ID] = Occurrent(
@@ -62,10 +62,10 @@ function occ(
             0
         )
     end
-    for (j, probandID) in enumerate(pro)
+    for (j, probandID) ∈ enumerate(pro)
         proband = occurrence_pedigree[probandID]
         occur!(proband)
-        for (i, ancestorID) in enumerate(ancestors)
+        for (i, ancestorID) ∈ enumerate(ancestors)
             ancestor = occurrence_pedigree[ancestorID]
             occurrence_matrix[i, j] = ancestor.occurrence
             ancestor.occurrence = 0

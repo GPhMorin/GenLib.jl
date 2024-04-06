@@ -44,7 +44,7 @@ end
 Return a vector of several individual's ancestors.
 """
 function ancestor(pedigree::Pedigree, IDs::Vector{Int64})
-    ancestorIDs = union([ancestor(pedigree, ID) for ID in IDs]...)
+    ancestorIDs = union([ancestor(pedigree, ID) for ID ∈ IDs]...)
     sort!(ancestorIDs)
 end
 
@@ -54,7 +54,7 @@ end
 Return the most recent common ancestors of a list of probands.
 """
 function _findMRCA(pedigree::Pedigree, individuals::Vector{Int64})
-    ancestorIDs = [ancestor(pedigree, ID) for ID in individuals]
+    ancestorIDs = [ancestor(pedigree, ID) for ID ∈ individuals]
     common_ancestorIDs = ∩(ancestorIDs...)
     older_common_ancestorIDs = ancestor(pedigree, common_ancestorIDs)
     mrcaIDs = sort(collect(setdiff(common_ancestorIDs, older_common_ancestorIDs)))
@@ -82,7 +82,7 @@ genMatrix = gen.findMRCA(ped, [pro1, pro2])
 function findMRCA(pedigree::Pedigree, individuals::Vector{Int64})
     mrcaIDs = _findMRCA(pedigree, individuals)
     meioses_matrix = Matrix{Int64}(undef, length(individuals), length(mrcaIDs))
-    for (i, ID) in enumerate(individuals), (j, mrcaID) in enumerate(mrcaIDs)
+    for (i, ID) ∈ enumerate(individuals), (j, mrcaID) ∈ enumerate(mrcaIDs)
         meioses_matrix[i, j] = _findMinDistance(pedigree, ID, mrcaID)
     end
     genMatrix = GenMatrix(individuals, mrcaIDs, meioses_matrix)
@@ -96,6 +96,6 @@ Return the minimum distance (meioses) between two individuals.
 """
 function _findMinDistanceMRCA(pedigree::Pedigree, individuals::Vector{Int64})
     mrcas = _findMRCA(pedigree, individuals)
-    distances = [findDistance(pedigree, individuals, mrca) for mrca in mrcas]
+    distances = [findDistance(pedigree, individuals, mrca) for mrca ∈ mrcas]
     minimum(distances)
 end

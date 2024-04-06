@@ -64,7 +64,7 @@ function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
     women = 0
     probands = 0
     depth = 0
-    for (_, individual) in pedigree
+    for (_, individual) ∈ pedigree
         n += 1
         children = length(individual.children)
         if children > 0
@@ -114,7 +114,7 @@ ped = gen.genealogy(df)
 """
 function genealogy(dataframe::DataFrame; sort::Bool = true)
     pedigree = Pedigree{IntIndividual}()
-    for row in eachrow(dataframe)
+    for row ∈ eachrow(dataframe)
         pedigree[row.ind] = IntIndividual(
             row.ind,
             row.father,
@@ -190,16 +190,16 @@ end
 """
     _ordered_pedigree(pedigree::Pedigree)
 
-Return a reordered pedigree where the individuals are in chronological order,
+Return a reordered pedigree where the individuals are ∈ chronological order,
 i.e. any individual's parents appear before them.
 """
 function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
     IDs = collect(keys(pedigree))
-    depths = [_max_depth(pedigree, pedigree[ID]) for ID in IDs]
+    depths = [_max_depth(pedigree, pedigree[ID]) for ID ∈ IDs]
     order = sortperm(depths)
     sortedIDs = IDs[order]
     ordered_pedigree = Pedigree{IntIndividual}()
-    for ID in sortedIDs
+    for ID ∈ sortedIDs
         ordered_pedigree[ID] = pedigree[ID]
     end
     ordered_pedigree
@@ -213,7 +213,7 @@ Return a pedigree of immutable individuals.
 function _finalize_pedigree(pedigree::Pedigree)
     temporary_pedigree = copy(pedigree)
     pedigree = Pedigree{Individual}()
-    for (rank, individual) in enumerate(collect(values(temporary_pedigree)))
+    for (rank, individual) ∈ enumerate(collect(values(temporary_pedigree)))
         pedigree[individual.ID] = Individual(
             individual.ID,
             individual.father == 0 ? nothing : pedigree[individual.father],
@@ -238,17 +238,17 @@ end
 Export the pedigree as a CSV file at a given `path`.
 
 If `sorted` is `false` (the default), then the individuals
-will appear in the same order as in the genealogy.
+will appear ∈ the same order as ∈ the genealogy.
 
 If `sorted` is `true`, then the individuals
-will appear in alphabetical ID order.
+will appear ∈ alphabetical ID order.
 """
 function save_genealogy(pedigree::Pedigree, path::String; sorted::Bool = false)
     df = genout(pedigree, sorted = sorted)
     open(path, "w") do file
         firstline = "ind\tfather\tmother\tsex"
         println(file, firstline)
-        for row in eachrow(df)
+        for row ∈ eachrow(df)
             line = join(row, "\t")
             println(file, line)
         end

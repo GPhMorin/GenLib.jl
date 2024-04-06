@@ -11,7 +11,7 @@ function _findDistance(
     descendant = pedigree[descendantID]
     paths = get_paths(pedigree, descendant)
     lengths = Vector{Int64}()
-    for path in paths
+    for path ∈ paths
         if path[1] ≡ ancestorID
             push!(lengths, length(path) - 1)
         end
