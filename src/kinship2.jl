@@ -19,24 +19,32 @@ function _previous_generation(pedigree::Pedigree{T}, next_generation::Vector{Int
 end
 
 function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
-    Φ = zeros(length(pedigree), length(pedigree))
+    Φ = ones(length(pedigree), length(pedigree)) .* -1
     indices = [pedigree[ID].rank for ID ∈ topIDs]
     Φ[indices, indices] = copy(Ψ)
+    individuals = collect(values(pedigree))
+    for founder ∈ individuals[indices]
+        for child ∈ founder.children
+            coefficient = Φ[founder.rank, founder.rank] / 2
+            Φ[child.rank, founder.rank] = coefficient
+            Φ[founder.rank, child.rank] = coefficient
+        end
+    end
     for individualᵢ in values(pedigree)
         i = individualᵢ.rank
         for individualⱼ in values(pedigree)
             j = individualⱼ.rank
-            if Φ[i, j] > 0
+            if Φ[i, j] > -1
                 continue
             elseif i == j
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father) && !isnothing(mother)
                     coefficient = (1 + Φ[mother.rank, father.rank]) / 2
-                    Φ[i, i] += coefficient
+                    Φ[i, i] = coefficient
                 else
                     coefficient = 0.5
-                    Φ[i, i] += coefficient
+                    Φ[i, i] = coefficient
                 end
             elseif i > j
                 fatherᵢ = individualᵢ.father
@@ -58,8 +66,8 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
                     coefficientⱼ += Φ[motherⱼ.rank, individualᵢ.rank] / 2
                 end
                 coefficient = max(coefficientᵢ, coefficientⱼ)
-                Φ[i, j] += coefficient
-                Φ[j, i] += coefficient
+                Φ[i, j] = coefficient
+                Φ[j, i] = coefficient
             end
         end
     end
