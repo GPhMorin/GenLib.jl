@@ -209,7 +209,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
 end
 
 """
-    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
+    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
 
 Return a square matrix of pairwise kinship coefficients between probands.
 
@@ -230,7 +230,7 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
     global Ψ, next_generation
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     cut_vertices = [probandIDs]
@@ -248,6 +248,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
     for i ∈ 1:length(cut_vertices)-1
         previous_generation = cut_vertices[i]
         next_generation = cut_vertices[i+1]
+        if verbose
+            println("Step $i / $(length(cut_vertices)-1) ($(length(previous_generation)) founders, $(length(next_generation)) probands)")
+        end
         if i == 1
             Ψ = zeros(length(previous_generation), length(previous_generation))
             for j ∈ eachindex(previous_generation)
