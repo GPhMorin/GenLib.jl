@@ -22,14 +22,6 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
     Φ = ones(length(pedigree), length(pedigree)) .* -1
     indices = [pedigree[ID].rank for ID ∈ topIDs]
     Φ[indices, indices] = copy(Ψ)
-    individuals = collect(values(pedigree))
-    for founder ∈ individuals[indices]
-        for child ∈ founder.children
-            coefficient = Φ[founder.rank, founder.rank] / 2
-            Φ[child.rank, founder.rank] = coefficient
-            Φ[founder.rank, child.rank] = coefficient
-        end
-    end
     for individualᵢ in values(pedigree)
         i = individualᵢ.rank
         for individualⱼ in values(pedigree)
@@ -46,7 +38,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
                     coefficient = 0.5
                     Φ[i, i] = coefficient
                 end
-            elseif i > j
+            elseif i < j
                 fatherᵢ = individualᵢ.father
                 motherᵢ = individualᵢ.mother
                 coefficientᵢ = 0.
