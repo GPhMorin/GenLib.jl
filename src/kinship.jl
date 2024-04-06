@@ -79,28 +79,28 @@ function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ:
         return Ψ[individualᵢ.index, individualⱼ.index]
     end
     value = 0.
-    if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
-        # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
-        if !isnothing(individualᵢ.father)
-            value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
-        end
-        if !isnothing(individualᵢ.mother)
-            value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
-        end
-    elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
-        # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
-        if !isnothing(individualⱼ.father)
-            value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
-        end
-        if !isnothing(individualⱼ.mother)
-            value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
-        end
-    elseif individualᵢ.rank == individualⱼ.rank # Same individual
+    if individualᵢ.rank == individualⱼ.rank # Same individual
         # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
         value += 1/2
         if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
             value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
         end
+    else
+        valueᵢ = 0.
+        if !isnothing(individualᵢ.father)
+            valueᵢ += phi(individualᵢ.father, individualⱼ, Ψ) / 2
+        end
+        if !isnothing(individualᵢ.mother)
+            valueᵢ += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
+        end
+        valueⱼ = 0.
+        if !isnothing(individualⱼ.father)
+            valueⱼ += phi(individualⱼ.father, individualᵢ, Ψ) / 2
+        end
+        if !isnothing(individualⱼ.mother)
+            valueⱼ += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
+        end
+        value = max(valueᵢ, valueⱼ)
     end
     return value
 end
@@ -231,46 +231,67 @@ gen.phi(ped)
 ```
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
-    if MT
-        Φ = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
-        probands = [pedigree[ID] for ID ∈ probandIDs]
-        Threads.@threads for i ∈ eachindex(probands)
-            Threads.@threads for j ∈ eachindex(probands)
-                if i ≤ j
-                    Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j])
-                end
+    global Ψ, next_generation
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
+    cut_vertices = [probandIDs]
+    founderIDs = founder(isolated_pedigree)
+    previous_generation = probandIDs
+    while true
+        previous_generation = _previous_generation(isolated_pedigree, previous_generation)
+        if previous_generation != founderIDs
+            pushfirst!(cut_vertices, previous_generation)
+        else
+            break
+        end
+    end
+    pushfirst!(cut_vertices, founderIDs)
+    for i ∈ 1:length(cut_vertices)-1
+        previous_generation = cut_vertices[i]
+        next_generation = cut_vertices[i+1]
+        if i == 1
+            Ψ = zeros(length(previous_generation), length(previous_generation))
+            for j ∈ eachindex(previous_generation)
+                Ψ[j, j] = 0.5
             end
         end
-    else
-        global Ψ, next_generation
-        isolated_pedigree = branching(pedigree, pro = probandIDs)
-        cut_vertices = [probandIDs]
-        founderIDs = founder(isolated_pedigree)
-        previous_generation = probandIDs
-        while true
-            previous_generation = _previous_generation(isolated_pedigree, previous_generation)
-            if previous_generation != founderIDs
-                pushfirst!(cut_vertices, previous_generation)
-            else
-                break
+        if MT
+            temporary_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
+            isolated_pedigree = Pedigree{PossibleFounder}()
+            for individual ∈ values(temporary_pedigree)
+                isolated_pedigree[individual.ID] = PossibleFounder(
+                    individual.ID,
+                    !isnothing(individual.father) ? isolated_pedigree[individual.father.ID] : nothing,
+                    !isnothing(individual.mother) ? isolated_pedigree[individual.mother.ID] : nothing,
+                    [],
+                    individual.sex,
+                    individual.rank,
+                    individual.ID ∈ previous_generation ? findfirst(previous_generation .== individual.ID) : 0
+                )
             end
-        end
-        pushfirst!(cut_vertices, founderIDs)
-        for i ∈ 1:length(cut_vertices)-1
-            previous_generation = cut_vertices[i]
-            next_generation = cut_vertices[i+1]
-            if i == 1
-                Ψ = zeros(length(previous_generation), length(previous_generation))
-                for j ∈ eachindex(previous_generation)
-                    Ψ[j, j] = 0.5
+            for individual ∈ values(isolated_pedigree)
+                if !isnothing(individual.father)
+                    push!(individual.father.children, individual)
+                end
+                if !isnothing(individual.mother)
+                    push!(individual.mother.children, individual)
                 end
             end
+            Φ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
+            probands = [isolated_pedigree[ID] for ID ∈ next_generation]
+            Threads.@threads for i ∈ eachindex(probands)
+                Threads.@threads for j ∈ eachindex(probands)
+                    if i ≤ j
+                        Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ)
+                    end
+                end
+            end
+            Ψ = Φ
+        else
             isolated_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
             Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
         end
-        Φ = Ψ
     end
-    Φ
+    Ψ
 end
 
 """
