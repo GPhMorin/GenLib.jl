@@ -54,7 +54,7 @@ end
 """
     branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
 
-Return a pedigree that filters individuals who are ∈ the paths
+Return a pedigree that filters individuals who are in the paths
 between select probands and ancestors.
 """
 function branching(pedigree::Pedigree{T}; pro::Vector{Int64} = pro(pedigree),

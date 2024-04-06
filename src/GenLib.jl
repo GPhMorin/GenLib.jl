@@ -35,7 +35,7 @@ Genealogical information for 140 individuals from the Quebec Reference Sample.
 According to the R GENLIB documentation, `genea140` corresponds to
 "a genealogical corpus made of 41523 individuals from the province
 of Quebec, Canada. A total of 140 individuals have been sampled in
-seven sub-populations, listed ∈ pop140, and their genealogies
+seven sub-populations, listed in pop140, and their genealogies
 were reconstructed as far back as possible using the BALSAC population
 register and the Early Quebec Population Register."
 

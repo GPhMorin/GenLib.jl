@@ -1,7 +1,7 @@
 """
     pro(pedigree::Pedigree)
 
-Return a vector of proband IDs ∈ alphabetical order.
+Return a vector of proband IDs in alphabetical order.
 
 # Example
 
@@ -20,7 +20,7 @@ end
 """
     founder(pedigree::Pedigree)
 
-Return a vector of founder IDs ∈ alphabetical order.
+Return a vector of founder IDs in alphabetical order.
 
 # Example
 
@@ -128,10 +128,10 @@ end
 Return a pedigree as a `DataFrame`.
 
 If `sorted` is `false` (the default), then the individuals
-will appear ∈ the same order as ∈ the pedigree.
+will appear in the same order as in the pedigree.
 
 If `sorted` is `true`, then the individuals
-will appear ∈ alphabetical ID order.
+will appear in alphabetical ID order.
 
 ```julia
 import GenLib as gen

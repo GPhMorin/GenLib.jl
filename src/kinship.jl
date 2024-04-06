@@ -9,7 +9,7 @@
         index::Int64
     end
 
-An individual with an index to access the founder's kinships ∈ the Ψ matrix.
+An individual with an index to access the founder's kinships in the Ψ matrix.
 """
 struct PossibleFounder <: AbstractIndividual
     ID::Int64
@@ -157,7 +157,7 @@ end
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
-An implementation of the recursive-cut algorithm presented ∈ [Kirkpatrick et al., 2019](@ref).
+An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
 function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
     Φ = ones(length(pedigree), length(pedigree)) .* -1
@@ -214,12 +214,13 @@ end
 Return a square matrix of pairwise kinship coefficients between probands.
 
 If no probands are given, return the square matrix
-for all probands ∈ the pedigree.
+for all probands in the pedigree.
 
 If MT = false: an implementation of the recursive-cut algorithm
-presented ∈ [Kirkpatrick et al., 2019](@ref).
+presented in [Kirkpatrick et al., 2019](@ref).
 
-If MT = true: pairwise kinships ∈ parallel, like ∈ GENLIB.
+If MT = true: pairwise kinships in parallel, a hybrid between
+the algorithms of [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 
 # Example
 
