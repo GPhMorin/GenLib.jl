@@ -127,127 +127,84 @@ function _lowest_founders(pedigree::Pedigree{T}) where T <: AbstractIndividual
 end
 
 """
-    _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
+    _previous_generation(pedigree::Pedigree{T}, next_generation::Vector{Int64}) where T <: AbstractIndividual
 
-Return whether an individual can be used as a cut vertex.
-
-A cut vertex is an individual that "when removed,
-disrupt every path from any source [founder]
-to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
+Return the previous generation of a given set of individuals.
 """
-function _cut_vertex(individual::T, candidateID::Int64) where T <: AbstractIndividual
-    value = true
-    for child in individual.children
-        # Check if going down the pedigree
-        # while avoiding the candidate ID
-        # reaches a proband (sink) anyway
-        if isempty(child.children) # The child is a proband
-            return false
-        elseif child.ID != candidateID
-            value = value && _cut_vertex(child, candidateID)
+function _previous_generation(pedigree::Pedigree{T}, next_generation::Vector{Int64}) where T <: AbstractIndividual
+    previous_generation = Int64[]
+    for ID ∈ next_generation
+        individual = pedigree[ID]
+        father = individual.father
+        mother = individual.mother
+        if isnothing(father) && isnothing(mother)
+            push!(previous_generation, ID)
+        else
+            if !isnothing(father)
+                push!(previous_generation, father.ID)
+            end
+            if !isnothing(mother)
+                push!(previous_generation, mother.ID)
+            end
         end
     end
-    value
+    sort(unique(previous_generation))
 end
 
 """
-    _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
-Return the bottleneck ancestors of a given pedigree.
-
-A bottleneck ancestor is an individual who is the only transmitter of 
-their ancestors' genetic contributions. In graph terms, it may be defined as
-a cut vertex, i. e. an individual that "when removed, disrupt every path from
-any source [founder] to any sink [proband]" ([Kirkpatrick et al., 2019](@ref)).
-"""
-function _bottlenecks(pedigree::Pedigree{T}) where T <: AbstractIndividual
-    bottlenecks = Int64[]
-    probandIDs = pro(pedigree)
-    founderIDs = _lowest_founders(pedigree)
-    isolated_pedigree = branching(pedigree, ancestors=founderIDs)
-    candidateIDs = [ID for ID ∈ keys(isolated_pedigree)
-                    if !isnothing(pedigree[ID].father)
-                    && !isnothing(pedigree[ID].mother)]
-    candidateIDs = [ID for ID ∈ candidateIDs
-                     if length(pedigree[ID].father.children) == 1
-                     && length(pedigree[ID].mother.children) == 1]
-    for candidateID ∈ setdiff(candidateIDs, ∪(probandIDs, founderIDs))
-        ancestors = ancestor(pedigree, candidateID)
-        sourceIDs = ∩(ancestors, founderIDs)
-        if all(_cut_vertex(pedigree[sourceID], candidateID) for sourceID ∈ sourceIDs)
-            push!(bottlenecks, candidateID)
-        end
-    end
-    sort(unique(bottlenecks))
-end
-
-
-"""
-    phi(pedigree::Pedigree, Ψ::Matrix{Float64})
+    phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
 
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
 An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
-function phi(pedigree::Pedigree, Ψ::Matrix{Float64})
-    probandIDs = filter(x -> isempty(pedigree[x].children), collect(keys(pedigree)))
-    probands = [pedigree[ID] for ID in probandIDs]
-    founderIDs = filter(x -> isnothing(pedigree[x].father) && isnothing(pedigree[x].mother), collect(keys(pedigree)))
-    founders = [pedigree[ID] for ID in founderIDs]
-    Φ = zeros(length(pedigree), length(pedigree))
-    for (index₁, founder₁) in enumerate(founders)
-        for (index₂, founder₂) in enumerate(founders)
-            if index₁ ≤ index₂
-                coefficient = Ψ[index₁, index₂]
-                Φ[founder₁.rank, founder₂.rank] = coefficient
-                Φ[founder₂.rank, founder₁.rank] = coefficient
-            end
-        end
-    end
+function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
+    Φ = ones(length(pedigree), length(pedigree)) .* -1
+    indices = [pedigree[ID].rank for ID ∈ topIDs]
+    Φ[indices, indices] = copy(Ψ)
     for individualᵢ in values(pedigree)
         i = individualᵢ.rank
         for individualⱼ in values(pedigree)
             j = individualⱼ.rank
-            if Φ[i, j] > 0
+            if Φ[i, j] > -1
                 continue
-            elseif i > j # i cannot be an ancestor of j
-                father = individualᵢ.father
-                mother = individualᵢ.mother
-                if !isnothing(father)
-                    coefficient = Φ[father.rank, individualⱼ.rank] / 2
-                    Φ[i, j] += coefficient
-                    Φ[j, i] += coefficient
-                end
-                if !isnothing(mother)
-                    coefficient = Φ[mother.rank, individualⱼ.rank] / 2
-                    Φ[i, j] += coefficient
-                    Φ[j, i] += coefficient
-                end
-            elseif j > i # j cannot be an ancestor of i
-                father = individualⱼ.father
-                mother = individualⱼ.mother
-                if !isnothing(father)
-                    coefficient = Φ[father.rank, individualᵢ.rank] / 2
-                    Φ[i, j] += coefficient
-                    Φ[j, i] += coefficient
-                end
-                if !isnothing(mother)
-                    coefficient = Φ[mother.rank, individualᵢ.rank] / 2
-                    Φ[i, j] += coefficient
-                    Φ[j, i] += coefficient
-                end
-            else # i == j, same individual
+            elseif i == j
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father) && !isnothing(mother)
-                    Φ[i, i] += (1 + Φ[mother.rank, father.rank]) / 2
+                    coefficient = (1 + Φ[mother.rank, father.rank]) / 2
+                    Φ[i, i] = coefficient
                 else
-                    Φ[i, i] += 0.5
+                    coefficient = 0.5
+                    Φ[i, i] = coefficient
                 end
+            elseif i < j
+                fatherᵢ = individualᵢ.father
+                motherᵢ = individualᵢ.mother
+                coefficientᵢ = 0.
+                if !isnothing(fatherᵢ)
+                    coefficientᵢ += Φ[fatherᵢ.rank, individualⱼ.rank] / 2
+                end
+                if !isnothing(motherᵢ)
+                    coefficientᵢ += Φ[motherᵢ.rank, individualⱼ.rank] / 2
+                end
+                fatherⱼ = individualⱼ.father
+                motherⱼ = individualⱼ.mother
+                coefficientⱼ = 0.
+                if !isnothing(fatherⱼ)
+                    coefficientⱼ += Φ[fatherⱼ.rank, individualᵢ.rank] / 2
+                end
+                if !isnothing(motherⱼ)
+                    coefficientⱼ += Φ[motherⱼ.rank, individualᵢ.rank] / 2
+                end
+                coefficient = max(coefficientᵢ, coefficientⱼ)
+                Φ[i, j] = coefficient
+                Φ[j, i] = coefficient
             end
         end
     end
-    indices = [proband.rank for proband in probands]
+    indices = [pedigree[ID].rank for ID ∈ bottomIDs]
     Φ[indices, indices]
 end
 
@@ -256,9 +213,13 @@ end
 
 Return a square matrix of pairwise kinship coefficients between probands.
 
-If no probands are given, return the square matrix for all probands in the pedigree.
+If no probands are given, return the square matrix
+for all probands in the pedigree.
 
-An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
+If MT = false: an implementation of the recursive-cut algorithm
+presented in [Kirkpatrick et al., 2019](@ref).
+
+If MT = true: pairwise kinships in parallel, like in GENLIB.
 
 # Example
 
@@ -270,56 +231,47 @@ gen.phi(ped)
 ```
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false)
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    founderIDs = _lowest_founders(isolated_pedigree)
-    isolated_pedigree = branching(pedigree, ancestors = founderIDs)
-    Ψ = zeros(length(founderIDs), length(founderIDs))
-    for f in eachindex(founderIDs)
-        Ψ[f, f] = 0.5
-    end
     if MT
-        index_pedigree = Pedigree{PossibleFounder}()
-        index = 0
-        for individual in collect(values(isolated_pedigree))
-            father = individual.father
-            mother = individual.mother
-            if isnothing(father) && isnothing(mother)
-                index += 1
-                individual_index = copy(index)
-            else
-                individual_index = 0
-            end
-            index_pedigree[individual.ID] = PossibleFounder(
-                individual.ID,
-                isnothing(father) ? nothing : index_pedigree[father.ID],
-                isnothing(mother) ? nothing : index_pedigree[mother.ID],
-                PossibleFounder[],
-                individual.sex,
-                individual.rank,
-                individual_index
-            )
-            if !isnothing(father)
-                push!(index_pedigree[father.ID].children, index_pedigree[individual.ID])
-            end
-            if !isnothing(mother)
-                push!(index_pedigree[mother.ID].children, index_pedigree[individual.ID])
-            end
-        end
-        probands = filter(x -> isempty(x.children), collect(values(index_pedigree)))
-        Φ = Matrix{Float64}(undef, length(probands), length(probands))
+        Φ = Matrix{Float64}(undef, length(probandIDs), length(probandIDs))
+        probands = [pedigree[ID] for ID ∈ probandIDs]
         Threads.@threads for i in eachindex(probands)
             Threads.@threads for j in eachindex(probands)
                 if i ≤ j
-                    Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ)
+                    Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j])
                 end
             end
         end
     else
-        Φ = phi(isolated_pedigree, Ψ)
+        global Ψ, next_generation
+        isolated_pedigree = branching(pedigree, pro = probandIDs)
+        cut_vertices = [probandIDs]
+        founderIDs = founder(isolated_pedigree)
+        previous_generation = probandIDs
+        while true
+            previous_generation = _previous_generation(isolated_pedigree, previous_generation)
+            if previous_generation != founderIDs
+                pushfirst!(cut_vertices, previous_generation)
+            else
+                break
+            end
+        end
+        pushfirst!(cut_vertices, founderIDs)
+        for i ∈ 1:length(cut_vertices)-1
+            previous_generation = cut_vertices[i]
+            next_generation = cut_vertices[i+1]
+            if i == 1
+                Ψ = zeros(length(previous_generation), length(previous_generation))
+                for j in eachindex(previous_generation)
+                    Ψ[j, j] = 0.5
+                end
+            end
+            isolated_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
+            Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
+        end
+        indices = [findfirst(ID .== next_generation) for ID ∈ probandIDs]
+        Φ = Ψ[indices, indices]
     end
-    probandIDs = filter(x -> x ∈ probandIDs, collect(keys(isolated_pedigree)))
-    order = sortperm(probandIDs)
-    Φ[order, order]
+    Φ
 end
 
 """
