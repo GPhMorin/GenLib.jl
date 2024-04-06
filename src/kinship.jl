@@ -282,46 +282,11 @@ as defined by a list or row IDs and column IDs.
 """
 function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
     Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
-    probandIDs = union(rowIDs, columnIDs)
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    founderIDs = _lowest_founders(isolated_pedigree)
-    isolated_pedigree = branching(pedigree, ancestors = founderIDs)
-    Ψ = zeros(length(founderIDs), length(founderIDs))
-    for f in eachindex(founderIDs)
-        Ψ[f, f] = 0.5
-    end
-    phi_pedigree = Pedigree{PossibleFounder}()
-    founder_index = 1
-    for (rank, individual) in enumerate(collect(values(isolated_pedigree)))
-        father = individual.father
-        mother = individual.mother
-        if isnothing(father) && isnothing(mother)
-            index = copy(founder_index)
-            founder_index += 1
-        else
-            index = 0
-        end
-        phi_pedigree[individual.ID] = PossibleFounder(
-            individual.ID,
-            isnothing(father) ? nothing : phi_pedigree[father.ID],
-            isnothing(mother) ? nothing : phi_pedigree[mother.ID],
-            PossibleFounder[],
-            individual.sex,
-            rank,
-            index
-        )
-        if !isnothing(father)
-            push!(phi_pedigree[father.ID].children, phi_pedigree[individual.ID])
-        end
-        if !isnothing(mother)
-            push!(phi_pedigree[mother.ID].children, phi_pedigree[individual.ID])
-        end
-    end
     Threads.@threads for i in eachindex(rowIDs)
-        individualᵢ = phi_pedigree[rowIDs[i]]
+        individualᵢ = pedigree[rowIDs[i]]
         Threads.@threads for j in eachindex(columnIDs)
-            individualⱼ = phi_pedigree[columnIDs[j]]
-            Φ[i, j] = phi(individualᵢ, individualⱼ, Ψ)
+            individualⱼ = pedigree[columnIDs[j]]
+            Φ[i, j] = phi(individualᵢ, individualⱼ)
         end
     end
     Φ
