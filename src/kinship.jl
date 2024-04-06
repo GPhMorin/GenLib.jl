@@ -245,10 +245,10 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
         end
     end
     pushfirst!(cut_vertices, founderIDs)
-    for i ∈ 1:length(cut_vertices)-1
-        previous_generation = cut_vertices[i]
-        next_generation = cut_vertices[i+1]
-        if verbose
+    if verbose
+        for i ∈ 1:length(cut_vertices)-1
+            previous_generation = cut_vertices[i]
+            next_generation = cut_vertices[i+1]
             println("Step $i / $(length(cut_vertices)-1): $(length(previous_generation)) founders, $(length(next_generation)) probands.")
         end
     end
