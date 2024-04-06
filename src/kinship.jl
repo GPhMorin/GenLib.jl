@@ -268,8 +268,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
             isolated_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
             Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
         end
-        indices = [findfirst(ID .== next_generation) for ID ∈ probandIDs]
-        Φ = Ψ[indices, indices]
+        Φ = Ψ
     end
     Φ
 end
