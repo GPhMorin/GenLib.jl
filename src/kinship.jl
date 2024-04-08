@@ -265,7 +265,7 @@ gen.phi(ped)
 ```
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
-    global Ψ, next_generation
+    global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     cut_vertices = [probandIDs]
     founderIDs = founder(isolated_pedigree)
@@ -295,13 +295,13 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
             end
         end
         if MT
-            temporary_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
-            isolated_pedigree = Pedigree{PossibleFounder}()
+            temporary_pedigree = branching(isolated_pedigree, pro = next_generation, ancestors = previous_generation)
+            indexed_pedigree = Pedigree{PossibleFounder}()
             for individual ∈ values(temporary_pedigree)
-                isolated_pedigree[individual.ID] = PossibleFounder(
+                indexed_pedigree[individual.ID] = PossibleFounder(
                     individual.ID,
-                    !isnothing(individual.father) ? isolated_pedigree[individual.father.ID] : nothing,
-                    !isnothing(individual.mother) ? isolated_pedigree[individual.mother.ID] : nothing,
+                    !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
+                    !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
                     [],
                     individual.sex,
                     individual.rank,
@@ -317,7 +317,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
                 end
             end
             Φ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
-            probands = [isolated_pedigree[ID] for ID ∈ next_generation]
+            probands = [indexed_pedigree[ID] for ID ∈ next_generation]
             Threads.@threads for i ∈ eachindex(probands)
                 Threads.@threads for j ∈ eachindex(probands)
                     if i ≤ j
