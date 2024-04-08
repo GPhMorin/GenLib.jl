@@ -279,7 +279,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
         for i ∈ 1:length(cut_vertices)-1
             previous_generation = cut_vertices[i]
             next_generation = cut_vertices[i+1]
-            println("Step $i / $(length(cut_vertices)-1): $(length(previous_generation)) founders, $(length(next_generation)) probands.")
+            verbose_pedigree = branching(isolated_pedigree, pro = next_generation, ancestors = previous_generation)
+            println("Step $i / $(length(cut_vertices)-1): $(length(previous_generation)) founders, $(length(next_generation)) probands (n = $(length(verbose_pedigree))).")
         end
     end
     for i ∈ 1:length(cut_vertices)-1
