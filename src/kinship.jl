@@ -75,34 +75,49 @@ Return the kinship coefficient between two individuals given a matrix of the fou
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ::Matrix{Float64})
-    if individualᵢ.index != 0 && individualⱼ.index != 0 # They are both founders
-        return Ψ[individualᵢ.index, individualⱼ.index]
-    end
     value = 0.
-    if individualᵢ.rank == individualⱼ.rank # Same individual
-        # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
-        value += 1/2
-        if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
-            value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
-        end
-    else
-        valueᵢ = 0.
-        if !isnothing(individualᵢ.father)
-            valueᵢ += phi(individualᵢ.father, individualⱼ, Ψ) / 2
-        end
-        if !isnothing(individualᵢ.mother)
-            valueᵢ += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
-        end
-        valueⱼ = 0.
+    if individualᵢ.index != 0 && individualⱼ.index != 0 # They are both founders
+        value += Ψ[individualᵢ.index, individualⱼ.index]
+    elseif individualᵢ.index != 0
         if !isnothing(individualⱼ.father)
-            valueⱼ += phi(individualⱼ.father, individualᵢ, Ψ) / 2
+            value += phi(individualᵢ, individualⱼ.father, Ψ) / 2
         end
         if !isnothing(individualⱼ.mother)
-            valueⱼ += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
+            value += phi(individualᵢ, individualⱼ.mother, Ψ) / 2
         end
-        value = max(valueᵢ, valueⱼ)
+    elseif individualⱼ.index != 0
+        if !isnothing(individualᵢ.father)
+            value += phi(individualⱼ, individualᵢ.father, Ψ) / 2
+        end
+        if !isnothing(individualᵢ.mother)
+            value += phi(individualⱼ, individualᵢ.mother, Ψ) / 2
+        end
+    else
+        if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
+            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
+            if !isnothing(individualᵢ.father)
+                value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
+            end
+            if !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
+            end
+        elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
+            # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
+            if !isnothing(individualⱼ.father)
+                value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
+            end
+            if !isnothing(individualⱼ.mother)
+                value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
+            end
+        elseif individualᵢ.rank == individualⱼ.rank # Same individual
+            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
+            value += 1/2
+            if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
+            end
+        end
     end
-    return value
+    value
 end
 
 """
