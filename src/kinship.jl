@@ -131,24 +131,57 @@ end
 
 Return the previous generation of a given set of individuals.
 """
-function _previous_generation(pedigree::Pedigree{T}, next_generation::Vector{Int64}) where T <: AbstractIndividual
-    previous_generation = Int64[]
-    for ID ∈ next_generation
+function _previous_generation(pedigree::Pedigree{T}, next_generationIDs::Vector{Int64}) where T <: AbstractIndividual
+    intermediateIDs = Int64[]
+    for ID ∈ next_generationIDs
         individual = pedigree[ID]
         father = individual.father
         mother = individual.mother
         if isnothing(father) && isnothing(mother)
-            push!(previous_generation, ID)
+            push!(intermediateIDs, ID)
         else
             if !isnothing(father)
-                push!(previous_generation, father.ID)
+                push!(intermediateIDs, father.ID)
             end
             if !isnothing(mother)
-                push!(previous_generation, mother.ID)
+                push!(intermediateIDs, mother.ID)
             end
         end
     end
-    sort(unique(previous_generation))
+    minimum_rank = minimum([pedigree[ID].rank for ID ∈ intermediateIDs])
+    previous_generationIDs = Int64[]
+    for ID ∈ intermediateIDs
+        individual = pedigree[ID]
+        stack = [individual]
+        while !isempty(stack)
+            candidate = pop!(stack)
+            if candidate.rank == minimum_rank # Reference individual
+                push!(previous_generationIDs, candidate.ID)
+            elseif isnothing(candidate.father) && isnothing(candidate.mother) # Founder
+                push!(previous_generationIDs, candidate.ID)
+            elseif !isnothing(candidate.father) && !isnothing(candidate.mother)
+                if candidate.father.rank ≥ minimum_rank && candidate.mother.rank ≥ minimum_rank
+                    push!(stack, candidate.father)
+                    push!(stack, candidate.mother)
+                else
+                    push!(previous_generationIDs, candidate.ID)
+                end
+            elseif !isnothing(candidate.father)
+                if candidate.father.rank ≥ minimum_rank
+                    push!(stack, candidate.father)
+                else
+                    push!(previous_generationIDs, candidate.ID)
+                end
+            elseif !isnothing(candidate.mother)
+                if candidate.mother.rank ≥ minimum_rank
+                    push!(stack, candidate.mother)
+                else
+                    push!(previous_generationIDs, candidate.ID)
+                end
+            end
+        end
+    end
+    sort(unique(previous_generationIDs))
 end
 
 """
