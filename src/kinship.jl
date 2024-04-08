@@ -270,13 +270,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
     cut_vertices = [probandIDs]
     founderIDs = founder(isolated_pedigree)
     previous_generation = probandIDs
-    while true
+    while previous_generation != founderIDs
         previous_generation = _previous_generation(isolated_pedigree, previous_generation)
-        if previous_generation != founderIDs
-            pushfirst!(cut_vertices, previous_generation)
-        else
-            break
-        end
+        pushfirst!(cut_vertices, previous_generation)
     end
     pushfirst!(cut_vertices, founderIDs)
     if verbose
