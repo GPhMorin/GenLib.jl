@@ -19,6 +19,7 @@ struct IntIndividual <: AbstractIndividual
     ID::Int64
     father::Int64
     mother::Int64
+    children::Vector{Int64}
     sex::Int64
 end
 
@@ -119,8 +120,17 @@ function genealogy(dataframe::DataFrame; sort::Bool = true)
             row.ind,
             row.father,
             row.mother,
-            row.sex,
+            [],
+            row.sex
         )
+    end
+    for individual ∈ values(pedigree)
+        if individual.father != 0
+            push!(pedigree[individual.father].children, individual.ID)
+        end
+        if individual.mother != 0
+            push!(pedigree[individual.mother].children, individual.ID)
+        end
     end
     if sort
         pedigree = _ordered_pedigree(pedigree)
@@ -160,8 +170,17 @@ function genealogy(filename::String; sort = true)
                 ind,
                 father,
                 mother,
-                sex
+                [],
+                sex,
             )
+        end
+    end
+    for individual ∈ values(pedigree)
+        if individual.father != 0
+            push!(pedigree[individual.father].children, individual.ID)
+        end
+        if individual.mother != 0
+            push!(pedigree[individual.mother].children, individual.ID)
         end
     end
     if sort
@@ -171,20 +190,17 @@ function genealogy(filename::String; sort = true)
 end
 
 """
-    _max_depth(pedigree::Pedigree{IntIndividual}, individual::Int64)
+    _max_height(pedigree::Pedigree{IntIndividual}, individual::Int64)
 
-Return the maximum depth of an individual's pedigree.
+Return the maximum height of an individual's pedigree.
 """
-function _max_depth(pedigree::Pedigree{IntIndividual}, individual::IntIndividual)
-    father_depth = 1
-    mother_depth = 1
-    if individual.father != 0
-        father_depth += _max_depth(pedigree, pedigree[individual.father])
+function _max_height(pedigree::Pedigree{IntIndividual}, individual::IntIndividual)
+    if isempty(individual.children)
+        max_children_height = 0
+    else
+        max_children_height = maximum([_max_height(pedigree, pedigree[child]) for child ∈ individual.children])
     end
-    if individual.mother != 0
-        mother_depth += _max_depth(pedigree, pedigree[individual.mother])
-    end
-    max(father_depth, mother_depth)
+    max_children_height + 1
 end
 
 """
@@ -195,8 +211,8 @@ i.e. any individual's parents appear before them.
 """
 function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
     IDs = collect(keys(pedigree))
-    depths = [_max_depth(pedigree, pedigree[ID]) for ID ∈ IDs]
-    order = sortperm(depths)
+    heights = [_max_height(pedigree, pedigree[ID]) for ID ∈ IDs]
+    order = sortperm(heights, rev=true)
     sortedIDs = IDs[order]
     ordered_pedigree = Pedigree{IntIndividual}()
     for ID ∈ sortedIDs
