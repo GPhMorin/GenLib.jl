@@ -233,7 +233,7 @@ function _finalize_pedigree(pedigree::Pedigree)
 end
 
 """
-    save_genealogy(pedigree::Pedigree, path::String, sorted::Bool = false)
+    _save(pedigree::Pedigree, path::String, sorted::Bool = false)
 
 Export the pedigree as a CSV file at a given `path`.
 
@@ -243,7 +243,7 @@ will appear in the same order as in the genealogy.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
-function save_genealogy(pedigree::Pedigree, path::String; sorted::Bool = false)
+function _save(pedigree::Pedigree, path::String; sorted::Bool = false)
     df = genout(pedigree, sorted = sorted)
     open(path, "w") do file
         firstline = "ind\tfather\tmother\tsex"

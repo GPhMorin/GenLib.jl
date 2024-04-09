@@ -65,12 +65,12 @@ using Test
     @test gen.occ(ped, typeOcc = "TOTAL") == [14; 18; 4; 1; 19; 19;;]
     @test gen._findMinDistanceMRCA(ped, [2, 29]) == 7
 
-    gen.save_genealogy(ped, "test.asc")
+    gen._save(ped, "test.asc")
     ped = gen.genealogy("test.asc")
     @test length(ped) == 29
     rm("test.asc")
 
-    gen.save_genealogy(ped, "test.asc", sorted=true)
+    gen._save(ped, "test.asc", sorted=true)
     ped = gen.genealogy("test.asc")
     IDs = [ID for ID ∈ collect(keys(ped))]
     order = sort(IDs)
