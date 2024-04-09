@@ -36,7 +36,7 @@ GenLib.pro
 GenLib.children
 GenLib.findFounders
 GenLib.findMRCA
-GenLib.ancestors
+GenLib.ancestor
 ```
 
 ## Describe
