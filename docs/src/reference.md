@@ -41,6 +41,9 @@ GenLib.ancestor
 
 ## Describe
 ```@docs
+GenLib.nomen
+GenLib.nowomen
+GenLib.noind
 GenLib.depth
 GenLib.rec
 GenLib.occ
