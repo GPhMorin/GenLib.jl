@@ -102,9 +102,6 @@ mutable struct Occurrent <: AbstractIndividual
     ID::Int64
     father::Union{Nothing, Occurrent}
     mother::Union{Nothing, Occurrent}
-    children::Vector{Occurrent}
-    sex::Int64
-    rank::Int64
     is_ancestor::Bool
     occurrence::Int64
 end
@@ -141,9 +138,6 @@ function occ(
             individual.ID,
             isnothing(father) ? nothing : occurrence_pedigree[father.ID],
             isnothing(mother) ? nothing : occurrence_pedigree[mother.ID],
-            Occurrent[],
-            individual.sex,
-            individual.rank,
             individual.ID ∈ ancestors ? true : false,
             0
         )
