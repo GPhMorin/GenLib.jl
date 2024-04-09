@@ -45,8 +45,6 @@ using Test
     to_keep = gen._cleanup(phi, 0.125)
     @test phi[to_keep, to_keep] == [0.591796875 0.072265625;
                                     0.072265625 0.53515625]
-    @test gen.phi(ped, [1, 2], [2, 29]) == [0.37109375 0.072265625;
-                                            0.591796875 0.072265625]
     founder1 = ped[17]
     founder2 = ped[19]
     @test gen.phi(founder1, founder2) == 0

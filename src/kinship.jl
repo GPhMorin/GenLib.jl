@@ -351,24 +351,6 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
 end
 
 """
-    phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-
-Return a rectangle matrix of kinship coefficients,
-as defined by a list or row IDs and column IDs.
-"""
-function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-    Φ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
-    Threads.@threads for i ∈ eachindex(rowIDs)
-        individualᵢ = pedigree[rowIDs[i]]
-        Threads.@threads for j ∈ eachindex(columnIDs)
-            individualⱼ = pedigree[columnIDs[j]]
-            Φ[i, j] = phi(individualᵢ, individualⱼ)
-        end
-    end
-    Φ
-end
-
-"""
     _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
 
 Return a vector of booleans of probands whose kinships
