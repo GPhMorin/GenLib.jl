@@ -6,28 +6,6 @@ module GenLib
 using DataFrames: DataFrame
 using DataStructures: OrderedDict
 
-# The unit structure for pedigrees
-export Individual,
-       Pedigree
-
-# GENLIB types and functions
-export GenMatrix,
-       ancestor,
-       branching,
-       children,
-       f,
-       findDistance,
-       findFounders,
-       findMRCA,
-       founder,
-       gc,
-       genealogy,
-       genout,
-       occ,
-       phi,
-       pro,
-       rec
-
 # GENLIB datasets
 """
 Genealogical information for 140 individuals from the Quebec Reference Sample.
@@ -115,10 +93,6 @@ function _pop(filename::String)
     end
     population
 end
-
-export genea140,
-       geneaJi,
-       pop140
 
 include("create.jl")
 include("extract.jl")
