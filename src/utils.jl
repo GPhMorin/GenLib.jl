@@ -181,3 +181,17 @@ function _max_depth(individual::Individual)
     end
     max(father_depth, mother_depth)
 end
+
+"""
+    _max_height(individual::Individual)
+
+Return the maximum height of an individual's pedigree.
+"""
+function _max_height(individual::Individual)
+    if isempty(individual.children)
+        max_children_height = 0
+    else
+        max_children_height = maximum([_max_height(child) for child ∈ individual.children])
+    end
+    max_children_height + 1
+end

@@ -142,6 +142,25 @@ function _lowest_founders(pedigree::Pedigree)
 end
 
 """
+    _topological_sort(pedigree::Pedigree)
+
+Return a reordered pedigree where the individuals are in chronological order,
+i.e. any individual's parents appear before them. In this topological sort,
+the parents of the probands appear as far in the pedigree as possible, etc.
+"""
+function _topological_sort(pedigree::Pedigree)
+    IDs = collect(keys(pedigree))
+    heights = [_max_height(individual) for individual ∈ values(pedigree)]
+    order = sortperm(heights, rev=true)
+    sortedIDs = IDs[order]
+    ordered_pedigree = Pedigree{Individual}()
+    for ID ∈ sortedIDs
+        ordered_pedigree[ID] = pedigree[ID]
+    end
+    ordered_pedigree
+end
+
+"""
     _previous_generation(pedigree::Pedigree, next_generation::Vector{Int64})
 
 Return the previous generation of a given set of individuals.
@@ -282,6 +301,7 @@ gen.phi(ped)
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
     global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
+    isolated_pedigree = _topological_sort(isolated_pedigree)
     cut_vertices = [probandIDs]
     founderIDs = founder(isolated_pedigree)
     previous_generation = probandIDs
