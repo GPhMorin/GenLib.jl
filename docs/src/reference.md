@@ -14,7 +14,7 @@ GenLib.geneaJi
 GenLib.pop140
 ```
 
-## Create pedigrees
+## Create a pedigree
 ```@docs
 GenLib.genealogy
 ```
