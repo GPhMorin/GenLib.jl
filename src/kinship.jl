@@ -22,7 +22,7 @@ struct PossibleFounder <: AbstractIndividual
 end
 
 """
-    phi(individualᵢ::T, individualⱼ::T) where T <: AbstractIndividual
+    phi(individualᵢ::Individual, individualⱼ::Individual)
 
 Return the kinship coefficient between two individuals.
 
@@ -39,7 +39,7 @@ pro2 = ped[113470]
 gen.phi(pro1, pro2)
 ```
 """
-function phi(individualᵢ::T, individualⱼ::T) where T <: AbstractIndividual
+function phi(individualᵢ::Individual, individualⱼ::Individual)
     value = 0.
     if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
         # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
@@ -121,14 +121,14 @@ function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ:
 end
 
 """
-    function _lowest_founders(pedigree::Pedigree{T}) where T <: AbstractIndividual
+    function _lowest_founders(pedigree::Pedigree)
 
 Return the lowest founders of a given pedigree.
 
 The lowest founder is defined as an only child who is either a
 founder or as the only child of a lineage of only children.
 """
-function _lowest_founders(pedigree::Pedigree{T}) where T <: AbstractIndividual
+function _lowest_founders(pedigree::Pedigree)
     founderIDs = founder(pedigree)
     deepestIDs = Int64[]
     for founderID ∈ founderIDs
@@ -142,11 +142,11 @@ function _lowest_founders(pedigree::Pedigree{T}) where T <: AbstractIndividual
 end
 
 """
-    _previous_generation(pedigree::Pedigree{T}, next_generation::Vector{Int64}) where T <: AbstractIndividual
+    _previous_generation(pedigree::Pedigree, next_generation::Vector{Int64})
 
 Return the previous generation of a given set of individuals.
 """
-function _previous_generation(pedigree::Pedigree{T}, next_generationIDs::Vector{Int64}) where T <: AbstractIndividual
+function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int64})
     intermediateIDs = Int64[]
     for ID ∈ next_generationIDs
         individual = pedigree[ID]

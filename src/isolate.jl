@@ -57,9 +57,9 @@ end
 Return a pedigree that filters individuals who are in the paths
 between select probands and ancestors.
 """
-function branching(pedigree::Pedigree{T}; pro::Vector{Int64} = pro(pedigree),
-    ancestors::Vector{Int64} = founder(pedigree)) where T <: AbstractIndividual
-    isolated_pedigree = Pedigree{T}()
+function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
+    ancestors::Vector{Int64} = founder(pedigree))
+    isolated_pedigree = Pedigree{Individual}()
     marking_pedigree = Pedigree{Candidate}()
     for individual ∈ collect(values(pedigree))
         father = isnothing(individual.father) ? nothing : marking_pedigree[individual.father.ID]
@@ -100,7 +100,7 @@ function branching(pedigree::Pedigree{T}; pro::Vector{Int64} = pro(pedigree),
             if !isnothing(mother)
                 mother = mother.is_ancestor && mother.is_descendant ? mother : nothing
             end
-            isolated_pedigree[individual.ID] = T(individual.ID,
+            isolated_pedigree[individual.ID] = Individual(individual.ID,
             isnothing(father) ? nothing : isolated_pedigree[father.ID],
             isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
             Int64[],
