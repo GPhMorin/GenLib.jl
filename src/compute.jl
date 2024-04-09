@@ -486,8 +486,6 @@ mutable struct PossibleDescendant <: AbstractIndividual
     father::Union{Nothing, PossibleDescendant}
     mother::Union{Nothing, PossibleDescendant}
     children::Vector{PossibleDescendant}
-    sex::Int64
-    rank::Int64
     contribution::Float64
 end
 
@@ -538,8 +536,6 @@ function gc(
             isnothing(father) ? nothing : contribution_pedigree[father.ID],
             isnothing(mother) ? nothing : contribution_pedigree[mother.ID],
             PossibleDescendant[],
-            individual.sex,
-            individual.rank,
             0.
         )
         if !isnothing(father)
