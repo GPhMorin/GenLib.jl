@@ -1,5 +1,12 @@
 # Reference
 
+## Structures
+```@docs
+GenLib.Individual
+GenLib.Pedigree
+GenLib.GenMatrix
+```
+
 ## Available data
 ```@docs
 GenLib.genea140

@@ -37,7 +37,7 @@ ped = gen.genealogy(df)
 ### From a CSV File
 
 The original GENLIB package for R contains two sample pedigrees.
-They are also available in GenLib.jl as [`genea140`](@ref) and [`geneaJi`](@ref).
+They are also available in GenLib.jl as [`GenLib.genea140`](@ref) and [`GenLib.geneaJi`](@ref).
 
 ```@repl
 import GenLib as gen
@@ -54,7 +54,7 @@ ped = gen.genealogy(geneaJi)
 ## Accessing an Individual
 
 A pedigree is an ordered dictionary where the key is the ID
-and the value corresponds to the [`Individual`](@ref).
+and the value corresponds to the [`GenLib.Individual`](@ref).
 
 The individual's parents and children are accessed by reference.
 
@@ -71,7 +71,7 @@ ped[33724].children[2].father
 
 ## Getting Founders and Probands
 
-This is done using the [`founder`](@ref) and [`pro`](@ref) functions, respectively.
+This is done using the [`GenLib.founder`](@ref) and [`GenLib.pro`](@ref) functions, respectively.
 
 ```@repl
 import GenLib as gen
@@ -98,7 +98,7 @@ genMatrix.meioses
 
 ## Computing Genetic Contributions
 
-This is done with the [`gc`](@ref) function.
+This is done with the [`GenLib.gc`](@ref) function.
 
 ```@repl
 import GenLib as gen
@@ -110,7 +110,7 @@ sum(contributions, dims=2)
 
 ## Computing Kinship Coefficients
 
-This is done using one of the [`phi`](@ref) functions.
+This is done using one of the [`GenLib.phi`](@ref) functions.
 
 ### Pairwise Coefficient
 

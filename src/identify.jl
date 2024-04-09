@@ -101,7 +101,7 @@ end
 """
     findMRCA(pedigree::Pedigree, IDs::Vector{Int64})
 
-Return a [`GenMatrix`](@ref) of meioses between individuals and their
+Return a [`GenLib.GenMatrix`](@ref) of meioses between individuals and their
 most recent common ancestors (MRCAs).
 
 # Example

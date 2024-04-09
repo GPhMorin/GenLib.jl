@@ -481,7 +481,6 @@ end
 
 Return the coefficient of inbreeding of an individual.
 """
-
 function f(pedigree::Pedigree, ID::Int64)
     individual = pedigree[ID]
     if isnothing(individual.father) || isnothing(individual.mother)

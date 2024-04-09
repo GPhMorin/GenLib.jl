@@ -13,7 +13,7 @@ abstract type AbstractIndividual end
         sex::Int64
     end
 
-The temporary unit structure of a [`Pedigree`](@ref).
+The temporary unit structure of a [`GenLib.Pedigree`](@ref).
 """
 struct IntIndividual <: AbstractIndividual
     ID::Int64
@@ -32,7 +32,7 @@ end
         rank::Int64
     end
 
-The unit structure of a [`Pedigree`](@ref).
+The unit structure of a [`GenLib.Pedigree`](@ref).
 """
 struct Individual <: AbstractIndividual
     ID::Int64
