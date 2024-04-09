@@ -1,23 +1,48 @@
 # Reference
 
+## Available data
 ```@docs
-genea140
-geneaJi
-pop140
-GenMatrix
-Individual
-Pedigree
-branching
-children
-findDistance
-findFounders
-findMRCA
-founder
-gc
-genealogy
-genout
-occ
-phi
-pro
-rec
+GenLib.genea140
+GenLib.geneaJi
+GenLib.pop140
+```
+
+## Create pedigrees
+```@docs
+GenLib.genealogy
+```
+
+## Extract a pedigree
+```@docs
+GenLib.branching
+```
+
+## Output a pedigree
+```@docs
+GenLib.genout
+```
+
+## Identify individuals
+```@docs
+GenLib.founder
+GenLib.pro
+GenLib.children
+GenLib.findFounders
+GenLib.findMRCA
+GenLib.ancestors
+```
+
+## Describe
+```@docs
+GenLib.depth
+GenLib.rec
+GenLib.occ
+GenLib.findDistance
+```
+
+## Compute
+```@docs
+GenLib.gc
+GenLib.phi
+GenLib.f
 ```
