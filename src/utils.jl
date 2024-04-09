@@ -50,21 +50,21 @@ function findFounders(pedigree::Pedigree, IDs::Vector{Int64})
 end
 
 """
-    get_paths(pedigree::Pedigree{T}, individual::T) where T <: AbstractIndividual
+    _get_paths(pedigree::Pedigree, individual::Individual)
 
 Return the paths from an individual to their ancestors.
 """
-function get_paths(pedigree::Pedigree{T}, individual::T) where T <: AbstractIndividual
+function _get_paths(pedigree::Pedigree, individual::Individual)
     paths = Vector{Vector{Int64}}([[individual.ID]])
     if !isnothing(individual.father)
-        fathers_paths = get_paths(pedigree, individual.father)
+        fathers_paths = _get_paths(pedigree, individual.father)
         for path ∈ fathers_paths
             push!(path, individual.ID)
         end
         append!(paths, fathers_paths)
     end
     if !isnothing(individual.mother)
-        mothers_paths = get_paths(pedigree, individual.mother)
+        mothers_paths = _get_paths(pedigree, individual.mother)
         for path ∈ mothers_paths
             push!(path, individual.ID)
         end

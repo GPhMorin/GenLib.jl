@@ -9,7 +9,7 @@ function _findDistance(
     ancestorID::Int64)
     
     descendant = pedigree[descendantID]
-    paths = get_paths(pedigree, descendant)
+    paths = _get_paths(pedigree, descendant)
     lengths = Vector{Int64}()
     for path ∈ paths
         if path[1] ≡ ancestorID
