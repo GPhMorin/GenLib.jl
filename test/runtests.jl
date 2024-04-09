@@ -22,6 +22,7 @@ using Test
                                          408065, 408069, 408075, 408375, 408937, 409808,
                                          623919, 712249, 712256, 860834, 860838, 868738,
                                          868740, 868743]
+    @test gen.depth(ped) == 18
 
     geneaJi = gen.geneaJi
     ped = gen.genealogy(geneaJi)
@@ -74,6 +75,6 @@ using Test
     rm("test.asc")
 
     pop140 = gen.pop140
-    pop = gen.population(pop140)
+    pop = gen._pop(pop140)
     @test pop[217891] == "Saguenay"
 end
