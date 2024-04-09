@@ -154,8 +154,26 @@ function _topological_sort(pedigree::Pedigree)
     order = sortperm(heights, rev=true)
     sortedIDs = IDs[order]
     ordered_pedigree = Pedigree{Individual}()
+    rank = 1
     for ID ∈ sortedIDs
-        ordered_pedigree[ID] = pedigree[ID]
+        individual = pedigree[ID]
+        ordered_pedigree[ID] = Individual(
+            ID,
+            !isnothing(individual.father) ? ordered_pedigree[individual.father.ID] : nothing,
+            !isnothing(individual.mother) ? ordered_pedigree[individual.mother.ID] : nothing,
+            [],
+            individual.sex,
+            rank
+        )
+        rank += 1
+    end
+    for individual ∈ values(ordered_pedigree)
+        if !isnothing(individual.father)
+            push!(individual.father.children, individual)
+        end
+        if !isnothing(individual.mother)
+            push!(individual.mother.children, individual)
+        end
     end
     ordered_pedigree
 end
