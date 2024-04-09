@@ -144,7 +144,7 @@ function occ(
     end
     for (j, probandID) ∈ enumerate(pro)
         proband = occurrence_pedigree[probandID]
-        occur!(proband)
+        _occur!(proband)
         for (i, ancestorID) ∈ enumerate(ancestors)
             ancestor = occurrence_pedigree[ancestorID]
             occurrence_matrix[i, j] = ancestor.occurrence
@@ -163,15 +163,15 @@ end
 
 Recursively increment the occurrence of an `individual` if they are an ancestor.
 """
-function occur!(individual::Occurrent)
+function _occur!(individual::Occurrent)
     if individual.is_ancestor
         individual.occurrence += 1
     end
     if !isnothing(individual.father)
-        occur!(individual.father)
+        _occur!(individual.father)
     end
     if !isnothing(individual.mother)
-        occur!(individual.mother)
+        _occur!(individual.mother)
     end
 end
 
