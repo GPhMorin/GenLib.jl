@@ -3,8 +3,6 @@
         ID::Int64
         father::Union{Nothing, PossibleFounder}
         mother::Union{Nothing, PossibleFounder}
-        children::Vector{PossibleFounder}
-        sex::Int64
         rank::Int64
         index::Int64
     end
@@ -15,8 +13,6 @@ struct PossibleFounder <: AbstractIndividual
     ID::Int64
     father::Union{Nothing, PossibleFounder}
     mother::Union{Nothing, PossibleFounder}
-    children::Vector{PossibleFounder}
-    sex::Int64
     rank::Int64
     index::Int64
 end
@@ -420,19 +416,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
                     individual.ID,
                     !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
                     !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
-                    [],
-                    individual.sex,
                     individual.rank,
                     individual.ID ∈ previous_generation ? findfirst(previous_generation .== individual.ID) : 0
                 )
-            end
-            for individual ∈ values(isolated_pedigree)
-                if !isnothing(individual.father)
-                    push!(individual.father.children, individual)
-                end
-                if !isnothing(individual.mother)
-                    push!(individual.mother.children, individual)
-                end
             end
             Φ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
             probands = [indexed_pedigree[ID] for ID ∈ next_generation]
