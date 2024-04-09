@@ -1,4 +1,41 @@
 """
+    nomen(pedigree::Pedigree)
+
+Return the number of men in the pedigree.
+"""
+function nomen(pedigree::Pedigree)
+    number = 0
+    for individual ∈ values(pedigree)
+        if individual.sex == 1
+            number += 1
+        end
+    end
+    number
+end
+
+"""
+    nowomen(pedigree::Pedigree)
+
+Return the number of women in the pedigree.
+"""
+function nowomen(pedigree::Pedigree)
+    number = 0
+    for individual ∈ values(pedigree)
+        if individual.sex == 2
+            number += 1
+        end
+    end
+    number
+end
+
+"""
+    noind(pedigree::Pedigree)
+
+Return the number of individuals in the pedigree.
+"""
+noind(pedigree::Pedigree) = length(pedigree)
+
+"""
     _max_depth(individual::Individual)
 
 Return the maximum depth of an individual's pedigree.
