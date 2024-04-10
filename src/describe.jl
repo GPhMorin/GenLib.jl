@@ -89,9 +89,6 @@ end
         ID::Int64
         father::Union{Nothing, Occurrent}
         mother::Union{Nothing, Occurrent}
-        children::Vector{Occurrent}
-        sex::Int64
-        rank::Int64
         is_ancestor::Bool
         occurrence::Int64
     end
