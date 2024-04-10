@@ -1,5 +1,5 @@
 """
-    struct IndexedIndividual <: AbstractIndividual
+    mutable struct IndexedIndividual <: AbstractIndividual
         ID::Int64
         father::Union{Nothing, IndexedIndividual}
         mother::Union{Nothing, IndexedIndividual}
