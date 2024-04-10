@@ -4,7 +4,7 @@
         father::Union{Nothing, IndexedIndividual}
         mother::Union{Nothing, IndexedIndividual}
         rank::Int64
-        index::Int64
+        founder_index::Int64
     end
 
 An individual with an index to access the founder's kinships in the Ψ matrix.
@@ -14,7 +14,7 @@ struct IndexedIndividual <: AbstractIndividual
     father::Union{Nothing, IndexedIndividual}
     mother::Union{Nothing, IndexedIndividual}
     rank::Int64
-    index::Int64
+    founder_index::Int64
 end
 
 """
@@ -72,16 +72,16 @@ Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
     value = 0.
-    if individualᵢ.index != 0 && individualⱼ.index != 0 # They are both founders
-        value += Ψ[individualᵢ.index, individualⱼ.index]
-    elseif individualᵢ.index != 0
+    if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0 # They are both founders
+        value += Ψ[individualᵢ.founder_index, individualⱼ.founder_index]
+    elseif individualᵢ.founder_index != 0
         if !isnothing(individualⱼ.father)
             value += phi(individualᵢ, individualⱼ.father, Ψ) / 2
         end
         if !isnothing(individualⱼ.mother)
             value += phi(individualᵢ, individualⱼ.mother, Ψ) / 2
         end
-    elseif individualⱼ.index != 0
+    elseif individualⱼ.founder_index != 0
         if !isnothing(individualᵢ.father)
             value += phi(individualⱼ, individualᵢ.father, Ψ) / 2
         end
@@ -108,7 +108,7 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
         elseif individualᵢ.rank == individualⱼ.rank # Same individual
             # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
             value += 1/2
-            if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
+            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
                 value += phi(individualᵢ.father, individualᵢ.mother, Ψ) / 2
             end
         end
