@@ -37,7 +37,8 @@ gen.phi(pro1, pro2)
 """
 function phi(individualᵢ::Individual, individualⱼ::Individual)
     value = 0.
-    if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
+    if individualᵢ.rank > individualⱼ.rank
+        # From the genealogical order, i cannot be an ancestor of j
         # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
         if !isnothing(individualᵢ.father)
             value += phi(individualᵢ.father, individualⱼ) / 2
@@ -45,7 +46,8 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
         if !isnothing(individualᵢ.mother)
             value += phi(individualᵢ.mother, individualⱼ) / 2
         end
-    elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
+    elseif individualⱼ.rank > individualᵢ.rank
+        # Reverse the order since i can be an ancestor of j
         # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
         if !isnothing(individualⱼ.father)
             value += phi(individualⱼ.father, individualᵢ) / 2
@@ -53,7 +55,8 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
         if !isnothing(individualⱼ.mother)
             value += phi(individualⱼ.mother, individualᵢ) / 2
         end
-    elseif individualᵢ.rank == individualⱼ.rank # Same individual
+    elseif individualᵢ.rank == individualⱼ.rank
+        # Same individual
         # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
         value += 1/2
         if !isnothing(individualᵢ.father) & !isnothing(individualᵢ.mother)
@@ -89,7 +92,8 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             value += phi(individualⱼ, individualᵢ.mother, Ψ) / 2
         end
     else
-        if individualᵢ.rank > individualⱼ.rank # From the genealogical order, i cannot be an ancestor of j
+        if individualᵢ.rank > individualⱼ.rank
+            # From the genealogical order, i cannot be an ancestor of j
             # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
             if !isnothing(individualᵢ.father)
                 value += phi(individualᵢ.father, individualⱼ, Ψ) / 2
@@ -97,7 +101,8 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             if !isnothing(individualᵢ.mother)
                 value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
             end
-        elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
+        elseif individualⱼ.rank > individualᵢ.rank
+            # Reverse the order since i can be an ancestor of j
             # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
             if !isnothing(individualⱼ.father)
                 value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
@@ -105,7 +110,8 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             if !isnothing(individualⱼ.mother)
                 value += phi(individualⱼ.mother, individualᵢ, Ψ) / 2
             end
-        elseif individualᵢ.rank == individualⱼ.rank # Same individual
+        elseif individualᵢ.rank == individualⱼ.rank
+            # Same individual
             # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
             value += 1/2
             if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
