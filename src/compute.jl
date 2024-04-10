@@ -9,7 +9,7 @@
 
 An individual with an index to access the founder's kinships in the Ψ matrix.
 """
-struct IndexedIndividual <: AbstractIndividual
+mutable struct IndexedIndividual <: AbstractIndividual
     ID::Int64
     father::Union{Nothing, IndexedIndividual}
     mother::Union{Nothing, IndexedIndividual}
@@ -380,6 +380,18 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
     global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     isolated_pedigree = _topological_sort(isolated_pedigree)
+    if MT
+        indexed_pedigree = Pedigree{IndexedIndividual}()
+        for individual ∈ values(isolated_pedigree)
+            indexed_pedigree[individual.ID] = IndexedIndividual(
+                individual.ID,
+                !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
+                !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
+                individual.rank,
+                0
+            )
+        end
+    end
     cut_vertices = [probandIDs]
     founderIDs = founder(isolated_pedigree)
     previous_generation = _previous_generation(isolated_pedigree, probandIDs)
@@ -409,16 +421,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
             end
         end
         if MT
-            temporary_pedigree = branching(isolated_pedigree, pro = next_generation, ancestors = previous_generation)
-            indexed_pedigree = Pedigree{IndexedIndividual}()
-            for individual ∈ values(temporary_pedigree)
-                indexed_pedigree[individual.ID] = IndexedIndividual(
-                    individual.ID,
-                    !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
-                    !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
-                    individual.rank,
-                    individual.ID ∈ previous_generation ? findfirst(previous_generation .== individual.ID) : 0
-                )
+            for (index, ID) ∈ enumerate(previous_generation)
+                indexed_pedigree[ID].founder_index = index
             end
             Φ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
             probands = [indexed_pedigree[ID] for ID ∈ next_generation]
