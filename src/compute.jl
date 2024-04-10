@@ -1,18 +1,18 @@
 """
-    struct PossibleFounder <: AbstractIndividual
+    struct IndexedIndividual <: AbstractIndividual
         ID::Int64
-        father::Union{Nothing, PossibleFounder}
-        mother::Union{Nothing, PossibleFounder}
+        father::Union{Nothing, IndexedIndividual}
+        mother::Union{Nothing, IndexedIndividual}
         rank::Int64
         index::Int64
     end
 
 An individual with an index to access the founder's kinships in the Ψ matrix.
 """
-struct PossibleFounder <: AbstractIndividual
+struct IndexedIndividual <: AbstractIndividual
     ID::Int64
-    father::Union{Nothing, PossibleFounder}
-    mother::Union{Nothing, PossibleFounder}
+    father::Union{Nothing, IndexedIndividual}
+    mother::Union{Nothing, IndexedIndividual}
     rank::Int64
     index::Int64
 end
@@ -46,7 +46,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
             value += phi(individualᵢ.mother, individualⱼ) / 2
         end
     elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
-        # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
+        # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
         if !isnothing(individualⱼ.father)
             value += phi(individualⱼ.father, individualᵢ) / 2
         end
@@ -64,13 +64,13 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
 end
 
 """
-    phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ::Matrix{Float64})
+    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
 
 Return the kinship coefficient between two individuals given a matrix of the founders' kinships.
 
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
-function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ::Matrix{Float64})
+function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
     value = 0.
     if individualᵢ.index != 0 && individualⱼ.index != 0 # They are both founders
         value += Ψ[individualᵢ.index, individualⱼ.index]
@@ -98,7 +98,7 @@ function phi(individualᵢ::PossibleFounder, individualⱼ::PossibleFounder, Ψ:
                 value += phi(individualᵢ.mother, individualⱼ, Ψ) / 2
             end
         elseif individualⱼ.rank > individualᵢ.rank # Reverse the order since a > b
-            # Φⱼᵢ = (Φₚⱼ + Φₘⱼ) / 2, if j is not an ancestor of i (Karigl, 1981)
+            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
             if !isnothing(individualⱼ.father)
                 value += phi(individualⱼ.father, individualᵢ, Ψ) / 2
             end
@@ -410,9 +410,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
         end
         if MT
             temporary_pedigree = branching(isolated_pedigree, pro = next_generation, ancestors = previous_generation)
-            indexed_pedigree = Pedigree{PossibleFounder}()
+            indexed_pedigree = Pedigree{IndexedIndividual}()
             for individual ∈ values(temporary_pedigree)
-                indexed_pedigree[individual.ID] = PossibleFounder(
+                indexed_pedigree[individual.ID] = IndexedIndividual(
                     individual.ID,
                     !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
                     !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
