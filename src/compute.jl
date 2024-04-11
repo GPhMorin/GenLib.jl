@@ -335,52 +335,52 @@ between all probands given the founders' kinships.
 An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
 function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
-    Φ = ones(length(pedigree), length(pedigree)) .* -1
+    ϕ = ones(length(pedigree), length(pedigree)) .* -1
     indices = [pedigree[ID].rank for ID ∈ topIDs]
-    Φ[indices, indices] = copy(Ψ)
+    ϕ[indices, indices] = copy(Ψ)
     for individualᵢ ∈ values(pedigree)
         i = individualᵢ.rank
         for individualⱼ ∈ values(pedigree)
             j = individualⱼ.rank
-            if Φ[i, j] > -1
+            if ϕ[i, j] > -1
                 continue
             elseif i == j
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father) && !isnothing(mother)
-                    coefficient = (1 + Φ[mother.rank, father.rank]) / 2
-                    Φ[i, i] = coefficient
+                    coefficient = (1 + ϕ[mother.rank, father.rank]) / 2
+                    ϕ[i, i] = coefficient
                 else
                     coefficient = 0.5
-                    Φ[i, i] = coefficient
+                    ϕ[i, i] = coefficient
                 end
             elseif i < j
                 fatherᵢ = individualᵢ.father
                 motherᵢ = individualᵢ.mother
                 coefficientᵢ = 0.
                 if !isnothing(fatherᵢ)
-                    coefficientᵢ += Φ[fatherᵢ.rank, individualⱼ.rank] / 2
+                    coefficientᵢ += ϕ[fatherᵢ.rank, individualⱼ.rank] / 2
                 end
                 if !isnothing(motherᵢ)
-                    coefficientᵢ += Φ[motherᵢ.rank, individualⱼ.rank] / 2
+                    coefficientᵢ += ϕ[motherᵢ.rank, individualⱼ.rank] / 2
                 end
                 fatherⱼ = individualⱼ.father
                 motherⱼ = individualⱼ.mother
                 coefficientⱼ = 0.
                 if !isnothing(fatherⱼ)
-                    coefficientⱼ += Φ[fatherⱼ.rank, individualᵢ.rank] / 2
+                    coefficientⱼ += ϕ[fatherⱼ.rank, individualᵢ.rank] / 2
                 end
                 if !isnothing(motherⱼ)
-                    coefficientⱼ += Φ[motherⱼ.rank, individualᵢ.rank] / 2
+                    coefficientⱼ += ϕ[motherⱼ.rank, individualᵢ.rank] / 2
                 end
                 coefficient = max(coefficientᵢ, coefficientⱼ)
-                Φ[i, j] = coefficient
-                Φ[j, i] = coefficient
+                ϕ[i, j] = coefficient
+                ϕ[j, i] = coefficient
             end
         end
     end
     indices = [pedigree[ID].rank for ID ∈ bottomIDs]
-    Φ[indices, indices]
+    ϕ[indices, indices]
 end
 
 """
@@ -454,16 +454,16 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
             for (index, ID) ∈ enumerate(previous_generation)
                 indexed_pedigree[ID].founder_index = index
             end
-            Φ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
+            ϕ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
             probands = [indexed_pedigree[ID] for ID ∈ next_generation]
             Threads.@threads for i ∈ eachindex(probands)
                 Threads.@threads for j ∈ eachindex(probands)
                     if i ≤ j
-                        Φ[i, j] = Φ[j, i] = phi(probands[i], probands[j], Ψ)
+                        ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
                     end
                 end
             end
-            Ψ = Φ
+            Ψ = ϕ
         else
             isolated_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
             Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
