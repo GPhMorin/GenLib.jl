@@ -45,6 +45,7 @@ GenLib.nomen
 GenLib.nowomen
 GenLib.noind
 GenLib.depth
+GenLib.completeness
 GenLib.rec
 GenLib.occ
 GenLib.findDistance

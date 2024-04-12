@@ -64,6 +64,8 @@ using Test
                            8 8 3]
     @test gen.occ(ped, typeOcc = "TOTAL") == [14; 18; 4; 1; 19; 19;;]
     @test gen._findMinDistanceMRCA(ped, [2, 29]) == 7
+    @test gen.completeness(ped, type="IND")[8, 1] == 3.125
+    @test gen.completeness(ped, genNo = [0, 4, 6]) == [100.; 62.5; 18.75;;]
 
     gen._save(ped, "test.asc")
     ped = gen.genealogy("test.asc")

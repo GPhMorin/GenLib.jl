@@ -66,6 +66,67 @@ function depth(pedigree::Pedigree)
 end
 
 """
+    _completeness!(completeness::Vector{Int64}, individual::Individual, depth::Int64)
+
+Return the completeness of an individual filled recursively.
+"""
+function _completeness!(completeness::Vector{Int64}, individual::Individual, depth::Int64)
+    if !isnothing(individual.father)
+        if length(completeness) < depth + 1
+            push!(completeness, 1)
+        else
+            completeness[depth + 1] += 1
+        end
+        _completeness!(completeness, individual.father, depth + 1)
+    end
+    if !isnothing(individual.mother)
+        if length(completeness) < depth + 1
+            push!(completeness, 1)
+        else
+            completeness[depth + 1] += 1
+        end
+        _completeness!(completeness, individual.mother, depth + 1)
+    end
+    return completeness
+end
+
+"""
+    completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), genNo::Vector{Int64} = Int64[], type::String = "MEAN")
+
+Return a dataframe with the completeness at each generation (one row per generation).
+
+genNo: A vector of the generations to output. The probands are at generation 0.
+
+type: If ```"MEAN"```, the mean completeness for each generation.
+If ```"IND"```, the completeness for each generation for each proband.
+"""
+function completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), genNo::Vector{Int64} = Int64[], type::String = "MEAN")
+    completenesses = Vector{Vector{Int64}}()
+    for ID ∈ pro
+        proband = pedigree[ID]
+        push!(completenesses, _completeness!(Int64[], proband, 0))
+    end
+    max_depth = maximum([length(completeness) for completeness ∈ completenesses])
+    println(max_depth)
+    matrix = zeros(max_depth, length(pro))
+    for column ∈ eachindex(pro)
+        completeness = completenesses[column]
+        for row ∈ eachindex(completeness)
+            matrix[row, column] = completeness[row] ./ (2^row) * 100
+        end
+    end
+    matrix = vcat(ones(1, length(pro)) .* 100, matrix)
+    if !isempty(genNo)
+        matrix = matrix[genNo .+ 1, :]
+    end
+    if type == "IND"
+        return matrix
+    elseif type == "MEAN"
+        return sum(matrix, dims=2) ./ length(pro)
+    end
+end
+
+"""
     rec(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
 
 Return the number of descendants of each ancestor.
