@@ -107,7 +107,6 @@ function completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ge
         push!(completenesses, _completeness!(Int64[], proband, 0))
     end
     max_depth = maximum([length(completeness) for completeness ∈ completenesses])
-    println(max_depth)
     matrix = zeros(max_depth, length(pro))
     for column ∈ eachindex(pro)
         completeness = completenesses[column]
