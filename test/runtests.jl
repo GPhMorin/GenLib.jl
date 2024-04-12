@@ -26,6 +26,8 @@ using Test
                                          623919, 712249, 712256, 860834, 860838, 868738,
                                          868740, 868743]
     @test gen.depth(ped) == 18
+    @test gen.sibship(ped, 11520) == [15397, 39369, 49658]
+    @test gen.sibship(ped, 11520, halfSibling = false) == []
 
     geneaJi = gen.geneaJi
     ped = gen.genealogy(geneaJi)

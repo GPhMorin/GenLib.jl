@@ -37,6 +37,29 @@ function pro(pedigree::Pedigree)
 end
 
 """
+    sibship(pedigree::Pedigree, ID::Int64; halfSibling = true)
+
+Return the siblings of an individual.
+"""
+function sibship(pedigree::Pedigree, ID::Int64; halfSibling = true)
+    individual = pedigree[ID]
+    fathers_children = Int64[]
+    if !isnothing(individual.father)
+        fathers_children = [child.ID for child ∈ individual.father.children]
+    end
+    mothers_children = Int64[]
+    if !isnothing(individual.mother)
+        mothers_children = [child.ID for child ∈ individual.mother.children]
+    end
+    if halfSibling
+        siblings = unique(∪(fathers_children, mothers_children))
+    else
+        siblings = ∩(fathers_children, mothers_children)
+    end
+    sort(setdiff(siblings, ID))
+end
+
+"""
     children(pedigree::Pedigree, ID::Int64)
 
 Return the children of an individual.

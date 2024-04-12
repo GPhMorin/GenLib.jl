@@ -33,6 +33,7 @@ GenLib.genout
 ```@docs
 GenLib.founder
 GenLib.pro
+GenLib.sibship
 GenLib.children
 GenLib.findFounders
 GenLib.findMRCA
