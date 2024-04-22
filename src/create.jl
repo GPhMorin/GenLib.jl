@@ -51,11 +51,24 @@ function Base.show(io::IO, individual::T) where T <: AbstractIndividual
 end
 
 """
-    const Pedigree{T} = OrderedDict{Int64, T} where T <: AbstractIndividual
+    struct Pedigree{T}
 
-A particular case of an `OrderedDict` containing individuals accessed by ID.
+A minimal structure wrapping an `OrderedDict` with individuals accessed by ID.
 """
-const Pedigree{T} = OrderedDict{Int64, T} where T <: AbstractIndividual
+struct Pedigree{T}
+    dict::OrderedDict{Int64, T}
+end
+
+Pedigree{T}() where T <: AbstractIndividual = Pedigree(OrderedDict{Int64, T}())
+
+Base.copy(p::Pedigree{T}) where T <: AbstractIndividual = Pedigree{T}(copy(p.dict))
+Base.length(p::Pedigree{T}) where T <: AbstractIndividual = length(p.dict)
+Base.setindex!(p::Pedigree{T}, value::T, key::Int64) where T <: AbstractIndividual = setindex!(p.dict, value, key)
+Base.getindex(p::Pedigree{T}, key::Int64) where T <: AbstractIndividual = p.dict[key]
+Base.keys(p::Pedigree{T}) where T <: AbstractIndividual = keys(p.dict)
+Base.values(p::Pedigree{T}) where T <: AbstractIndividual = values(p.dict)
+Base.iterate(p::Pedigree{T}) where T <: AbstractIndividual = iterate(p.dict)
+Base.iterate(p::Pedigree{T}, i) where T <: AbstractIndividual = iterate(p.dict, i)
 
 function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
     n = 0
