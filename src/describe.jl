@@ -100,7 +100,7 @@ genNo: A vector of the generations to output. The probands are at generation 0.
 type: If ```"MEAN"```, the mean completeness for each generation.
 If ```"IND"```, the completeness for each generation for each proband.
 """
-function completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), genNo::Vector{Int64} = Int64[], type::String = "MEAN")
+function completeness(pedigree::Pedigree, pro::Vector{Int64} = pro(pedigree); genNo::Vector{Int64} = Int64[], type::String = "MEAN")
     completenesses = Vector{Vector{Int64}}()
     for ID ∈ pro
         proband = pedigree[ID]
