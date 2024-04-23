@@ -71,20 +71,17 @@ end
 Return the completeness of an individual filled recursively.
 """
 function _completeness!(completeness::Vector{Int64}, individual::Individual, depth::Int64)
-    if !isnothing(individual.father)
+    if !isnothing(individual.father) || !isnothing(individual.mother)
         if length(completeness) < depth + 1
-            push!(completeness, 1)
-        else
-            completeness[depth + 1] += 1
+            push!(completeness, 0)
         end
+    end
+    if !isnothing(individual.father)
+        completeness[depth + 1] += 1
         _completeness!(completeness, individual.father, depth + 1)
     end
     if !isnothing(individual.mother)
-        if length(completeness) < depth + 1
-            push!(completeness, 1)
-        else
-            completeness[depth + 1] += 1
-        end
+        completeness[depth + 1] += 1
         _completeness!(completeness, individual.mother, depth + 1)
     end
     return completeness
