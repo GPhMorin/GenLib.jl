@@ -61,7 +61,7 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
     ancestors::Vector{Int64} = founder(pedigree))
     isolated_pedigree = Pedigree{Individual}()
     marking_pedigree = Pedigree{Candidate}()
-    for individual ∈ collect(values(pedigree))
+    for individual ∈ values(pedigree)
         father = isnothing(individual.father) ? nothing : marking_pedigree[individual.father.ID]
         mother = isnothing(individual.mother) ? nothing : marking_pedigree[individual.mother.ID]
         marking_pedigree[individual.ID] = Candidate(
@@ -89,7 +89,7 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
         _mark_descendants!(ancestor)
     end
     rank = 0
-    for individual ∈ collect(values(marking_pedigree))
+    for individual ∈ values(marking_pedigree)
         if individual.is_ancestor && individual.is_descendant
             rank += 1
             father = individual.father

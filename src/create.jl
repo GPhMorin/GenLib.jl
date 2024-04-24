@@ -226,7 +226,7 @@ Return a pedigree of immutable individuals.
 function _finalize_pedigree(pedigree::Pedigree)
     temporary_pedigree = copy(pedigree)
     pedigree = Pedigree{Individual}()
-    for (rank, individual) ∈ enumerate(collect(values(temporary_pedigree)))
+    for (rank, individual) ∈ enumerate(values(temporary_pedigree))
         pedigree[individual.ID] = Individual(
             individual.ID,
             individual.father == 0 ? nothing : pedigree[individual.father],
