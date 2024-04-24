@@ -80,11 +80,13 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
             push!(marking_pedigree[mother.ID].children, marking_pedigree[individual.ID])
         end
     end
-    for ID ∈ pro
+    Threads.@threads for i ∈ eachindex(pro)
+        ID = pro[i]
         proband = marking_pedigree[ID]
         _mark_ancestors!(proband)
     end
-    for ID ∈ ancestors
+    Threads.@threads for j ∈ eachindex(ancestors)
+        ID = ancestors[j]
         ancestor = marking_pedigree[ID]
         _mark_descendants!(ancestor)
     end
