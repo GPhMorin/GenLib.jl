@@ -194,15 +194,15 @@ Set and return the maximum depth of an individual's pedigree.
 """
 function _max_depth!(individual::IntIndividual, pedigree::Pedigree{IntIndividual})
     if individual.max_depth == -1
-        father_depth = 1
-        mother_depth = 1
+        father_depth = 0
+        mother_depth = 0
         if individual.father != 0
             father_depth += _max_depth!(pedigree[individual.father], pedigree)
         end
         if individual.mother != 0
             mother_depth += _max_depth!(pedigree[individual.mother], pedigree)
         end
-        individual.max_depth = max(father_depth, mother_depth)
+        individual.max_depth = max(father_depth, mother_depth) + 1
     end
     individual.max_depth
 end
