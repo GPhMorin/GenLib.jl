@@ -3,16 +3,24 @@
         ID::Int64
         father::Union{Nothing, IndexedIndividual}
         mother::Union{Nothing, IndexedIndividual}
+        sex::Int64
+        children::Vector{IndexedIndividual}
+        max_height::Int64
         rank::Int64
         founder_index::Int64
     end
 
 An individual with an index to access the founder's kinships in the Ψ matrix.
+
+`max_height` is also used to do a topological sort of the pedigree.
 """
 mutable struct IndexedIndividual <: AbstractIndividual
     ID::Int64
     father::Union{Nothing, IndexedIndividual}
     mother::Union{Nothing, IndexedIndividual}
+    sex::Int64
+    children::Vector{IndexedIndividual}
+    max_height::Int64
     rank::Int64
     founder_index::Int64
 end
@@ -199,17 +207,19 @@ function _lowest_founders(pedigree::Pedigree)
 end
 
 """
-    _max_height(individual::Individual)
+    _max_height!(individual::IndexedIndividual)
 
-Return the maximum height of an individual's pedigree.
+Return the maximum height of an individual in the pedigree.
 """
-function _max_height(individual::Individual)
-    if isempty(individual.children)
-        max_children_height = 0
-    else
-        max_children_height = maximum([_max_height(child) for child ∈ individual.children])
+function _max_height!(individual::IndexedIndividual)
+    if individual.max_height == -1
+        if isempty(individual.children)
+            individual.max_height = 0
+        else
+            individual.max_height = maximum([_max_height!(child) for child ∈ individual.children]) + 1
+        end
     end
-    max_children_height + 1
+    individual.max_height
 end
 
 """
@@ -220,25 +230,16 @@ i.e. any individual's parents appear before them. In this topological sort,
 the parents of the probands appear as far in the pedigree as possible, etc.
 """
 function _topological_sort(pedigree::Pedigree)
-    IDs = collect(keys(pedigree))
-    heights = [_max_height(individual) for individual ∈ values(pedigree)]
-    order = sortperm(heights, rev=true)
-    sortedIDs = IDs[order]
-    ordered_pedigree = Pedigree{Individual}()
-    rank = 1
-    for ID ∈ sortedIDs
-        individual = pedigree[ID]
-        ordered_pedigree[ID] = Individual(
-            ID,
-            !isnothing(individual.father) ? ordered_pedigree[individual.father.ID] : nothing,
-            !isnothing(individual.mother) ? ordered_pedigree[individual.mother.ID] : nothing,
-            [],
-            individual.sex,
-            rank
+    indexed_pedigree = Pedigree{IndexedIndividual}()
+    for individual ∈ values(pedigree)
+        indexed_pedigree[individual.ID] = IndexedIndividual(
+            individual.ID,
+            !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
+            !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
+            individual.sex, [], -1, 0, 0
         )
-        rank += 1
     end
-    for individual ∈ values(ordered_pedigree)
+    for individual ∈ values(indexed_pedigree)
         if !isnothing(individual.father)
             push!(individual.father.children, individual)
         end
@@ -246,7 +247,14 @@ function _topological_sort(pedigree::Pedigree)
             push!(individual.mother.children, individual)
         end
     end
-    ordered_pedigree
+    IDs = collect(keys(pedigree))
+    heights = [_max_height!(individual) for individual ∈ values(indexed_pedigree)]
+    order = sortperm(heights, rev=true)
+    sortedIDs = IDs[order]
+    for (rank, ID) ∈ enumerate(sortedIDs)
+        indexed_pedigree[ID].rank = rank
+    end
+    indexed_pedigree
 end
 
 """
@@ -409,25 +417,13 @@ gen.phi(ped)
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
     global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    isolated_pedigree = _topological_sort(isolated_pedigree)
-    if MT
-        indexed_pedigree = Pedigree{IndexedIndividual}()
-        for individual ∈ values(isolated_pedigree)
-            indexed_pedigree[individual.ID] = IndexedIndividual(
-                individual.ID,
-                !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
-                !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
-                individual.rank,
-                0
-            )
-        end
-    end
+    indexed_pedigree = _topological_sort(isolated_pedigree)
     cut_vertices = [probandIDs]
-    founderIDs = founder(isolated_pedigree)
-    previous_generation = _previous_generation(isolated_pedigree, probandIDs)
+    founderIDs = founder(indexed_pedigree)
+    previous_generation = _previous_generation(indexed_pedigree, probandIDs)
     while previous_generation != founderIDs
         pushfirst!(cut_vertices, previous_generation)
-        previous_generation = _previous_generation(isolated_pedigree, previous_generation)
+        previous_generation = _previous_generation(indexed_pedigree, previous_generation)
     end
     pushfirst!(cut_vertices, founderIDs)
     if verbose
@@ -473,7 +469,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
 end
 
 """
-    _cleanup(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
+    _trim_kinships(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
 
 Return a vector of booleans of probands whose kinships
 between them never exceed a given `threshold`.
@@ -481,7 +477,7 @@ between them never exceed a given `threshold`.
 For instance, a threshold of 0.0625 (the default) removes individuals
 who are first-degree cousins or closer.
 """
-function _cleanup(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
+function _trim_kinships(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
     visited = [false for i ∈ 1:size(kinship_matrix, 1)]
     to_keep = [true for i ∈ 1:size(kinship_matrix, 1)]
     for i ∈ eachindex(to_keep)
