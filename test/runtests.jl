@@ -48,7 +48,7 @@ using Test
     @test phi == [0.591796875 0.37109375 0.072265625;
                   0.37109375 0.591796875 0.072265625;
                   0.072265625 0.072265625 0.53515625]
-    to_keep = gen._cleanup(phi, 0.125)
+    to_keep = gen._trim_kinships(phi, 0.125)
     @test phi[to_keep, to_keep] == [0.591796875 0.072265625;
                                     0.072265625 0.53515625]
     founder1 = ped[17]
