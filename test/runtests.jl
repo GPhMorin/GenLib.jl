@@ -69,12 +69,12 @@ using Test
     @test gen.completeness(ped, type="IND")[8, 1] == 3.125
     @test gen.completeness(ped, genNo = [0, 4, 6]) == [100.; 62.5; 18.75;;]
 
-    gen._save(ped, "test.asc")
+    gen._save("test.asc", ped)
     ped = gen.genealogy("test.asc")
     @test length(ped) == 29
     rm("test.asc")
 
-    gen._save(ped, "test.asc", sorted=true)
+    gen._save("test.asc", ped, sorted=true)
     ped = gen.genealogy("test.asc")
     IDs = [ID for ID ∈ collect(keys(ped))]
     order = sort(IDs)

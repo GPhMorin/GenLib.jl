@@ -11,15 +11,17 @@ abstract type AbstractIndividual end
         father::Int64
         mother::Int64
         sex::Int64
+        max_depth::Int64
     end
 
 The temporary unit structure of a [`GenLib.Pedigree`](@ref).
 """
-struct IntIndividual <: AbstractIndividual
+mutable struct IntIndividual <: AbstractIndividual
     ID::Int64
     father::Int64
     mother::Int64
     sex::Int64
+    max_depth::Int64
 end
 
 """
@@ -132,7 +134,8 @@ function genealogy(dataframe::DataFrame; sort::Bool = true)
             row.ind,
             row.father,
             row.mother,
-            row.sex
+            row.sex,
+            -1
         )
     end
     if sort
@@ -173,7 +176,8 @@ function genealogy(filename::String; sort = true)
                 ind,
                 father,
                 mother,
-                sex
+                sex,
+                -1
             )
         end
     end
@@ -184,20 +188,23 @@ function genealogy(filename::String; sort = true)
 end
 
 """
-    _max_depth(pedigree::Pedigree{IntIndividual}, individual::Int64)
+    _max_depth!(individual::IntIndividual, pedigree::Pedigree{IntIndividual})
 
-Return the maximum depth of an individual's pedigree.
+Set and return the maximum depth of an individual's pedigree.
 """
-function _max_depth(pedigree::Pedigree{IntIndividual}, individual::IntIndividual)
-    father_depth = 1
-    mother_depth = 1
-    if individual.father != 0
-        father_depth += _max_depth(pedigree, pedigree[individual.father])
+function _max_depth!(individual::IntIndividual, pedigree::Pedigree{IntIndividual})
+    if individual.max_depth == -1
+        father_depth = 1
+        mother_depth = 1
+        if individual.father != 0
+            father_depth += _max_depth!(pedigree[individual.father], pedigree)
+        end
+        if individual.mother != 0
+            mother_depth += _max_depth!(pedigree[individual.mother], pedigree)
+        end
+        individual.max_depth = max(father_depth, mother_depth)
     end
-    if individual.mother != 0
-        mother_depth += _max_depth(pedigree, pedigree[individual.mother])
-    end
-    max(father_depth, mother_depth)
+    individual.max_depth
 end
 
 """
@@ -208,7 +215,7 @@ i.e. any individual's parents appear before them.
 """
 function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
     IDs = collect(keys(pedigree))
-    depths = [_max_depth(pedigree, pedigree[ID]) for ID ∈ IDs]
+    depths = [_max_depth!(pedigree[ID], pedigree) for ID ∈ IDs]
     order = sortperm(depths)
     sortedIDs = IDs[order]
     ordered_pedigree = Pedigree{IntIndividual}()
@@ -246,7 +253,7 @@ function _finalize_pedigree(pedigree::Pedigree)
 end
 
 """
-    _save(pedigree::Pedigree, path::String, sorted::Bool = false)
+    _save(path::String, pedigree::Pedigree, sorted::Bool = false)
 
 Export the pedigree as a CSV file at a given `path`.
 
@@ -256,7 +263,7 @@ will appear in the same order as in the genealogy.
 If `sorted` is `true`, then the individuals
 will appear in alphabetical ID order.
 """
-function _save(pedigree::Pedigree, path::String; sorted::Bool = false)
+function _save(path::String, pedigree::Pedigree; sorted::Bool = false)
     df = genout(pedigree, sorted = sorted)
     open(path, "w") do file
         firstline = "ind\tfather\tmother\tsex"

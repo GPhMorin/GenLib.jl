@@ -209,7 +209,7 @@ end
 """
     _max_height!(individual::IndexedIndividual)
 
-Return the maximum height of an individual in the pedigree.
+Set and return the maximum height of an individual in the pedigree.
 """
 function _max_height!(individual::IndexedIndividual)
     if individual.max_height == -1
