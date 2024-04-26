@@ -30,12 +30,14 @@ end
 Recursively mark the ancestors of an `individual`.
 """
 function _mark_ancestors!(individual::Candidate)
-    individual.is_ancestor = true
-    if !isnothing(individual.father)
-        _mark_ancestors!(individual.father)
-    end
-    if !isnothing(individual.mother)
-        _mark_ancestors!(individual.mother)
+    if !individual.is_ancestor
+        individual.is_ancestor = true
+        if !isnothing(individual.father)
+            _mark_ancestors!(individual.father)
+        end
+        if !isnothing(individual.mother)
+            _mark_ancestors!(individual.mother)
+        end
     end
 end
 
@@ -45,9 +47,11 @@ end
 Recursively mark the descendants of an `individual`.
 """
 function _mark_descendants!(individual::Candidate)
-    individual.is_descendant = true
-    for child ∈ individual.children
-        _mark_descendants!(child)
+    if !individual.is_descendant
+        individual.is_descendant = true
+        for child ∈ individual.children
+            _mark_descendants!(child)
+        end
     end
 end
 
