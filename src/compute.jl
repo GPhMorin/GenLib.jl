@@ -400,25 +400,26 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
                     ϕ[i, i] = coefficient
                 end
             elseif i < j
-                fatherᵢ = individualᵢ.father
-                motherᵢ = individualᵢ.mother
-                coefficient₁ = 0.
-                if !isnothing(fatherᵢ)
-                    coefficient₁ += ϕ[fatherᵢ.rank, individualⱼ.rank] / 2
+                if ϕ[individualⱼ.rank, individualⱼ.rank] == -1
+                    father = individualⱼ.father
+                    mother = individualⱼ.mother
+                    individual = individualᵢ
+                elseif individualᵢ.ID ∈ A[individualⱼ.ID]
+                    father = individualⱼ.father
+                    mother = individualⱼ.mother
+                    individual = individualᵢ
+                else
+                    father = individualᵢ.father
+                    mother = individualᵢ.mother
+                    individual = individualⱼ
                 end
-                if !isnothing(motherᵢ)
-                    coefficient₁ += ϕ[motherᵢ.rank, individualⱼ.rank] / 2
+                coefficient = 0.
+                if !isnothing(father)
+                    coefficient += ϕ[father.rank, individual.rank] / 2
                 end
-                fatherⱼ = individualⱼ.father
-                motherⱼ = individualⱼ.mother
-                coefficient₂ = 0.
-                if !isnothing(fatherⱼ)
-                    coefficient₂ += ϕ[fatherⱼ.rank, individualᵢ.rank] / 2
+                if !isnothing(mother)
+                    coefficient += ϕ[mother.rank, individual.rank] / 2
                 end
-                if !isnothing(motherⱼ)
-                    coefficient₂ += ϕ[motherⱼ.rank, individualᵢ.rank] / 2
-                end
-                coefficient = max(coefficient₁, coefficient₂)
                 ϕ[i, j] = coefficient
                 ϕ[j, i] = coefficient
             end
