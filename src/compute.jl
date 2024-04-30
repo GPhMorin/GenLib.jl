@@ -301,8 +301,21 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
                 # The individual is a founder, so we keep them
                 push!(previous_generationIDs, candidate.ID)
             elseif !isnothing(candidate.father) && !isnothing(candidate.mother)
-                if candidate.father.rank ≥ minimum_rank && candidate.mother.rank ≥ minimum_rank
-                    # We need to check both parents' ranks because we don't want to keep
+                parents = Set([candidate.father, candidate.mother])
+                fathers_children = candidate.father.children
+                for child ∈ fathers_children
+                    if !isnothing(child.mother)
+                        push!(parents, child.mother)
+                    end
+                end
+                mothers_children = candidate.mother.children
+                for child ∈ mothers_children
+                    if !isnothing(child.father)
+                        push!(parents, child.father)
+                    end
+                end
+                if all(parent.rank ≥ minimum_rank for parent ∈ parents)
+                    # We need to check all parents' ranks because we don't want to keep
                     # both a parent and their child, as that would cause a conflict
                     push!(stack, candidate.father)
                     push!(stack, candidate.mother)
@@ -314,16 +327,30 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
                 end
             elseif !isnothing(candidate.father)
                 # The individual is a half founder,
-                # so we just check the father
-                if candidate.father.rank ≥ minimum_rank
+                # so we just check the father and mothers-in-law
+                parents = Set([candidate.father])
+                fathers_children = candidate.father.children
+                for child ∈ fathers_children
+                    if !isnothing(child.mother)
+                        push!(parents, child.mother)
+                    end
+                end
+                if all(parent.rank ≥ minimum_rank for parent ∈ parents)
                     push!(stack, candidate.father)
                 else
                     push!(previous_generationIDs, candidate.ID)
                 end
             elseif !isnothing(candidate.mother)
                 # The individual is a half founder,
-                # so we just check the mother
-                if candidate.mother.rank ≥ minimum_rank
+                # so we just check the mother and fathers-in-law
+                parents = Set([candidate.mother])
+                mothers_children = candidate.mother.children
+                for child ∈ mothers_children
+                    if !isnothing(child.father)
+                        push!(parents, child.father)
+                    end
+                end
+                if all(parent.rank ≥ minimum_rank for parent ∈ parents)
                     push!(stack, candidate.mother)
                 else
                     push!(previous_generationIDs, candidate.ID)
@@ -343,6 +370,16 @@ between all probands given the founders' kinships.
 An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
 """
 function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
+    A = Dict{Int64, Set{Int64}}()
+    for individual ∈ values(pedigree)
+        A[individual.ID] = Set(individual.ID)
+        if !isnothing(individual.father)
+            union!(A[individual.ID], A[individual.father.ID])
+        end
+        if !isnothing(individual.mother)
+            union!(A[individual.ID], A[individual.mother.ID])
+        end
+    end
     ϕ = ones(length(pedigree), length(pedigree)) .* -1
     indices = [pedigree[ID].rank for ID ∈ topIDs]
     ϕ[indices, indices] = copy(Ψ)
