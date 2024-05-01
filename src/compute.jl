@@ -251,20 +251,7 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
                 # The individual is a founder, so we keep them
                 push!(previous_generationIDs, candidate.ID)
             elseif !isnothing(candidate.father) && !isnothing(candidate.mother)
-                parents = Set([candidate.father, candidate.mother])
-                fathers_children = candidate.father.children
-                for child ∈ fathers_children
-                    if !isnothing(child.mother)
-                        push!(parents, child.mother)
-                    end
-                end
-                mothers_children = candidate.mother.children
-                for child ∈ mothers_children
-                    if !isnothing(child.father)
-                        push!(parents, child.father)
-                    end
-                end
-                if all(parent.rank ≥ minimum_rank for parent ∈ parents)
+                if candidate.father.rank ≥ minimum_rank && candidate.mother.rank ≥ minimum_rank
                     # We need to check all parents' ranks because we don't want to keep
                     # both a parent and their child, as that would cause a conflict
                     push!(stack, candidate.father)
@@ -277,30 +264,16 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
                 end
             elseif !isnothing(candidate.father)
                 # The individual is a half founder,
-                # so we just check the father and mothers-in-law
-                parents = Set([candidate.father])
-                fathers_children = candidate.father.children
-                for child ∈ fathers_children
-                    if !isnothing(child.mother)
-                        push!(parents, child.mother)
-                    end
-                end
-                if all(parent.rank ≥ minimum_rank for parent ∈ parents)
+                # so we just check the father
+                if candidate.father.rank ≥ minimum_rank
                     push!(stack, candidate.father)
                 else
                     push!(previous_generationIDs, candidate.ID)
                 end
             elseif !isnothing(candidate.mother)
                 # The individual is a half founder,
-                # so we just check the mother and fathers-in-law
-                parents = Set([candidate.mother])
-                mothers_children = candidate.mother.children
-                for child ∈ mothers_children
-                    if !isnothing(child.father)
-                        push!(parents, child.father)
-                    end
-                end
-                if all(parent.rank ≥ minimum_rank for parent ∈ parents)
+                # so we just check the mother
+                if candidate.mother.rank ≥ minimum_rank
                     push!(stack, candidate.mother)
                 else
                     push!(previous_generationIDs, candidate.ID)
