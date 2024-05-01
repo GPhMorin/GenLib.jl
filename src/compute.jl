@@ -390,15 +390,13 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
             if ϕ[i, j] > -1
                 continue
             elseif i == j
+                coefficient = 0.5
                 father = individualᵢ.father
                 mother = individualᵢ.mother
                 if !isnothing(father) && !isnothing(mother)
-                    coefficient = (1 + ϕ[mother.rank, father.rank]) / 2
-                    ϕ[i, i] = coefficient
-                else
-                    coefficient = 0.5
-                    ϕ[i, i] = coefficient
+                    coefficient += ϕ[mother.rank, father.rank] / 2
                 end
+                ϕ[i, i] = coefficient
             else
                 if ϕ[individualⱼ.rank, individualⱼ.rank] > -1 && individualᵢ.ID ∉ A[individualⱼ.ID]
                     father = individualᵢ.father
