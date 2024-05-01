@@ -136,56 +136,6 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
 end
 
 """
-    _phi(individualᵢ::Individual, individualⱼ::Individual)
-
-Return the kinship coefficient between two individuals.
-
-Adapted from the recursive function of [Karigl, 1981](@ref).
-Actually slower than the recursive version, so not in use.
-
-function _phi(individualᵢ::Individual, individualⱼ::Individual)
-    coefficient = 0.
-    if individualᵢ.rank < individualⱼ.rank
-        # First one in the tuple is always ranked lower.
-        # This is done so that once the second individual has no parents,
-        # we know both of them are founders.
-        stack = [(individualᵢ, individualⱼ, 1)]
-    else
-        stack = [(individualⱼ, individualᵢ, 1)]
-    end
-    while !isempty(stack)
-        individualᵢ, individualⱼ, depth = pop!(stack)
-        if individualᵢ.rank == individualⱼ.rank # Same individual
-            coefficient += 0.5 ^ depth
-            if !isnothing(individualᵢ.father) && !isnothing(individualⱼ.mother)
-                if individualᵢ.father.rank < individualᵢ.mother.rank
-                    pushfirst!(stack, (individualᵢ.father, individualⱼ.mother, depth + 1))
-                else
-                    pushfirst!(stack, (individualᵢ.mother, individualᵢ.father, depth + 1))
-                end
-            end
-        else
-            if !isnothing(individualⱼ.father)
-                if individualⱼ.father.rank < individualᵢ.rank
-                    pushfirst!(stack, (individualⱼ.father, individualᵢ, depth + 1))
-                else
-                    pushfirst!(stack, (individualᵢ, individualⱼ.father, depth + 1))
-                end
-            end
-            if !isnothing(individualⱼ.mother)
-                if individualⱼ.mother.rank < individualᵢ.rank
-                    pushfirst!(stack, (individualⱼ.mother, individualᵢ, depth + 1))
-                else
-                    pushfirst!(stack, (individualᵢ, individualⱼ.mother, depth + 1))
-                end
-            end
-        end
-    end
-    coefficient
-end
-"""
-
-"""
     function _lowest_founders(pedigree::Pedigree)
 
 Return the lowest founders of a given pedigree.
