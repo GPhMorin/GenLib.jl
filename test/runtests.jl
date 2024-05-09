@@ -15,9 +15,11 @@ end
 @testset "genea140: kinship coefficients" begin
     genea140 = gen.genea140
     ped = gen.genealogy(genea140)
-    phi1 = gen.phi(ped, gen.pro(ped), gen.pro(ped))
-    phi2 = gen.phi(ped, MT = true, verbose = true)
-    phi3 = gen.phi(ped, MT = false, verbose = true)
+    founders = gen._lowest_founders(ped)
+    iso_ped = gen.branching(ped, ancestors = founders)
+    phi1 = gen.phi(iso_ped, gen.pro(ped), gen.pro(ped))
+    phi2 = gen.phi(iso_ped, MT = true, verbose = true)
+    phi3 = gen.phi(iso_ped, MT = false, verbose = true)
     @test phi1 == phi2 == phi3
 end
 
