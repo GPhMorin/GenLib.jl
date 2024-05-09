@@ -2,7 +2,7 @@ import GenLib as gen
 using DataFrames
 using Test
 
-@testset "GenLib.jl" begin
+@testset "Custom pedigree" begin
     inds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     fathers = [0, 0, 0, 1, 1, 0, 3, 3, 6, 6]
     mothers = [0, 0, 0, 2, 2, 0, 4, 4, 5, 5]
@@ -10,7 +10,18 @@ using Test
     df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
     ped = gen.genealogy(df)
     @test ped[9].mother.sex == 2
+end
+    
+@testset "genea140: kinship coefficients" begin
+    genea140 = gen.genea140
+    ped = gen.genealogy(genea140)
+    phi1 = gen.phi(ped, gen.pro(ped), gen.pro(ped))
+    phi2 = gen.phi(ped, MT = true, verbose = true)
+    phi3 = gen.phi(ped, MT = false, verbose = true)
+    @test phi1 == phi2 == phi3
+end
 
+@testset "genea140: other tests" begin
     genea140 = gen.genea140
     ped = gen.genealogy(genea140)
     @test repr(MIME("text/plain"), ped) == "A pedigree with:\n41523 individuals;\n68248 parent-child relations;\n20773 men;\n20750 women;\n140 subjects;\n18 generations."
@@ -28,7 +39,9 @@ using Test
     @test gen.depth(ped) == 18
     @test gen.sibship(ped, 11520) == [15397, 39369, 49658]
     @test gen.sibship(ped, 11520, halfSibling = false) == []
+end
 
+@testset "geneaJi" begin
     geneaJi = gen.geneaJi
     ped = gen.genealogy(geneaJi)
     @test gen._lowest_founders(ped) == [17, 19, 20, 25, 26, 29]
@@ -41,10 +54,10 @@ using Test
     @test gen.f(ped, 1) == 0.18359375
     @test gen.f(ped, 17) == 0.
     @test gen.phi(ped[1], ped[2]) == 0.37109375
-    @test gen.phi(ped) == [0.591796875 0.37109375 0.072265625;
+    @test gen.phi(ped, MT = false, verbose = true) == [0.591796875 0.37109375 0.072265625;
                            0.37109375 0.591796875 0.072265625;
                            0.072265625 0.072265625 0.53515625]
-    phi = gen.phi(ped, MT=true, verbose=true)
+    phi = gen.phi(ped, MT = true, verbose = true)
     @test phi == [0.591796875 0.37109375 0.072265625;
                   0.37109375 0.591796875 0.072265625;
                   0.072265625 0.072265625 0.53515625]
@@ -74,13 +87,15 @@ using Test
     @test length(ped) == 29
     rm("test.asc")
 
-    gen._save("test.asc", ped, sorted=true)
+    gen._save("test.asc", ped, sorted = true)
     ped = gen.genealogy("test.asc")
     IDs = [ID for ID ∈ collect(keys(ped))]
     order = sort(IDs)
     @test IDs == IDs[order]
     rm("test.asc")
+end
 
+@testset "pop140" begin
     pop140 = gen.pop140
     pop = gen._pop(pop140)
     @test pop[217891] == "Saguenay"
