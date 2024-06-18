@@ -246,22 +246,15 @@ Return the previous generation of a given set of individuals.
 """
 function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int64})
     previous_generationIDs = Int64[]
-    # We extract all the parents of the next generation,
-    # and keep the founders of the next generation
     for ID ∈ next_generationIDs
         individual = pedigree[ID]
         father = individual.father
+        if !isnothing(father)
+            push!(previous_generationIDs, father.ID)
+        end
         mother = individual.mother
-        if isnothing(father) && isnothing(mother)
-            # The individual is a founder, so we keep them
-            push!(previous_generationIDs, ID)
-        else
-            if !isnothing(father)
-                push!(previous_generationIDs, father.ID)
-            end
-            if !isnothing(mother)
-                push!(previous_generationIDs, mother.ID)
-            end
+        if !isnothing(mother)
+            push!(previous_generationIDs, mother.ID)
         end
     end
     minimum_rank = minimum([pedigree[ID].rank for ID ∈ previous_generationIDs])
