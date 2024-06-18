@@ -258,7 +258,7 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
         end
     end
     minimum_rank = minimum([pedigree[ID].rank for ID ∈ previous_generationIDs])
-    candidateIDs = [individual.ID for individual ∈ values(pedigree) if individual.rank ≥ minimum_rank]
+    candidateIDs = [individual.ID for individual ∈ values(pedigree) if minimum_rank ≤ individual.rank]
     parentIDs = Set{Int64}()
     for ID ∈ candidateIDs
         individual = pedigree[ID]
