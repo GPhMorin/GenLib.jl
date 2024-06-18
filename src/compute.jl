@@ -245,7 +245,7 @@ end
 Return the previous generation of a given set of individuals.
 """
 function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int64})
-    intermediateIDs = Int64[]
+    previous_generationIDs = Int64[]
     # We extract all the parents of the next generation,
     # and keep the founders of the next generation
     for ID ∈ next_generationIDs
@@ -254,66 +254,42 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
         mother = individual.mother
         if isnothing(father) && isnothing(mother)
             # The individual is a founder, so we keep them
-            push!(intermediateIDs, ID)
+            push!(previous_generationIDs, ID)
         else
             if !isnothing(father)
-                push!(intermediateIDs, father.ID)
+                push!(previous_generationIDs, father.ID)
             end
             if !isnothing(mother)
-                push!(intermediateIDs, mother.ID)
+                push!(previous_generationIDs, mother.ID)
             end
         end
     end
-    # The minimum rank indicates where we find the highest parent (reference
-    # individual) so that all the other individuals will be below them
-    minimum_rank = minimum([pedigree[ID].rank for ID ∈ intermediateIDs])
-    previous_generationIDs = Int64[]
-    for ID ∈ intermediateIDs
-        # We replace the intermediate candidates with the highest ancestors
-        # that are ranked equal or below the reference individual
+    minimum_rank = minimum([pedigree[ID].rank for ID ∈ previous_generationIDs])
+    candidateIDs = [individual.ID for individual ∈ values(pedigree) if individual.rank ≥ minimum_rank]
+    parentIDs = Set{Int64}()
+    for ID ∈ candidateIDs
         individual = pedigree[ID]
-        stack = [individual]
-        while !isempty(stack)
-            candidate = pop!(stack)
-            if candidate.rank == minimum_rank
-                # This is the reference individual with the highest position
-                # among the parents, so we keep that individual
-                push!(previous_generationIDs, candidate.ID)
-            elseif isnothing(candidate.father) && isnothing(candidate.mother)
-                # The individual is a founder, so we keep them
-                push!(previous_generationIDs, candidate.ID)
-            elseif !isnothing(candidate.father) && !isnothing(candidate.mother)
-                if candidate.father.rank ≥ minimum_rank && candidate.mother.rank ≥ minimum_rank
-                    # We need to check all parents' ranks because we don't want to keep
-                    # both a parent and their child, as that would cause a conflict
-                    push!(stack, candidate.father)
-                    push!(stack, candidate.mother)
-                else
-                    # At least one parent is ranked higher
-                    # than the reference individual,
-                    # so we keep the child
-                    push!(previous_generationIDs, candidate.ID)
+        if length(individual.children) == 0
+            push!(parentIDs, ID)
+        else
+            for child ∈ individual.children
+                if !isnothing(child.father)
+                    push!(parentIDs, child.father.ID)
                 end
-            elseif !isnothing(candidate.father)
-                # The individual is a half founder,
-                # so we just check the father
-                if candidate.father.rank ≥ minimum_rank
-                    push!(stack, candidate.father)
-                else
-                    push!(previous_generationIDs, candidate.ID)
-                end
-            elseif !isnothing(candidate.mother)
-                # The individual is a half founder,
-                # so we just check the mother
-                if candidate.mother.rank ≥ minimum_rank
-                    push!(stack, candidate.mother)
-                else
-                    push!(previous_generationIDs, candidate.ID)
+                if !isnothing(child.mother)
+                    push!(parentIDs, child.mother.ID)
                 end
             end
         end
     end
-    sort(unique(previous_generationIDs))
+    descendantIDs = Set{Int64}()
+    for ID ∈ candidateIDs
+        descendants = descendant(pedigree, ID)
+        for descendant ∈ descendants
+            push!(descendantIDs, descendant)
+        end
+    end
+    sort(collect(setdiff(parentIDs, descendantIDs)))
 end
 
 """
