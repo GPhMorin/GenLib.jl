@@ -13,7 +13,8 @@ founders = gen.founder(ped)
 ```
 """
 function founder(pedigree::Pedigree)
-    founders = [individual.ID for individual ∈ values(pedigree) if isnothing(individual.father) && isnothing(individual.mother)]
+    founders = [individual.ID for individual ∈ values(pedigree)
+        if isnothing(individual.father) && isnothing(individual.mother)]
     sort(founders)
 end
 
@@ -32,7 +33,8 @@ probands = gen.pro(ped)
 ```
 """
 function pro(pedigree::Pedigree)
-    probands = [individual.ID for individual ∈ values(pedigree) if isempty(individual.children)]
+    probands = [individual.ID for individual ∈ values(pedigree)
+        if isempty(individual.children)]
     sort(probands)
 end
 
@@ -78,7 +80,8 @@ function findFounders(pedigree::Pedigree, IDs::Vector{Int64})
     ancestorIDs = [ancestor(pedigree, ID) for ID ∈ IDs]
     common_ancestorIDs = ∩(ancestorIDs...)
     founderIDs = [ancestorID for ancestorID ∈ common_ancestorIDs
-                  if isnothing(pedigree[ancestorID].father) && isnothing(pedigree[ancestorID].mother)]
+                    if isnothing(pedigree[ancestorID].father) &&
+                        isnothing(pedigree[ancestorID].mother)]
     sort(founderIDs)
 end
 
@@ -124,8 +127,8 @@ end
 """
     findMRCA(pedigree::Pedigree, IDs::Vector{Int64})
 
-Return a [`GenLib.GenMatrix`](@ref) of meioses between individuals and their
-most recent common ancestors (MRCAs).
+Return a [`GenLib.GenMatrix`](@ref) of meioses between individuals and their most recent
+common ancestors (MRCAs).
 
 # Example
 

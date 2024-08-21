@@ -15,18 +15,20 @@ end
 @testset "genea140: other tests" begin
     genea140 = gen.genea140
     ped = gen.genealogy(genea140)
-    @test repr(MIME("text/plain"), ped) == "A pedigree with:\n41523 individuals;\n68248 parent-child relations;\n20773 men;\n20750 women;\n140 subjects;\n18 generations."
+    @test repr(MIME("text/plain"), ped) ==
+        "A pedigree with:\n41523 individuals;\n68248 parent-child relations;\n20773 men;" *
+        "\n20750 women;\n140 subjects;\n18 generations."
     @test gen.nomen(ped) == 20773
     @test gen.nowomen(ped) == 20750
     @test gen.noind(ped) == 41523
-    @test repr(MIME("text/plain"), ped[33724]) == "ind: 33724\nfather: 10086\nmother: 10087\nsex: 1"
+    @test repr(MIME("text/plain"), ped[33724]) == "ind: 33724\nfather: 10086\n" *
+        "mother: 10087\nsex: 1"
     @test gen.children(ped, 33724) == [10033, 113470]
     @test ped[33724].children[2].father.ID == 33724
     @test sum(gen.gc(ped)) == 140
     @test gen.descendant(ped, 10086) == [10009, 10018, 10033, 33724, 105379, 113470,
-                                         408065, 408069, 408075, 408375, 408937, 409808,
-                                         623919, 712249, 712256, 860834, 860838, 868738,
-                                         868740, 868743]
+        408065, 408069, 408075, 408375, 408937, 409808, 623919, 712249, 712256, 860834,
+        860838, 868738, 868740, 868743]
     @test gen.depth(ped) == 18
     @test gen.sibship(ped, 11520) == [15397, 39369, 49658]
     @test gen.sibship(ped, 11520, halfSibling = false) == []
@@ -46,12 +48,10 @@ end
     @test gen.f(ped, 17) == 0.
     @test gen.phi(ped[1], ped[2]) == 0.37109375
     @test gen.phi(ped, MT = false, verbose = true) == [0.591796875 0.37109375 0.072265625;
-                           0.37109375 0.591796875 0.072265625;
-                           0.072265625 0.072265625 0.53515625]
+        0.37109375 0.591796875 0.072265625; 0.072265625 0.072265625 0.53515625]
     phi = gen.phi(ped, MT = true, verbose = true)
-    @test phi == [0.591796875 0.37109375 0.072265625;
-                  0.37109375 0.591796875 0.072265625;
-                  0.072265625 0.072265625 0.53515625]
+    @test phi == [0.591796875 0.37109375 0.072265625; 0.37109375 0.591796875 0.072265625;
+        0.072265625 0.072265625 0.53515625]
     to_keep = gen._trim_kinships(phi, 0.125)
     @test phi[to_keep, to_keep] == [0.591796875 0.072265625; 0.072265625 0.53515625]
     @test gen.phi(ped, [1], [29]) == [0.072265625;;]
@@ -62,12 +62,7 @@ end
     @test gen.findFounders(ped, [1, 2, 29]) == [17, 19, 20, 25, 26]
     @test gen.rec(ped) == [3, 3, 3, 1, 3, 3]
     @test gen.findDistance(ped, [1, 2], 25) == 12
-    @test gen.occ(ped) == [6 6 2;
-                           8 8 2;
-                           1 1 2;
-                           0 0 1;
-                           8 8 3;
-                           8 8 3]
+    @test gen.occ(ped) == [6 6 2; 8 8 2; 1 1 2; 0 0 1; 8 8 3; 8 8 3]
     @test gen.occ(ped, typeOcc = "TOTAL") == [14; 18; 4; 1; 19; 19;;]
     @test gen._findMinDistanceMRCA(ped, [2, 29]) == 7
     @test gen.completeness(ped, type="IND")[8, 1] == 3.125

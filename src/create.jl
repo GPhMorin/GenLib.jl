@@ -65,7 +65,8 @@ Pedigree{T}() where T <: AbstractIndividual = Pedigree(OrderedDict{Int64, T}())
 
 Base.copy(p::Pedigree{T}) where T <: AbstractIndividual = Pedigree{T}(copy(p.dict))
 Base.length(p::Pedigree{T}) where T <: AbstractIndividual = length(p.dict)
-Base.setindex!(p::Pedigree{T}, value::T, key::Int64) where T <: AbstractIndividual = setindex!(p.dict, value, key)
+Base.setindex!(p::Pedigree{T}, value::T, key::Int64) where T <: AbstractIndividual =
+    setindex!(p.dict, value, key)
 Base.getindex(p::Pedigree{T}, key::Int64) where T <: AbstractIndividual = p.dict[key]
 Base.keys(p::Pedigree{T}) where T <: AbstractIndividual = keys(p.dict)
 Base.values(p::Pedigree{T}) where T <: AbstractIndividual = values(p.dict)
@@ -210,8 +211,8 @@ end
 """
     _ordered_pedigree(pedigree::Pedigree)
 
-Return a reordered pedigree where the individuals are in chronological order,
-i.e. any individual's parents appear before them.
+Return a reordered pedigree where the individuals are in chronological order, i.e. any
+individual's parents appear before them.
 """
 function _ordered_pedigree(pedigree::Pedigree{IntIndividual})
     IDs = collect(keys(pedigree))
@@ -257,11 +258,10 @@ end
 
 Export the pedigree as a CSV file at a given `path`.
 
-If `sorted` is `false` (the default), then the individuals
-will appear in the same order as in the genealogy.
+If `sorted` is `false` (the default), then the individuals will appear in the same order as
+in the genealogy.
 
-If `sorted` is `true`, then the individuals
-will appear in alphabetical ID order.
+If `sorted` is `true`, then the individuals will appear in alphabetical ID order.
 """
 function _save(path::String, pedigree::Pedigree; sorted::Bool = false)
     df = genout(pedigree, sorted = sorted)

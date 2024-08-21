@@ -3,11 +3,10 @@
 
 Return a pedigree as a `DataFrame`.
 
-If `sorted` is `false` (the default), then the individuals
-will appear in the same order as in the pedigree.
+If `sorted` is `false` (the default), then the individuals will appear in the same order as
+in the pedigree.
 
-If `sorted` is `true`, then the individuals
-will appear in alphabetical ID order.
+If `sorted` is `true`, then the individuals will appear in alphabetical ID order.
 
 ```julia
 import GenLib as gen

@@ -88,16 +88,18 @@ function _completeness!(completeness::Vector{Int64}, individual::Individual, dep
 end
 
 """
-    completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), genNo::Vector{Int64} = Int64[], type::String = "MEAN")
+    completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
+    genNo::Vector{Int64} = Int64[], type::String = "MEAN")
 
 Return a dataframe with the completeness at each generation (one row per generation).
 
 genNo: A vector of the generations to output. The probands are at generation 0.
 
-type: If ```"MEAN"```, the mean completeness for each generation.
-If ```"IND"```, the completeness for each generation for each proband.
+type: If ```"MEAN"```, the mean completeness for each generation. If ```"IND"```, the
+completeness for each generation for each proband.
 """
-function completeness(pedigree::Pedigree, pro::Vector{Int64} = pro(pedigree); genNo::Vector{Int64} = Int64[], type::String = "MEAN")
+function completeness(pedigree::Pedigree, pro::Vector{Int64} = pro(pedigree);
+    genNo::Vector{Int64} = Int64[], type::String = "MEAN")
     completenesses = Vector{Vector{Int64}}()
     for ID ∈ pro
         proband = pedigree[ID]
@@ -123,7 +125,8 @@ function completeness(pedigree::Pedigree, pro::Vector{Int64} = pro(pedigree); ge
 end
 
 """
-    rec(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(genealogy), ancestorIDs::Vector{Int64} = founder(genealogy))
+    rec(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(genealogy),
+    ancestorIDs::Vector{Int64} = founder(genealogy))
 
 Return the number of descendants of each ancestor.
 """
@@ -161,12 +164,13 @@ mutable struct Occurrent <: AbstractIndividual
 end
 
 """
-    occ(pedigree::Pedigree; pro::Vector{Int64} = pro(genealogy), ancestors::Vector{Int64} = founder(genealogy), typeOcc::String = "IND")
+    occ(pedigree::Pedigree; pro::Vector{Int64} = pro(genealogy),
+    ancestors::Vector{Int64} = founder(genealogy), typeOcc::String = "IND")
 
 Return a matrix of ancestors' occurrences.
 
-If `typeOcc` is "IND" (default), then the matrix corresponds to the occurrence per individual.
-If `typeOcc` is "TOTAL", then the matrix corresponds to the total occurrence.
+If `typeOcc` is "IND" (default), then the matrix corresponds to the occurrence per
+individual. If `typeOcc` is "TOTAL", then the matrix corresponds to the total occurrence.
 
 # Example
 
