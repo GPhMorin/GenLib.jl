@@ -12,7 +12,7 @@ using Test
     @test ped[9].mother.sex == 2
 end
 
-@testset "genea140: other tests" begin
+@testset "genea140" begin
     genea140 = gen.genea140
     ped = gen.genealogy(genea140)
     @test repr(MIME("text/plain"), ped) ==
