@@ -56,13 +56,14 @@ function _mark_descendants!(individual::Candidate)
 end
 
 """
-    branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
+    branching(pedigree::Pedigree; pro::Union{Vector{Int64}, Nothing} = nothing, ancestors::Union{Vector{Int64}, Nothing} = nothing)
 
 Return a pedigree that filters individuals who are in the paths
 between select probands and ancestors.
 """
-function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
-    ancestors::Vector{Int64} = founder(pedigree))
+function branching(pedigree::Pedigree;
+    pro::Union{Vector{Int64}, Nothing} = nothing,
+    ancestors::Union{Vector{Int64}, Nothing} = nothing)
     isolated_pedigree = Pedigree{Individual}()
     marking_pedigree = Pedigree{Candidate}()
     for individual ∈ values(pedigree)
@@ -84,39 +85,91 @@ function branching(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
             push!(marking_pedigree[mother.ID].children, marking_pedigree[individual.ID])
         end
     end
-    Threads.@threads for i ∈ eachindex(pro)
-        ID = pro[i]
-        proband = marking_pedigree[ID]
-        _mark_ancestors!(proband)
+    if !isnothing(pro)
+        Threads.@threads for i ∈ eachindex(pro)
+            ID = pro[i]
+            proband = marking_pedigree[ID]
+            _mark_ancestors!(proband)
+        end
     end
-    Threads.@threads for j ∈ eachindex(ancestors)
-        ID = ancestors[j]
-        ancestor = marking_pedigree[ID]
-        _mark_descendants!(ancestor)
+    if !isnothing(ancestors)
+        Threads.@threads for j ∈ eachindex(ancestors)
+            ID = ancestors[j]
+            ancestor = marking_pedigree[ID]
+            _mark_descendants!(ancestor)
+        end
     end
     rank = 0
-    for individual ∈ values(marking_pedigree)
-        if individual.is_ancestor && individual.is_descendant
-            rank += 1
-            father = individual.father
-            if !isnothing(father)
-                father = father.is_ancestor && father.is_descendant ? father : nothing
+    if !isnothing(pro) && !isnothing(ancestors)
+        for individual ∈ values(marking_pedigree)
+            if individual.is_ancestor && individual.is_descendant
+                rank += 1
+                father = individual.father
+                if !isnothing(father)
+                    father = father.is_ancestor && father.is_descendant ? father : nothing
+                end
+                mother = individual.mother
+                if !isnothing(mother)
+                    mother = mother.is_ancestor && mother.is_descendant ? mother : nothing
+                end
+                isolated_pedigree[individual.ID] = Individual(individual.ID,
+                isnothing(father) ? nothing : isolated_pedigree[father.ID],
+                isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
+                Int64[],
+                individual.sex,
+                rank)
+                if !isnothing(father)
+                    push!(isolated_pedigree[father.ID].children, isolated_pedigree[individual.ID])
+                end
+                if !isnothing(mother)
+                    push!(isolated_pedigree[mother.ID].children, isolated_pedigree[individual.ID])
+                end
             end
-            mother = individual.mother
-            if !isnothing(mother)
-                mother = mother.is_ancestor && mother.is_descendant ? mother : nothing
+        end
+    elseif !isnothing(pro)
+        for individual ∈ values(marking_pedigree)
+            if individual.is_ancestor
+                rank += 1
+                father = individual.father
+                mother = individual.mother
+                isolated_pedigree[individual.ID] = Individual(individual.ID,
+                isnothing(father) ? nothing : isolated_pedigree[father.ID],
+                isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
+                Int64[],
+                individual.sex,
+                rank)
+                if !isnothing(father)
+                    push!(isolated_pedigree[father.ID].children, isolated_pedigree[individual.ID])
+                end
+                if !isnothing(mother)
+                    push!(isolated_pedigree[mother.ID].children, isolated_pedigree[individual.ID])
+                end
             end
-            isolated_pedigree[individual.ID] = Individual(individual.ID,
-            isnothing(father) ? nothing : isolated_pedigree[father.ID],
-            isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
-            Int64[],
-            individual.sex,
-            rank)
-            if !isnothing(father)
-                push!(isolated_pedigree[father.ID].children, isolated_pedigree[individual.ID])
-            end
-            if !isnothing(mother)
-                push!(isolated_pedigree[mother.ID].children, isolated_pedigree[individual.ID])
+        end
+    elseif !isnothing(ancestors)
+        for individual ∈ values(marking_pedigree)
+            if individual.is_descendant
+                rank += 1
+                father = individual.father
+                if !isnothing(father)
+                    father = father.is_descendant ? father : nothing
+                end
+                mother = individual.mother
+                if !isnothing(mother)
+                    mother = mother.is_descendant ? mother : nothing
+                end
+                isolated_pedigree[individual.ID] = Individual(individual.ID,
+                isnothing(father) ? nothing : isolated_pedigree[father.ID],
+                isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
+                Int64[],
+                individual.sex,
+                rank)
+                if !isnothing(father)
+                    push!(isolated_pedigree[father.ID].children, isolated_pedigree[individual.ID])
+                end
+                if !isnothing(mother)
+                    push!(isolated_pedigree[mother.ID].children, isolated_pedigree[individual.ID])
+                end
             end
         end
     end
