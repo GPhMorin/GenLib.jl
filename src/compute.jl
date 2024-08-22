@@ -109,11 +109,13 @@ end
 """
     phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
 
-Return the kinship coefficient between two individuals given a matrix of the founders' kinships.
+Return the kinship coefficient between two individuals given a matrix of the founders'
+kinships.
 
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
-function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
+function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
+    Ψ::Matrix{Float64})
     value = 0.
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
@@ -198,7 +200,8 @@ function _max_height!(individual::IndexedIndividual)
         if isempty(individual.children)
             individual.max_height = 0
         else
-            individual.max_height = maximum([_max_height!(child) for child ∈ individual.children]) + 1
+            individual.max_height = maximum([_max_height!(child)
+            for child ∈ individual.children]) + 1
         end
     end
     individual.max_height
@@ -216,8 +219,10 @@ function _topological_sort(pedigree::Pedigree)
     for individual ∈ values(pedigree)
         indexed_pedigree[individual.ID] = IndexedIndividual(
             individual.ID,
-            !isnothing(individual.father) ? indexed_pedigree[individual.father.ID] : nothing,
-            !isnothing(individual.mother) ? indexed_pedigree[individual.mother.ID] : nothing,
+            !isnothing(individual.father) ?
+                indexed_pedigree[individual.father.ID] : nothing,
+            !isnothing(individual.mother) ?
+                indexed_pedigree[individual.mother.ID] : nothing,
             individual.sex, [], -1, 0, 0
         )
     end
@@ -258,7 +263,8 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
         end
     end
     minimum_rank = minimum([pedigree[ID].rank for ID ∈ previous_generationIDs])
-    candidateIDs = [individual.ID for individual ∈ values(pedigree) if minimum_rank ≤ individual.rank]
+    candidateIDs = [individual.ID for individual ∈ values(pedigree)
+        if minimum_rank ≤ individual.rank]
     parentIDs = Set{Int64}()
     for ID ∈ candidateIDs
         individual = pedigree[ID]
@@ -286,14 +292,17 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
 end
 
 """
-    phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
+    phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64},
+        bottomIDs::Vector{Int64})
 
 Return a square matrix of pairwise kinship coefficients
 between all probands given the founders' kinships.
 
-An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al., 2019](@ref).
+An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al.,
+2019](@ref).
 """
-function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bottomIDs::Vector{Int64})
+function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64},
+    bottomIDs::Vector{Int64})
     A = Dict{Int64, Set{Int64}}()
     for individual ∈ values(pedigree)
         A[individual.ID] = Set(individual.ID)
@@ -322,7 +331,8 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
                 end
                 ϕ[i, i] = coefficient
             else
-                if ϕ[individualⱼ.rank, individualⱼ.rank] > -1 && individualᵢ.ID ∉ A[individualⱼ.ID]
+                if ϕ[individualⱼ.rank, individualⱼ.rank] > -1 &&
+                        individualᵢ.ID ∉ A[individualⱼ.ID]
                     father = individualᵢ.father
                     mother = individualᵢ.mother
                     individual = individualⱼ
@@ -348,7 +358,8 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64}, bot
 end
 
 """
-    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
+    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false,
+        verbose::Bool = false)
 
 Return a square matrix of pairwise kinship coefficients between probands.
 
@@ -370,7 +381,8 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false, verbose::Bool = false)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false,
+        verbose::Bool = false)
     global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     indexed_pedigree = _topological_sort(isolated_pedigree)
@@ -386,15 +398,20 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
         for i ∈ 1:length(cut_vertices)-1
             previous_generation = cut_vertices[i]
             next_generation = cut_vertices[i+1]
-            verbose_pedigree = branching(isolated_pedigree, pro = next_generation, ancestors = previous_generation)
-            println("Step $i / $(length(cut_vertices)-1): $(length(previous_generation)) founders, $(length(next_generation)) probands (n = $(length(verbose_pedigree))).")
+            verbose_pedigree = branching(isolated_pedigree, pro = next_generation,
+                ancestors = previous_generation)
+            println("Step $i / $(length(cut_vertices)-1): $(length(previous_generation)) " *
+                "founders, $(length(next_generation)) probands " *
+                "(n = $(length(verbose_pedigree))).")
         end
     end
     for i ∈ 1:length(cut_vertices)-1
         previous_generation = cut_vertices[i]
         next_generation = cut_vertices[i+1]
         if verbose
-            println("Running step $i / $(length(cut_vertices)-1) ($(length(previous_generation)) founders, $(length(next_generation)) probands)")
+            println("Running step $i / $(length(cut_vertices)-1) " *
+                "($(length(previous_generation)) founders, $(length(next_generation)) " *
+                "probands)")
         end
         if i == 1
             Ψ = zeros(length(previous_generation), length(previous_generation))
@@ -417,7 +434,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::
             end
             Ψ = ϕ
         else
-            isolated_pedigree = branching(pedigree, pro = next_generation, ancestors = previous_generation)
+            isolated_pedigree = branching(pedigree, pro = next_generation,
+                ancestors = previous_generation)
             Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
         end
     end
@@ -492,7 +510,8 @@ function _contribute!(individual::PossibleDescendant, depth::Int64 = 0)
 end
 
 """
-    gc(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree), ancestors::Vector{Int64} = founder(pedigree))
+    gc(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
+        ancestors::Vector{Int64} = founder(pedigree))
 
 Return a matrix of the genetic contribution
 of each ancestor (columns) to each proband (rows).
@@ -525,10 +544,12 @@ function gc(
             0.
         )
         if !isnothing(father)
-            push!(contribution_pedigree[father.ID].children, contribution_pedigree[individual.ID])
+            push!(contribution_pedigree[father.ID].children,
+                contribution_pedigree[individual.ID])
         end
         if !isnothing(mother)
-            push!(contribution_pedigree[mother.ID].children, contribution_pedigree[individual.ID])
+            push!(contribution_pedigree[mother.ID].children,
+                contribution_pedigree[individual.ID])
         end
     end
     for (index₁, ancestorID) ∈ enumerate(ancestors)
