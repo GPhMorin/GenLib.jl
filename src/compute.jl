@@ -381,8 +381,8 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false,
-        verbose::Bool = false)
+function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+        MT::Bool = false, verbose::Bool = false)
     global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     indexed_pedigree = _topological_sort(isolated_pedigree)
