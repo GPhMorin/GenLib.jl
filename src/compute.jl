@@ -229,11 +229,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         for i ∈ 1:length(cut_vertices)-1
             previous_generationIDs = cut_vertices[i]
             next_generationIDs = cut_vertices[i+1]
-            verbose_pedigree = branching(pedigree, pro = next_generationIDs,
-                ancestors = previous_generationIDs)
             println("Step $i of $(length(cut_vertices)-1): " *
                 "$(length(previous_generationIDs)) founders, " *
-                "$(length(next_generationIDs)) probands (n = $(length(verbose_pedigree))).")
+                "$(length(next_generationIDs)) probands.")
         end
     end
     # Add the `founder_index` attribute to the individuals and make them mutable so we can
