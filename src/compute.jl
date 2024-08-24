@@ -182,7 +182,6 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
         end
     end
     unique!(previous_generationIDs)
-    sort!(previous_generationIDs)
 end
 
 """
