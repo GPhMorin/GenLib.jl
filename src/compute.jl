@@ -20,7 +20,6 @@ mutable struct IndexedIndividual <: AbstractIndividual
     mother::Union{Nothing, IndexedIndividual}
     sex::Int64
     children::Vector{IndexedIndividual}
-    max_height::Int64
     rank::Int64
     founder_index::Int64
 end
@@ -191,28 +190,9 @@ function _lowest_founders(pedigree::Pedigree)
 end
 
 """
-    _max_height!(individual::IndexedIndividual)
-
-Set and return the maximum height of an individual in the pedigree.
-"""
-function _max_height!(individual::IndexedIndividual)
-    if individual.max_height == -1
-        if isempty(individual.children)
-            individual.max_height = 0
-        else
-            individual.max_height = maximum([_max_height!(child)
-            for child ∈ individual.children]) + 1
-        end
-    end
-    individual.max_height
-end
-
-"""
     _index_pedigree(pedigree::Pedigree)
 
-Return a reordered pedigree where the individuals are in chronological order,
-i.e. any individual's parents appear before them. In this topological sort,
-the parents of the probands appear as far in the pedigree as possible, etc.
+Return a pedigree with an index that indicates the individual's position among the founders.
 """
 function _index_pedigree(pedigree::Pedigree)
     indexed_pedigree = Pedigree{IndexedIndividual}()
@@ -223,7 +203,7 @@ function _index_pedigree(pedigree::Pedigree)
                 indexed_pedigree[individual.father.ID] : nothing,
             !isnothing(individual.mother) ?
                 indexed_pedigree[individual.mother.ID] : nothing,
-            individual.sex, [], -1, individual.rank, 0
+            individual.sex, [], individual.rank, 0
         )
     end
     for individual ∈ values(indexed_pedigree)
