@@ -5,7 +5,6 @@
         mother::Union{Nothing, IndexedIndividual}
         sex::Int64
         children::Vector{IndexedIndividual}
-        max_height::Int64
         rank::Int64
         founder_index::Int64
     end
@@ -240,82 +239,15 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
 end
 
 """
-    phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64},
-        bottomIDs::Vector{Int64})
-
-Return a square matrix of pairwise kinship coefficients
-between all probands given the founders' kinships.
-
-An implementation of the recursive-cut algorithm presented in [Kirkpatrick et al.,
-2019](@ref).
-"""
-function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64},
-    bottomIDs::Vector{Int64})
-    A = Dict{Int64, Set{Int64}}()
-    for individual ∈ values(pedigree)
-        A[individual.ID] = Set(individual.ID)
-        if !isnothing(individual.father)
-            union!(A[individual.ID], A[individual.father.ID])
-        end
-        if !isnothing(individual.mother)
-            union!(A[individual.ID], A[individual.mother.ID])
-        end
-    end
-    ϕ = ones(length(pedigree), length(pedigree)) .* -1
-    indices = [pedigree[ID].rank for ID ∈ topIDs]
-    ϕ[indices, indices] = copy(Ψ)
-    for individualᵢ ∈ values(pedigree)
-        i = individualᵢ.rank
-        for individualⱼ ∈ values(pedigree)
-            j = individualⱼ.rank
-            if ϕ[i, j] > -1
-                continue
-            elseif i == j
-                coefficient = 0.5
-                father = individualᵢ.father
-                mother = individualᵢ.mother
-                if !isnothing(father) && !isnothing(mother)
-                    coefficient += ϕ[mother.rank, father.rank] / 2
-                end
-                ϕ[i, i] = coefficient
-            else
-                if ϕ[individualⱼ.rank, individualⱼ.rank] > -1 &&
-                        individualᵢ.ID ∉ A[individualⱼ.ID]
-                    father = individualᵢ.father
-                    mother = individualᵢ.mother
-                    individual = individualⱼ
-                else
-                    father = individualⱼ.father
-                    mother = individualⱼ.mother
-                    individual = individualᵢ
-                end
-                coefficient = 0.
-                if !isnothing(father)
-                    coefficient += ϕ[father.rank, individual.rank] / 2
-                end
-                if !isnothing(mother)
-                    coefficient += ϕ[mother.rank, individual.rank] / 2
-                end
-                ϕ[i, j] = coefficient
-                ϕ[j, i] = coefficient
-            end
-        end
-    end
-    indices = [pedigree[ID].rank for ID ∈ bottomIDs]
-    ϕ[indices, indices]
-end
-
-"""
     phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         verbose::Bool = false)
 
 Return a square matrix of pairwise kinship coefficients between probands.
 
-If no probands are given, return the square matrix
-for all probands in the pedigree.
+If no probands are given, return the square matrix for all probands in the pedigree.
 
-The algorithm computes pairwise kinships in parallel, a hybrid between
-the algorithms of [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+The algorithm computes pairwise kinships in parallel, a hybrid between the algorithms of
+[Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 
 # Example
 
@@ -393,11 +325,11 @@ end
 """
     _trim_kinships(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
 
-Return a vector of booleans of probands whose kinships
-between them never exceed a given `threshold`.
+Return a vector of booleans of probands whose kinships between them never exceed a given
+`threshold`.
     
-For instance, a threshold of 0.0625 (the default) removes individuals
-who are first-degree cousins or closer.
+For instance, a threshold of 0.0625 (the default) removes individuals who are first-degree
+cousins or closer.
 """
 function _trim_kinships(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
     visited = [false for i ∈ 1:size(kinship_matrix, 1)]
@@ -461,8 +393,8 @@ end
     gc(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
         ancestors::Vector{Int64} = founder(pedigree))
 
-Return a matrix of the genetic contribution
-of each ancestor (columns) to each proband (rows).
+Return a matrix of the genetic contribution of each ancestor (columns) to each proband
+(rows).
 
 # Example
 
