@@ -326,7 +326,7 @@ function phi(pedigree::Pedigree, Ψ::Matrix{Float64}, topIDs::Vector{Int64},
 end
 
 """
-    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree); MT::Bool = false,
+    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         verbose::Bool = false)
 
 Return a square matrix of pairwise kinship coefficients between probands.
@@ -334,10 +334,7 @@ Return a square matrix of pairwise kinship coefficients between probands.
 If no probands are given, return the square matrix
 for all probands in the pedigree.
 
-If MT = false: an implementation of the recursive-cut algorithm
-presented in [Kirkpatrick et al., 2019](@ref).
-
-If MT = true: pairwise kinships in parallel, a hybrid between
+The algorithm computes pairwise kinships in parallel, a hybrid between
 the algorithms of [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 
 # Example
@@ -350,18 +347,15 @@ gen.phi(ped)
 ```
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
-        MT::Bool = false, verbose::Bool = false)
+    verbose::Bool = false)
     global Ψ
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    indexed_pedigree = _index_pedigree(isolated_pedigree)
     cut_vertices = [probandIDs]
-    previous_generationIDs = _previous_generation(indexed_pedigree, probandIDs)
+    previous_generationIDs = _previous_generation(pedigree, probandIDs)
     while !isempty(previous_generationIDs)
         pushfirst!(cut_vertices, previous_generationIDs)
-        previous_generationIDs = _previous_generation(indexed_pedigree,
-            previous_generationIDs)
+        previous_generationIDs = _previous_generation(pedigree, previous_generationIDs)
     end
-    for ID ∈ keys(indexed_pedigree)
+    for ID ∈ keys(pedigree)
         start = findfirst(ID .∈ cut_vertices)
         stop = findlast(ID .∈ cut_vertices)
         for generationIDs ∈ cut_vertices[start:stop]
@@ -377,13 +371,14 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         for i ∈ 1:length(cut_vertices)-1
             previous_generation = cut_vertices[i]
             next_generation = cut_vertices[i+1]
-            verbose_pedigree = branching(isolated_pedigree, pro = next_generation,
+            verbose_pedigree = branching(pedigree, pro = next_generation,
                 ancestors = previous_generation)
             println("Step $i / $(length(cut_vertices)-1): $(length(previous_generation)) " *
                 "founders, $(length(next_generation)) probands " *
                 "(n = $(length(verbose_pedigree))).")
         end
     end
+    indexed_pedigree = _index_pedigree(pedigree)
     for k ∈ 1:length(cut_vertices)-1
         previous_generation = cut_vertices[k]
         next_generation = cut_vertices[k+1]
@@ -398,27 +393,19 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 Ψ[i, i] = 0.5
             end
         end
-        #if MT
-            for (index, ID) ∈ enumerate(previous_generation)
-                indexed_pedigree[ID].founder_index = index
-            end
-            ϕ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
-            probands = [indexed_pedigree[ID] for ID ∈ next_generation]
-            Threads.@threads for i ∈ eachindex(probands)
-                Threads.@threads for j ∈ eachindex(probands)
-                    if i ≤ j
-                        ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
-                    end
+        for (index, ID) ∈ enumerate(previous_generation)
+            indexed_pedigree[ID].founder_index = index
+        end
+        ϕ = Matrix{Float64}(undef, length(next_generation), length(next_generation))
+        probands = [indexed_pedigree[ID] for ID ∈ next_generation]
+        Threads.@threads for i ∈ eachindex(probands)
+            Threads.@threads for j ∈ eachindex(probands)
+                if i ≤ j
+                    ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
                 end
             end
-            Ψ = ϕ
-        """
-        else
-            isolated_pedigree = branching(pedigree, pro = next_generation,
-                ancestors = previous_generation)
-            Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
         end
-        """
+        Ψ = ϕ
     end
     Ψ
 end
