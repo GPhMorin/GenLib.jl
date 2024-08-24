@@ -135,8 +135,8 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             value += phi(individualⱼ, individualᵢ.mother, Ψ) / 2
         end
     else
-        # None of the individuals are founders, so we climb on the side
-        # of the individual that appears lowest in the pedigree
+        # None of the individuals are founders, so we climb on the side of the individual
+        # that appears lowest in the pedigree
         if individualᵢ.rank > individualⱼ.rank
             # From the genealogical order, i cannot be an ancestor of j
             # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
@@ -172,8 +172,8 @@ end
 
 Return the lowest founders of a given pedigree.
 
-The lowest founder is defined as an only child who is either a
-founder or as the only child of a lineage of only children.
+The lowest founder is defined as an only child who is either a founder or as the only child
+of a lineage of only children.
 """
 function _lowest_founders(pedigree::Pedigree)
     founderIDs = founder(pedigree)
