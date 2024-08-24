@@ -64,7 +64,7 @@ end
     @test gen.completeness(ped, genNo=[0, 4, 6]) == [100.; 62.5; 18.75;;]
     iso_ped = gen.branching(ped, pro=[1])
     @test gen.founder(iso_ped) == [17, 19, 20, 25, 26]
-    iso_ped = gen.branching(ped, ancestors=[8])
+    iso_ped = gen.branching(ped, ancestors=[13])
     @test gen.pro(iso_ped) == [1, 2]
 
     gen._save("test.asc", ped)
