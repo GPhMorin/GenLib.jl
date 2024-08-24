@@ -216,7 +216,9 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     end
     # The following loop slows down the algorithm considerably but is necessary to drag the
     # individuals down the generations as long as they are required
-    for ID ∈ keys(pedigree)
+    IDs = union([generationIDs for generationIDs ∈ cut_vertices]...)
+    unique!(IDs)
+    for ID ∈ IDs
         start = findfirst(ID .∈ cut_vertices) + 1
         stop = findlast(ID .∈ cut_vertices) - 1
         for generationIDs ∈ cut_vertices[start:stop]

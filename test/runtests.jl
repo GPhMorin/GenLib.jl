@@ -31,7 +31,7 @@ end
         860838, 868738, 868740, 868743]
     @test gen.depth(ped) == 18
     @test gen.sibship(ped, 11520) == [15397, 39369, 49658]
-    @test gen.sibship(ped, 11520, halfSibling = false) == []
+    @test gen.sibship(ped, 11520, halfSibling=false) == []
 end
 
 @testset "geneaJi" begin
@@ -58,10 +58,14 @@ end
     @test gen.rec(ped) == [3, 3, 3, 1, 3, 3]
     @test gen.findDistance(ped, [1, 2], 25) == 12
     @test gen.occ(ped) == [6 6 2; 8 8 2; 1 1 2; 0 0 1; 8 8 3; 8 8 3]
-    @test gen.occ(ped, typeOcc = "TOTAL") == [14; 18; 4; 1; 19; 19;;]
+    @test gen.occ(ped, typeOcc="TOTAL") == [14; 18; 4; 1; 19; 19;;]
     @test gen._findMinDistanceMRCA(ped, [2, 29]) == 7
     @test gen.completeness(ped, type="IND")[8, 1] == 3.125
-    @test gen.completeness(ped, genNo = [0, 4, 6]) == [100.; 62.5; 18.75;;]
+    @test gen.completeness(ped, genNo=[0, 4, 6]) == [100.; 62.5; 18.75;;]
+    iso_ped = gen.branching(ped, pro=[1])
+    @test gen.founder(iso_ped) == [17, 19, 20, 25, 26]
+    iso_ped = gen.branching(ped, ancestors=[8])
+    @test gen.pro(iso_ped) == [1, 2]
 
     gen._save("test.asc", ped)
     ped = gen.genealogy("test.asc")
