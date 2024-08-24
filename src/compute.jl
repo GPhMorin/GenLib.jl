@@ -73,38 +73,6 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
 end
 
 """
-    phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-
-Return a rectangle matrix of kinship coefficients,
-as defined by a list or row IDs and column IDs.
-"""
-function phi(pedigree::Pedigree, rowIDs::Vector{Int64}, columnIDs::Vector{Int64})
-    ϕ = Matrix{Float64}(undef, length(rowIDs), length(columnIDs))
-    if rowIDs == columnIDs
-        Threads.@threads for i in eachindex(rowIDs)
-            Threads.@threads for j in eachindex(columnIDs)
-                if i ≤ j
-                    individualᵢ = pedigree[rowIDs[i]]
-                    individualⱼ = pedigree[columnIDs[j]]
-                    coefficient = phi(individualᵢ, individualⱼ)
-                    ϕ[i, j] = coefficient
-                    ϕ[j, i] = coefficient
-                end
-            end
-        end
-    else
-        Threads.@threads for i in eachindex(rowIDs)
-            individualᵢ = pedigree[rowIDs[i]]
-            Threads.@threads for j in eachindex(columnIDs)
-                individualⱼ = pedigree[columnIDs[j]]
-                ϕ[i, j] = phi(individualᵢ, individualⱼ)
-            end
-        end
-    end
-    ϕ
-end
-
-"""
     phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
 
 Return the kinship coefficient between two individuals given a matrix of the founders'
