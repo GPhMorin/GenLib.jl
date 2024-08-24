@@ -208,13 +208,13 @@ function _max_height!(individual::IndexedIndividual)
 end
 
 """
-    _topological_sort(pedigree::Pedigree)
+    _index_pedigree(pedigree::Pedigree)
 
 Return a reordered pedigree where the individuals are in chronological order,
 i.e. any individual's parents appear before them. In this topological sort,
 the parents of the probands appear as far in the pedigree as possible, etc.
 """
-function _topological_sort(pedigree::Pedigree)
+function _index_pedigree(pedigree::Pedigree)
     indexed_pedigree = Pedigree{IndexedIndividual}()
     for individual ∈ values(pedigree)
         indexed_pedigree[individual.ID] = IndexedIndividual(
@@ -223,7 +223,7 @@ function _topological_sort(pedigree::Pedigree)
                 indexed_pedigree[individual.father.ID] : nothing,
             !isnothing(individual.mother) ?
                 indexed_pedigree[individual.mother.ID] : nothing,
-            individual.sex, [], -1, 0, 0
+            individual.sex, [], -1, individual.rank, 0
         )
     end
     for individual ∈ values(indexed_pedigree)
@@ -234,20 +234,13 @@ function _topological_sort(pedigree::Pedigree)
             push!(individual.mother.children, individual)
         end
     end
-    IDs = collect(keys(pedigree))
-    heights = [_max_height!(individual) for individual ∈ values(indexed_pedigree)]
-    order = sortperm(heights, rev=true)
-    sortedIDs = IDs[order]
-    for (rank, ID) ∈ enumerate(sortedIDs)
-        indexed_pedigree[ID].rank = rank
-    end
     indexed_pedigree
 end
 
 """
-    _previous_generation(pedigree::Pedigree, next_generation::Vector{Int64})
+    _next_generation(pedigree::Pedigree, previous_generationIDs::Vector{Int64})
 
-Return the previous generation of a given set of individuals.
+Return the next generation of a given set of individuals.
 """
 function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int64})
     previous_generationIDs = Int64[]
@@ -262,33 +255,8 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
             push!(previous_generationIDs, mother.ID)
         end
     end
-    minimum_rank = minimum([pedigree[ID].rank for ID ∈ previous_generationIDs])
-    candidateIDs = [individual.ID for individual ∈ values(pedigree)
-        if minimum_rank ≤ individual.rank]
-    parentIDs = Set{Int64}()
-    for ID ∈ candidateIDs
-        individual = pedigree[ID]
-        if length(individual.children) == 0
-            push!(parentIDs, ID)
-        else
-            for child ∈ individual.children
-                if !isnothing(child.father)
-                    push!(parentIDs, child.father.ID)
-                end
-                if !isnothing(child.mother)
-                    push!(parentIDs, child.mother.ID)
-                end
-            end
-        end
-    end
-    descendantIDs = Set{Int64}()
-    for ID ∈ candidateIDs
-        descendants = descendant(pedigree, ID)
-        for descendant ∈ descendants
-            push!(descendantIDs, descendant)
-        end
-    end
-    sort(collect(setdiff(parentIDs, descendantIDs)))
+    unique!(previous_generationIDs)
+    sort!(previous_generationIDs)
 end
 
 """
@@ -385,15 +353,26 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         MT::Bool = false, verbose::Bool = false)
     global Ψ
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    indexed_pedigree = _topological_sort(isolated_pedigree)
+    indexed_pedigree = _index_pedigree(isolated_pedigree)
     cut_vertices = [probandIDs]
-    founderIDs = founder(indexed_pedigree)
-    previous_generation = _previous_generation(indexed_pedigree, probandIDs)
-    while previous_generation != founderIDs
-        pushfirst!(cut_vertices, previous_generation)
-        previous_generation = _previous_generation(indexed_pedigree, previous_generation)
+    previous_generationIDs = _previous_generation(indexed_pedigree, probandIDs)
+    while !isempty(previous_generationIDs)
+        pushfirst!(cut_vertices, previous_generationIDs)
+        previous_generationIDs = _previous_generation(indexed_pedigree,
+            previous_generationIDs)
     end
-    pushfirst!(cut_vertices, founderIDs)
+    for ID ∈ keys(indexed_pedigree)
+        start = findfirst(ID .∈ cut_vertices)
+        stop = findlast(ID .∈ cut_vertices)
+        for generationIDs ∈ cut_vertices[start:stop]
+            push!(generationIDs, ID)
+        end
+    end
+    for generationIDs ∈ cut_vertices
+        unique!(generationIDs)
+        sort!(generationIDs)
+    end
+    cut_vertices[end] = probandIDs
     if verbose
         for i ∈ 1:length(cut_vertices)-1
             previous_generation = cut_vertices[i]
@@ -405,21 +384,21 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 "(n = $(length(verbose_pedigree))).")
         end
     end
-    for i ∈ 1:length(cut_vertices)-1
-        previous_generation = cut_vertices[i]
-        next_generation = cut_vertices[i+1]
+    for k ∈ 1:length(cut_vertices)-1
+        previous_generation = cut_vertices[k]
+        next_generation = cut_vertices[k+1]
         if verbose
-            println("Running step $i / $(length(cut_vertices)-1) " *
+            println("Running step $k / $(length(cut_vertices)-1) " *
                 "($(length(previous_generation)) founders, $(length(next_generation)) " *
                 "probands)")
         end
-        if i == 1
+        if k == 1
             Ψ = zeros(length(previous_generation), length(previous_generation))
-            for j ∈ eachindex(previous_generation)
-                Ψ[j, j] = 0.5
+            for i ∈ axes(Ψ, 1)
+                Ψ[i, i] = 0.5
             end
         end
-        if MT
+        #if MT
             for (index, ID) ∈ enumerate(previous_generation)
                 indexed_pedigree[ID].founder_index = index
             end
@@ -433,11 +412,13 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 end
             end
             Ψ = ϕ
+        """
         else
             isolated_pedigree = branching(pedigree, pro = next_generation,
                 ancestors = previous_generation)
             Ψ = phi(isolated_pedigree, Ψ, previous_generation, next_generation)
         end
+        """
     end
     Ψ
 end
