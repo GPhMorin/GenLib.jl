@@ -231,7 +231,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             next_generationIDs = cut_vertices[i+1]
             verbose_pedigree = branching(pedigree, pro = next_generationIDs,
                 ancestors = previous_generationIDs)
-            println("Step $i / $(length(cut_vertices)-1): " *
+            println("Step $i of $(length(cut_vertices)-1): " *
                 "$(length(previous_generationIDs)) founders, " *
                 "$(length(next_generationIDs)) probands (n = $(length(verbose_pedigree))).")
         end
@@ -245,7 +245,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         next_generationIDs = cut_vertices[k+1]
         # Describe each pair of generations, if desired
         if verbose
-            println("Running step $k / $(length(cut_vertices)-1) " *
+            println("Running step $k of $(length(cut_vertices)-1) " *
                 "($(length(previous_generationIDs)) founders, " *
                 "$(length(next_generationIDs)) probands)")
         end
