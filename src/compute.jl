@@ -303,30 +303,6 @@ function _lowest_founders(pedigree::Pedigree)
 end
 
 """
-    _trim_kinships(kinship_matrix::Matrix{Float64, Float64}, threshold::Float64 = 0.0625)
-
-Return a vector of booleans of probands whose kinships between them never exceed a given
-`threshold`.
-    
-For instance, a threshold of 0.0625 (the default) removes individuals who are first-degree
-cousins or closer.
-"""
-function _trim_kinships(kinship_matrix::Matrix{Float64}, threshold::Float64 = 0.0625)
-    visited = [false for i ∈ 1:size(kinship_matrix, 1)]
-    to_keep = [true for i ∈ 1:size(kinship_matrix, 1)]
-    for i ∈ eachindex(to_keep)
-        row = kinship_matrix[i, :]
-        row[i] = 0
-        row[visited] .= 0
-        row[.!to_keep] .= 0
-        to_reject = findall(row .≥ threshold)
-        to_keep[to_reject] .= false
-        visited[i] = true
-    end
-    to_keep
-end
-
-"""
     f(pedigree::Pedigree, ID::Int64)
 
 Return the coefficient of inbreeding of an individual.
