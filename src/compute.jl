@@ -214,23 +214,16 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         pushfirst!(cut_vertices, previous_generationIDs)
         previous_generationIDs = _previous_generation(pedigree, previous_generationIDs)
     end
-    # The following loop slows down the algorithm considerably but is necessary to drag the
-    # individuals down the generations as long as they are required
-    IDs = union([generationIDs for generationIDs ∈ cut_vertices]...)
-    unique!(IDs)
-    for ID ∈ IDs
-        start = findfirst(ID .∈ cut_vertices) + 1
-        stop = findlast(ID .∈ cut_vertices) - 1
-        for generationIDs ∈ cut_vertices[start:stop]
-            push!(generationIDs, ID)
-        end
+    # Drag the individuals down the generations for as long as they are required
+    top_down = copy(cut_vertices)
+    bottom_up = copy(cut_vertices)
+    reverse!(bottom_up)
+    for i ∈ 1:length(cut_vertices)-1
+        top_down[i + 1] = union(top_down[i + 1], top_down[i])
+        bottom_up[i + 1] = union(bottom_up[i + 1], bottom_up[i])
     end
-    # Make sure everyone appears only once per generation, no matter the order. Since the
-    # last generation already starts with the proband IDs in the right order, `unique!` will
-    # not affect that ordering.
-    for generationIDs ∈ cut_vertices
-        unique!(generationIDs)
-    end
+    reverse!(bottom_up)
+    cut_vertices = [∩(i, j) for (i, j) ∈ zip(top_down, bottom_up)]
     # Describe each pair of generations, if desired
     if verbose
         for i ∈ 1:length(cut_vertices)-1
