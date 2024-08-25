@@ -67,6 +67,8 @@ end
     @test gen.founder(iso_ped) == [17, 19, 20, 25, 26]
     iso_ped = gen.branching(ped, ancestors=[13])
     @test gen.pro(iso_ped) == [1, 2]
+    iso_ped = gen.branching(ped, pro=[1], ancestors=[13])
+    @test collect(keys(iso_ped)) == [13, 8, 4, 1]
 
     gen._save("test.asc", ped)
     ped = gen.genealogy("test.asc")
