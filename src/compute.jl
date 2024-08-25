@@ -275,6 +275,18 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
 end
 
 """
+    function phiMean(phiMatrix::Matrix{Float64})
+
+Return the mean kinship from a given kinship matrix.
+"""
+function phiMean(phiMatrix::Matrix{Float64})
+    total = sum(phiMatrix)
+    diagonal = sum([phiMatrix[i, i] for i ∈ axes(phiMatrix, 1)])
+    total -= diagonal
+    total / (length(phiMatrix) - size(phiMatrix, 1))
+end
+
+"""
     function _lowest_founders(pedigree::Pedigree)
 
 Return the lowest founders of a given pedigree.
