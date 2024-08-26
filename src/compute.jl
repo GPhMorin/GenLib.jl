@@ -231,7 +231,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             next_generationIDs = cut_vertices[i+1]
             println("Step $i of $(length(cut_vertices)-1): " *
                 "$(length(previous_generationIDs)) founders, " *
-                "$(length(next_generationIDs)) probands.")
+                "$(length(next_generationIDs)) probands, " *
+                "$(length(∩(previous_generationIDs, next_generationIDs))) both.")
         end
     end
     # Add the `founder_index` attribute to the individuals and make them mutable so we can
@@ -245,7 +246,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         if verbose
             println("Running step $k of $(length(cut_vertices)-1) " *
                 "($(length(previous_generationIDs)) founders, " *
-                "$(length(next_generationIDs)) probands)")
+                "$(length(next_generationIDs)) probands, " *
+                "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
         end
         # Initialize the kinship matrix of the top founders
         if k == 1
