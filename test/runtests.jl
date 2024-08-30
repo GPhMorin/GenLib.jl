@@ -30,8 +30,8 @@ end
         408065, 408069, 408075, 408375, 408937, 409808, 623919, 712249, 712256, 860834,
         860838, 868738, 868740, 868743]
     @test gen.depth(ped) == 18
-    @test gen.sibship(ped, 11520) == [15397, 39369, 49658]
-    @test gen.sibship(ped, 11520, halfSibling=false) == []
+    @test gen.sibship(ped, [11520]) == [15397, 39369, 49658]
+    @test gen.sibship(ped, [11520], halfSibling=false) == []
 end
 
 @testset "geneaJi" begin
