@@ -44,8 +44,8 @@ end
     @test genMatrix.individuals == [1, 2, 29]
     @test genMatrix.ancestors == [14, 20]
     @test genMatrix.meioses == [4 4; 4 4; 3 3]
-    @test gen.f(ped, 1) == 0.18359375
-    @test gen.f(ped, 17) == 0.
+    @test gen.f(ped, [1]) == [0.18359375]
+    @test gen.f(ped, [17]) == [0.]
     @test gen.phi(ped[1], ped[2]) == 0.37109375
     phi = gen.phi(ped, verbose = true)
     @test phi == [0.591796875 0.37109375 0.072265625; 0.37109375 0.591796875 0.072265625;

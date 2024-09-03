@@ -310,17 +310,21 @@ function _lowest_founders(pedigree::Pedigree)
 end
 
 """
-    f(pedigree::Pedigree, ID::Int64)
+    f(pedigree::Pedigree, IDs::Vector{Int64})
 
-Return the coefficient of inbreeding of an individual.
+Return the coefficients of inbreeding of a vector of individuals.
 """
-function f(pedigree::Pedigree, ID::Int64)
-    individual = pedigree[ID]
-    if isnothing(individual.father) || isnothing(individual.mother)
-        0.
-    else
-        phi(individual.father, individual.mother)
+function f(pedigree::Pedigree, IDs::Vector{Int64})
+    coefficients = Float64[]
+    for ID ∈ IDs
+        individual = pedigree[ID]
+        if isnothing(individual.father) || isnothing(individual.mother)
+            push!(coefficients, 0.)
+        else
+            push!(coefficients, phi(individual.father, individual.mother))
+        end
     end
+    coefficients
 end
 
 """
