@@ -238,6 +238,11 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     # Add the `founder_index` attribute to the individuals and make them mutable so we can
     # quickly track the location of the founders in their kinship matrix.
     indexed_pedigree = _index_pedigree(pedigree)
+    # Initialize the kinship matrix of the top founders
+    Ψ = zeros(length(previous_generationIDs), length(previous_generationIDs))
+    for i ∈ axes(Ψ, 1)
+        Ψ[i, i] = 0.5
+    end
     # For each pair of generations…
     for k ∈ 1:length(cut_vertices)-1
         previous_generationIDs = cut_vertices[k]
@@ -248,13 +253,6 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 "($(length(previous_generationIDs)) founders, " *
                 "$(length(next_generationIDs)) probands, " *
                 "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
-        end
-        # Initialize the kinship matrix of the top founders
-        if k == 1
-            Ψ = zeros(length(previous_generationIDs), length(previous_generationIDs))
-            for i ∈ axes(Ψ, 1)
-                Ψ[i, i] = 0.5
-            end
         end
         # Assign the index to each individual from the previous generation
         for (index, ID) ∈ enumerate(previous_generationIDs)
