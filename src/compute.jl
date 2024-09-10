@@ -239,7 +239,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     # quickly track the location of the founders in their kinship matrix.
     indexed_pedigree = _index_pedigree(pedigree)
     # Initialize the kinship matrix of the top founders
-    Ψ = zeros(length(previous_generationIDs), length(previous_generationIDs))
+    Ψ = zeros(length(cut_vertices[1]), length(cut_vertices[1]))
     for i ∈ axes(Ψ, 1)
         Ψ[i, i] = 0.5
     end
