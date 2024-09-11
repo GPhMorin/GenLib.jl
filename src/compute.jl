@@ -206,7 +206,6 @@ gen.phi(ped)
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     verbose::Bool = false)
-    global Ψ
     # Start from the probands and go up until the highest founder(s)
     cut_vertices = [probandIDs]
     previous_generationIDs = _previous_generation(pedigree, probandIDs)
