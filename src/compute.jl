@@ -195,6 +195,10 @@ If no probands are given, return the square matrix for all probands in the pedig
 The algorithm computes pairwise kinships in parallel, a hybrid between the algorithms of
 [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 
+If `verbose` is `true`, print the information about the cut vertices. If `compute` is
+`true` (the default), compute the kinship matrix. If it is `false`, only print the
+information about the cut vertices.
+
 # Example
 
 ```julia
@@ -205,7 +209,7 @@ gen.phi(ped)
 ```
 """
 function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
-    verbose::Bool = false)
+    verbose::Bool = false, compute::Bool = true)
     # Start from the probands and go up until the highest founder(s)
     cut_vertices = [probandIDs]
     previous_generationIDs = _previous_generation(pedigree, probandIDs)
@@ -224,7 +228,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     reverse!(bottom_up)
     cut_vertices = [∩(i, j) for (i, j) ∈ zip(top_down, bottom_up)]
     # Describe each pair of generations, if desired
-    if verbose
+    if verbose || !compute
         for i ∈ 1:length(cut_vertices)-1
             previous_generationIDs = cut_vertices[i]
             next_generationIDs = cut_vertices[i+1]
@@ -234,43 +238,46 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 "$(length(∩(previous_generationIDs, next_generationIDs))) both.")
         end
     end
-    # Add the `founder_index` attribute to the individuals and make them mutable so we can
-    # quickly track the location of the founders in their kinship matrix.
-    indexed_pedigree = _index_pedigree(pedigree)
-    # Initialize the kinship matrix of the top founders
-    Ψ = zeros(length(cut_vertices[1]), length(cut_vertices[1]))
-    for i ∈ axes(Ψ, 1)
-        Ψ[i, i] = 0.5
-    end
-    # For each pair of generations…
-    for k ∈ 1:length(cut_vertices)-1
-        previous_generationIDs = cut_vertices[k]
-        next_generationIDs = cut_vertices[k+1]
-        # Describe each pair of generations, if desired
-        if verbose
-            println("Running step $k of $(length(cut_vertices)-1) " *
-                "($(length(previous_generationIDs)) founders, " *
-                "$(length(next_generationIDs)) probands, " *
-                "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
+    # Stop here if the user only wants to print information about each pair of generations
+    if compute
+        # Add the `founder_index` attribute to the individuals and make them mutable so we can
+        # quickly track the location of the founders in their kinship matrix.
+        indexed_pedigree = _index_pedigree(pedigree)
+        # Initialize the kinship matrix of the top founders
+        Ψ = zeros(length(cut_vertices[1]), length(cut_vertices[1]))
+        for i ∈ axes(Ψ, 1)
+            Ψ[i, i] = 0.5
         end
-        # Assign the index to each individual from the previous generation
-        for (index, ID) ∈ enumerate(previous_generationIDs)
-            indexed_pedigree[ID].founder_index = index
-        end
-        # Fill the matrix in parallel, using the adapted algorithm from Karigl, 1981
-        ϕ = Matrix{Float64}(undef, length(next_generationIDs), length(next_generationIDs))
-        probands = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-        Threads.@threads for i ∈ eachindex(probands)
-            Threads.@threads for j ∈ eachindex(probands)
-                if i ≤ j
-                    ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
-                end
+        # For each pair of generations…
+        for k ∈ 1:length(cut_vertices)-1
+            previous_generationIDs = cut_vertices[k]
+            next_generationIDs = cut_vertices[k+1]
+            # Describe each pair of generations, if desired
+            if verbose
+                println("Running step $k of $(length(cut_vertices)-1) " *
+                    "($(length(previous_generationIDs)) founders, " *
+                    "$(length(next_generationIDs)) probands, " *
+                    "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
             end
-        end
-        # At each iteration, the next generation becomes the previous generation
-        Ψ = ϕ
+            # Assign the index to each individual from the previous generation
+            for (index, ID) ∈ enumerate(previous_generationIDs)
+                        indexed_pedigree[ID].founder_index = index
+                    end
+                    # Fill the matrix in parallel, using the adapted algorithm from Karigl, 1981
+                    ϕ = Matrix{Float64}(undef, length(next_generationIDs), length(next_generationIDs))
+                    probands = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
+                    Threads.@threads for i ∈ eachindex(probands)
+                        Threads.@threads for j ∈ eachindex(probands)
+                            if i ≤ j
+                                ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
+                            end
+                        end
+                    end
+                    # At each iteration, the next generation becomes the previous generation
+                    Ψ = ϕ
+                end
+        Ψ
     end
-    Ψ
 end
 
 """
