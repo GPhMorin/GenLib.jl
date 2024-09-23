@@ -56,5 +56,6 @@ GenLib.findDistance
 ```@docs
 GenLib.gc
 GenLib.phi
+GenLib.phiMean
 GenLib.f
 ```
