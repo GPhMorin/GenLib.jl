@@ -24,7 +24,7 @@ genea140 = gen.genea140
 ped = gen.genealogy(genea140)
 ```
 """
-const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.asc"
+const genea140 = "$(chop(pathof(GenLib), tail=13))data/genea140.csv"
 
 """
 A highly inbred pedigree.
@@ -40,7 +40,7 @@ geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)
 ```
 """
-const geneaJi = "$(chop(pathof(GenLib), tail=13))data/geneaJi.asc"
+const geneaJi = "$(chop(pathof(GenLib), tail=13))data/geneaJi.csv"
 
 """
 Population of origin of the 140 Quebec samples.
