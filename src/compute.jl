@@ -425,17 +425,21 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Fill the sparse matrix, using the adapted algorithm from Karigl, 1981
-            for IDᵢ ∈ next_generationIDs
-                for IDⱼ ∈ next_generationIDs
+            # Make a parallel copy of the kinships
+            ϕs = [Dict{Tuple{Int32, Int32}, Float64}() for _ ∈ 1:Threads.nthreads()]
+            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
+            Threads.@threads for IDᵢ ∈ next_generationIDs
+                Threads.@threads for IDⱼ ∈ next_generationIDs
                     if IDᵢ ≤ IDⱼ
                         coefficient = phi(indexed_pedigree[IDᵢ], indexed_pedigree[IDⱼ], ϕ)
                         if coefficient > 0
-                            ϕ[IDᵢ, IDⱼ] = coefficient
+                            ϕs[Threads.threadid()][IDᵢ, IDⱼ] = coefficient
                         end
                     end
                 end
             end
+            empty!(ϕ)
+            ϕ = merge(ϕs...)
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
