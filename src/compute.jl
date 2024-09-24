@@ -428,12 +428,15 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             # Make a parallel copy of the kinships
             ϕs = [Dict{Tuple{Int32, Int32}, Float64}() for _ ∈ 1:Threads.nthreads()]
             # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
-            Threads.@threads for IDᵢ ∈ next_generationIDs
-                Threads.@threads for IDⱼ ∈ next_generationIDs
-                    if IDᵢ ≤ IDⱼ
-                        coefficient = phi(indexed_pedigree[IDᵢ], indexed_pedigree[IDⱼ], ϕ)
+            individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
+            Threads.@threads for i ∈ eachindex(individuals)
+                Threads.@threads for j ∈ eachindex(individuals)
+                    individualᵢ = individuals[i]
+                    individualⱼ = individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
-                            ϕs[Threads.threadid()][IDᵢ, IDⱼ] = coefficient
+                            ϕs[Threads.threadid()][individualᵢ.ID, individualⱼ.ID] = coefficient
                         end
                     end
                 end
