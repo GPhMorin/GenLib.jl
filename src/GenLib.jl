@@ -5,6 +5,7 @@ module GenLib
 
 using DataFrames: DataFrame
 using DataStructures: OrderedDict
+using SparseArrays
 
 # GENLIB datasets
 """

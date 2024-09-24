@@ -281,7 +281,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
 end
 
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::OrderedDict{Tuple{Int32, Int32}, Float64})
+    ϕ::Dict{Tuple{Int32, Int32}, Float64})
     value = 0.
     (individualᵢ, individualⱼ) = individualᵢ.ID ≤ individualⱼ.ID ?
         (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
@@ -374,7 +374,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         # quickly track the location of the founders in their kinship matrix.
         indexed_pedigree = _index_pedigree(pedigree)
         # Initialize the kinship matrix of the top founders
-        ϕ = OrderedDict{Tuple{Int32, Int32}, Float64}()
+        ϕ = Dict{Tuple{Int32, Int32}, Float64}()
         for ID ∈ cut_vertices[1]
             ϕ[ID, ID] = 0.5
         end
@@ -405,7 +405,39 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 end
             end
         end
-        ϕ
+        if verbose
+            println("Transforming the kinships into a sparse CSC matrix.")
+        end
+        # Assign an index to each ID
+        ID_to_index = Dict{Int64, Int64}()
+        IDs = collect(keys(pedigree))
+        for (index, ID) ∈ enumerate(IDs)
+            ID_to_index[ID] = index
+        end
+        # Convert the dictionary to COO matrix
+        rows = Int64[]
+        columns = Int64[]
+        values = Float64[]
+        for (key, value) ∈ ϕ
+            (IDᵢ, IDⱼ) = key
+            if IDᵢ ∈ probandIDs && IDⱼ ∈ probandIDs
+                push!(rows, ID_to_index[IDᵢ])
+                push!(columns, ID_to_index[IDⱼ])
+                push!(values, value)
+                if IDᵢ != IDⱼ
+                    push!(rows, ID_to_index[IDⱼ])
+                    push!(columns, ID_to_index[IDᵢ])
+                    push!(values, value)
+                end
+            end
+        end
+        # Free no longer used space
+        empty!(ϕ)
+        # Convert COO format to CSC sparse matrix
+        matrix = sparse(rows, columns, values)
+        # Slice to keep only the relevant kinships
+        indices = [ID_to_index[ID] for ID ∈ probandIDs]
+        matrix[indices, indices]
     end
 end
 
