@@ -262,20 +262,20 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             # Assign the index to each individual from the previous generation
             for (index, ID) ∈ enumerate(previous_generationIDs)
                         indexed_pedigree[ID].founder_index = index
+            end
+            # Fill the matrix in parallel, using the adapted algorithm from Karigl, 1981
+            ϕ = Matrix{Float64}(undef, length(next_generationIDs), length(next_generationIDs))
+            probands = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
+            Threads.@threads for i ∈ eachindex(probands)
+                Threads.@threads for j ∈ eachindex(probands)
+                    if i ≤ j
+                        ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
                     end
-                    # Fill the matrix in parallel, using the adapted algorithm from Karigl, 1981
-                    ϕ = Matrix{Float64}(undef, length(next_generationIDs), length(next_generationIDs))
-                    probands = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-                    Threads.@threads for i ∈ eachindex(probands)
-                        Threads.@threads for j ∈ eachindex(probands)
-                            if i ≤ j
-                                ϕ[i, j] = ϕ[j, i] = phi(probands[i], probands[j], Ψ)
-                            end
-                        end
-                    end
-                    # At each iteration, the next generation becomes the previous generation
-                    Ψ = ϕ
                 end
+            end
+            # At each iteration, the next generation becomes the previous generation
+            Ψ = ϕ
+        end
         Ψ
     end
 end
