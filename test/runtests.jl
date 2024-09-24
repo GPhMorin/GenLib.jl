@@ -10,6 +10,8 @@ using Test
     df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
     ped = gen.genealogy(df)
     @test ped[9].mother.sex == 2
+    phi = gen.complete_sparse_phi(ped)
+    @test gen.phiMean(phi) == 0.022222222222222223
 end
 
 @testset "genea140" begin
@@ -51,7 +53,7 @@ end
     @test phi == [0.591796875 0.37109375 0.072265625; 0.37109375 0.591796875 0.072265625;
         0.072265625 0.072265625 0.53515625]
     @test gen.phiMean(phi) == 0.171875
-    phi = gen.sparse_phi(ped, verbose = true)
+    phi = gen.probands_sparse_phi(ped, verbose = true)
     @test phi == [0.591796875 0.37109375 0.072265625; 0.37109375 0.591796875 0.072265625;
         0.072265625 0.072265625 0.53515625]
     founder1 = ped[17]
