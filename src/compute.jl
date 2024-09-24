@@ -280,6 +280,14 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     end
 end
 
+"""
+    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, ϕ::Dict{Tuple{Int32, Int32}, Float64})
+
+Return the kinship coefficient between two individuals given a dictionary of the
+individuals' kinships.
+
+Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+"""
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
     ϕ::Dict{Tuple{Int32, Int32}, Float64})
     value = 0.
@@ -338,6 +346,30 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
     value
 end
 
+"""
+    sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+        verbose::Bool = false)
+
+Return a sparse matrix of pairwise kinship coefficients between probands.
+
+If no probands are given, return the sparse matrix for all probands in the pedigree.
+
+The algorithm is a hybrid between the algorithms of
+[Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+
+If `verbose` is `true`, print the information about the cut vertices. If `compute` is
+`true` (the default), compute the kinship matrix. If it is `false`, only print the
+information about the cut vertices.
+
+# Example
+
+```julia
+import GenLib as gen
+geneaJi = gen.geneaJi
+ped = gen.genealogy(geneaJi)
+gen.sparse_phi(ped)
+```
+"""
 function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     verbose::Bool = false, compute::Bool = true)
     # Start from the probands and go up until the highest founder(s)
