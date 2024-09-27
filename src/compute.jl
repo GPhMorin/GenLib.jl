@@ -658,15 +658,13 @@ function complete_sparse_phi(pedigree::Pedigree; verbose::Bool = false,
         values = Float64[]
         for (key, value) ∈ ϕ
             (IDᵢ, IDⱼ) = key
-            if IDᵢ ∈ probandIDs && IDⱼ ∈ probandIDs
-                push!(rows, ID_to_index[IDᵢ])
-                push!(columns, ID_to_index[IDⱼ])
+            push!(rows, ID_to_index[IDᵢ])
+            push!(columns, ID_to_index[IDⱼ])
+            push!(values, value)
+            if IDᵢ != IDⱼ
+                push!(rows, ID_to_index[IDⱼ])
+                push!(columns, ID_to_index[IDᵢ])
                 push!(values, value)
-                if IDᵢ != IDⱼ
-                    push!(rows, ID_to_index[IDⱼ])
-                    push!(columns, ID_to_index[IDᵢ])
-                    push!(values, value)
-                end
             end
         end
         # Free no longer used space
