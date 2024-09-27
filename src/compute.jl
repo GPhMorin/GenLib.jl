@@ -431,12 +431,11 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             # Make a parallel copy of the kinships
             ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
             # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
-            new_individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs if ID ∉ previous_generationIDs]
-            recurring_individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs if ID ∈ previous_generationIDs]
-            Threads.@threads for i ∈ eachindex(new_individuals)
-                Threads.@threads for j ∈ eachindex(new_individuals)
-                    individualᵢ = new_individuals[i]
-                    individualⱼ = new_individuals[j]
+            individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
+            Threads.@threads for i ∈ eachindex(individuals)
+                Threads.@threads for j ∈ eachindex(individuals)
+                    individualᵢ = individuals[i]
+                    individualⱼ = individuals[j]
                     if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
@@ -445,45 +444,8 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                     end
                 end
             end
-            Threads.@threads for i ∈ eachindex(new_individuals)
-                Threads.@threads for j ∈ eachindex(recurring_individuals)
-                    individualᵢ = new_individuals[i]
-                    individualⱼ = recurring_individuals[j]
-                    if individualᵢ.ID ≤ individualⱼ.ID
-                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
-                        if coefficient > 0
-                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
-                        end
-                    end
-                end
-            end
-            Threads.@threads for i ∈ eachindex(recurring_individuals)
-                Threads.@threads for j ∈ eachindex(new_individuals)
-                    individualᵢ = recurring_individuals[i]
-                    individualⱼ = new_individuals[j]
-                    if individualᵢ.ID ≤ individualⱼ.ID
-                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
-                        if coefficient > 0
-                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
-                        end
-                    end
-                end
-            end
-            for i ∈ eachindex(recurring_individuals)
-                for j ∈ eachindex(recurring_individuals)
-                    individualᵢ = recurring_individuals[i]
-                    individualⱼ = recurring_individuals[j]
-                    if individualᵢ.ID ≤ individualⱼ.ID
-                        slice = searchsorted(ϕ, (individualᵢ.ID, individualⱼ.ID) => 0, by = first)
-                        if !isempty(slice)
-                            pair = popat!(ϕ, slice[1])
-                            push!(ϕs[1], pair)
-                        end
-                    end
-                end
-            end
-            empty!(ϕ)
-            ϕ = union(ϕs...)
+            ϕ = pop!(ϕs)
+            union!(ϕ, ϕs...)
             sort!(ϕ)
         end
         if verbose
