@@ -289,14 +289,16 @@ individuals' kinships.
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::Dict{Tuple{Int32, Int32}, Float64})
+    ϕ::Vector{Pair{Tuple{Int32, Int32}, Float64}})
     value = 0.
     (individualᵢ, individualⱼ) = individualᵢ.ID ≤ individualⱼ.ID ?
         (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
-        value += (individualᵢ.ID, individualⱼ.ID) ∈ keys(ϕ) ?
-            ϕ[individualᵢ.ID, individualⱼ.ID] : 0.
+        slice = searchsorted(ϕ, (individualᵢ.ID, individualⱼ.ID) => 0, by = first)
+        if !isempty(slice)
+            value += ϕ[slice[1]].second
+        end
     elseif individualᵢ.founder_index != 0
         # Individual i is a founder, so we climb the pedigree on individual j's side
         if !isnothing(individualⱼ.father)
@@ -403,12 +405,12 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
     # Stop here if the user only wants to print information about each pair of generations
     if compute
         # Add the `founder_index` attribute to the individuals and make them mutable so we can
-        # quickly track the location of the founders in their kinship matrix.
+        # quickly track the location of the founders in their kinship vector.
         indexed_pedigree = _index_pedigree(pedigree)
-        # Initialize the kinship matrix of the top founders
-        ϕ = Dict{Tuple{Int32, Int32}, Float64}()
+        # Initialize the kinship vector of the top founders
+        ϕ = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
         for ID ∈ cut_vertices[1]
-            ϕ[ID, ID] = 0.5
+            push!(ϕ, (ID, ID) => 0.5)
         end
         # For each pair of generations…
         for k ∈ 1:length(cut_vertices)-1
@@ -426,26 +428,62 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                 indexed_pedigree[ID].founder_index = 1
             end
             # Make a parallel copy of the kinships
-            ϕs = [Dict{Tuple{Int32, Int32}, Float64}() for _ ∈ 1:Threads.nthreads()]
-            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
-            individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-            Threads.@threads for i ∈ eachindex(individuals)
-                Threads.@threads for j ∈ eachindex(individuals)
-                    individualᵢ = individuals[i]
-                    individualⱼ = individuals[j]
+            ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
+            # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
+            new_individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs if ID ∉ previous_generationIDs]
+            recurring_individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs if ID ∈ previous_generationIDs]
+            Threads.@threads for i ∈ eachindex(new_individuals)
+                Threads.@threads for j ∈ eachindex(new_individuals)
+                    individualᵢ = new_individuals[i]
+                    individualⱼ = new_individuals[j]
                     if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
-                            ϕs[Threads.threadid()][individualᵢ.ID, individualⱼ.ID] = coefficient
+                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+                        end
+                    end
+                end
+            end
+            Threads.@threads for i ∈ eachindex(new_individuals)
+                Threads.@threads for j ∈ eachindex(recurring_individuals)
+                    individualᵢ = new_individuals[i]
+                    individualⱼ = recurring_individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
+                        if coefficient > 0
+                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+                        end
+                    end
+                end
+            end
+            Threads.@threads for i ∈ eachindex(recurring_individuals)
+                Threads.@threads for j ∈ eachindex(new_individuals)
+                    individualᵢ = recurring_individuals[i]
+                    individualⱼ = new_individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
+                        if coefficient > 0
+                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+                        end
+                    end
+                end
+            end
+            for i ∈ eachindex(recurring_individuals)
+                for j ∈ eachindex(recurring_individuals)
+                    individualᵢ = recurring_individuals[i]
+                    individualⱼ = recurring_individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        slice = searchsorted(ϕ, (individualᵢ.ID, individualⱼ.ID) => 0, by = first)
+                        if !isempty(slice)
+                            pair = popat!(ϕ, slice[1])
+                            push!(ϕs[1], pair)
                         end
                     end
                 end
             end
             empty!(ϕ)
-            for ϕᵢ ∈ ϕs
-                merge!(ϕ, ϕᵢ)
-                empty!(ϕᵢ)
-            end
+            ϕ = union(ϕs...)
+            sort!(ϕ)
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
@@ -456,7 +494,7 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         for (index, ID) ∈ enumerate(IDs)
             ID_to_index[ID] = index
         end
-        # Convert the dictionary to COO matrix
+        # Convert the vector to COO matrix
         rows = Int64[]
         columns = Int64[]
         values = Float64[]
@@ -539,12 +577,12 @@ function complete_sparse_phi(pedigree::Pedigree; verbose::Bool = false,
     # Stop here if the user only wants to print information about each pair of generations
     if compute
         # Add the `founder_index` attribute to the individuals and make them mutable so we can
-        # quickly track the location of the founders in their kinship matrix.
+        # quickly track the location of the founders in their kinship vector.
         indexed_pedigree = _index_pedigree(pedigree)
-        # Initialize the kinship matrix of the top founders
-        ϕ = Dict{Tuple{Int32, Int32}, Float64}()
+        # Initialize the kinship vector of the top founders
+        ϕ = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
         for ID ∈ cut_vertices[1]
-            ϕ[ID, ID] = 0.5
+            push!(ϕ, (ID, ID) => 0.5)
         end
         # For each pair of generations…
         for k ∈ 1:length(cut_vertices)-1
@@ -561,17 +599,49 @@ function complete_sparse_phi(pedigree::Pedigree; verbose::Bool = false,
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Fill the dictionary, using the adapted algorithm from Karigl, 1981
-            for IDᵢ ∈ next_generationIDs
-                for IDⱼ ∈ next_generationIDs
-                    if IDᵢ ≤ IDⱼ
-                        coefficient = phi(indexed_pedigree[IDᵢ], indexed_pedigree[IDⱼ], ϕ)
+            # Make a parallel copy of the kinships
+            ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
+            # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
+            new_individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs if ID ∉ previous_generationIDs]
+            recurring_individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs if ID ∈ previous_generationIDs]
+            Threads.@threads for i ∈ eachindex(new_individuals)
+                Threads.@threads for j ∈ eachindex(new_individuals)
+                    individualᵢ = new_individuals[i]
+                    individualⱼ = new_individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
-                            ϕ[IDᵢ, IDⱼ] = coefficient
+                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
                         end
                     end
                 end
             end
+            Threads.@threads for i ∈ eachindex(new_individuals)
+                Threads.@threads for j ∈ eachindex(recurring_individuals)
+                    individualᵢ = new_individuals[i]
+                    individualⱼ = recurring_individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
+                        if coefficient > 0
+                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+                        end
+                    end
+                end
+            end
+            Threads.@threads for i ∈ eachindex(recurring_individuals)
+                Threads.@threads for j ∈ eachindex(new_individuals)
+                    individualᵢ = recurring_individuals[i]
+                    individualⱼ = new_individuals[j]
+                    if individualᵢ.ID ≤ individualⱼ.ID
+                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
+                        if coefficient > 0
+                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+                        end
+                    end
+                end
+            end
+            ϕ = union(ϕ, ϕs...)
+            sort!(ϕ)
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
@@ -582,19 +652,21 @@ function complete_sparse_phi(pedigree::Pedigree; verbose::Bool = false,
         for (index, ID) ∈ enumerate(IDs)
             ID_to_index[ID] = index
         end
-        # Convert the dictionary to COO matrix
+        # Convert the vector to COO matrix
         rows = Int64[]
         columns = Int64[]
         values = Float64[]
         for (key, value) ∈ ϕ
             (IDᵢ, IDⱼ) = key
-            push!(rows, ID_to_index[IDᵢ])
-            push!(columns, ID_to_index[IDⱼ])
-            push!(values, value)
-            if IDᵢ != IDⱼ
-                push!(rows, ID_to_index[IDⱼ])
-                push!(columns, ID_to_index[IDᵢ])
+            if IDᵢ ∈ probandIDs && IDⱼ ∈ probandIDs
+                push!(rows, ID_to_index[IDᵢ])
+                push!(columns, ID_to_index[IDⱼ])
                 push!(values, value)
+                if IDᵢ != IDⱼ
+                    push!(rows, ID_to_index[IDⱼ])
+                    push!(columns, ID_to_index[IDᵢ])
+                    push!(values, value)
+                end
             end
         end
         # Free no longer used space
