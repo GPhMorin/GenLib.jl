@@ -640,7 +640,7 @@ function complete_sparse_phi(pedigree::Pedigree; verbose::Bool = false,
                     end
                 end
             end
-            ϕ = union(ϕ, ϕs...)
+            union!(ϕ, ϕs...)
             sort!(ϕ)
         end
         if verbose
