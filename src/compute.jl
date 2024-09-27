@@ -549,7 +549,7 @@ function complete_sparse_phi(pedigree::Pedigree)
     indexed_pedigree = _index_pedigree(pedigree)
     # Fill the vectors, using the adapted algorithm from Kirkpatrick, 2019
     total_count = length(pedigree) * (length(pedigree) - 1) / 2 + length(pedigree)
-    decile = floor(total_count / 10)
+    decile = ceil(total_count / 10)
     count = 0
     percentage = 0
     for individualᵢ ∈ values(indexed_pedigree)
