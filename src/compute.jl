@@ -444,9 +444,11 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                     end
                 end
             end
+            println("Sorting...")
             ϕ = pop!(ϕs)
-            union!(ϕ, ϕs...)
+            append!(ϕ, ϕs...)
             sort!(ϕ)
+            println("Sort done.")
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
