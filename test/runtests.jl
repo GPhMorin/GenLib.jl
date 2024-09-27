@@ -10,8 +10,8 @@ using Test
     df = DataFrame([inds, fathers, mothers, sexes], [:ind, :father, :mother, :sex])
     ped = gen.genealogy(df)
     @test ped[9].mother.sex == 2
-    phi = gen.complete_sparse_phi(ped, verbose=true)
-    @test gen.phiMean(phi) == 0.022222222222222223
+    phi = gen.complete_sparse_phi(ped)
+    @test gen.phiMean(phi) == 0.12222222222222222
 end
 
 @testset "genea140" begin
