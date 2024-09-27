@@ -548,8 +548,19 @@ function complete_sparse_phi(pedigree::Pedigree)
     # Index the individuals with integrated kinships
     indexed_pedigree = _index_pedigree(pedigree)
     # Fill the vectors, using the adapted algorithm from Kirkpatrick, 2019
+    total_count = length(pedigree) * (length(pedigree) - 1) / 2 + length(pedigree)
+    decile = floor(total_count / 10)
+    count = 0
+    percentage = 0
     for individualᵢ ∈ values(indexed_pedigree)
         for individualⱼ ∈ values(indexed_pedigree)
+            if individualᵢ.rank ≥ individualⱼ.rank
+                count += 1
+                if count % decile == 0
+                    percentage += 10
+                    println("$percentage% processed.")
+                end
+            end
             if individualᵢ.rank > individualⱼ.rank
                 coefficient = 0.
                 if !isnothing(individualᵢ.father)
