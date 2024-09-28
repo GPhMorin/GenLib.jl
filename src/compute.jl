@@ -480,8 +480,10 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                 push!(values, value)
             end
         end
+        println("Converting the kinships into a sparse CSC matrix.")
         # Convert COO format to CSC sparse matrix
-        matrix = sparse(rows, columns, values)
+        matrix = SparseArrays.sparse!(rows, columns, values)
+        println("Slicing the matrix.")
         # Slice to keep only the relevant kinships
         indices = [indexed_pedigree[ID].rank for ID ∈ probandIDs]
         matrix[indices, indices]
