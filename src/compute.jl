@@ -434,7 +434,7 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             end
             # Make a parallel copy of the kinships
             ϕs = [Dict{Int64, Vector{Pair{Int64, Float64}}}() for _ ∈ 1:Threads.nthreads()]
-            # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
+            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
             Threads.@threads :static for i ∈ eachindex(individuals)
                 for j ∈ eachindex(individuals)
@@ -452,7 +452,7 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                     end
                 end
             end
-            # Merge the vectors
+            # Merge the dictionaries
             empty!(ϕ)
             for ϕᵢ ∈ ϕs
                 while !isempty(ϕᵢ)
@@ -468,26 +468,37 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
         end
-        # Convert the vector to COO matrix
+        # Convert ID to index
+        ID_to_index = Dict{Int64, Int64}()
+        for (index, ID) ∈ enumerate(probandIDs)
+            ID_to_index[ID] = index
+        end
+        # Convert the dictionary of vectors to CSC matrix
+        pointers = [1]
         rows = Int64[]
-        columns = Int64[]
         values = Float64[]
-        while(!isempty(ϕ))
-            (IDᵢ, kinships) = pop!(ϕ)
-            while(!isempty(kinships))
-                (IDⱼ, value) = pop!(kinships)
-                push!(rows, indexed_pedigree[IDᵢ].rank)
-                push!(columns, indexed_pedigree[IDⱼ].rank)
-                push!(values, value)
+        last_index = 0
+        for (index, IDᵢ) ∈ enumerate(probandIDs)
+            kinships = pop!(ϕ, IDᵢ, nothing)      
+            if !isnothing(kinships)      
+                while(!isempty(kinships))
+                    (IDⱼ, value) = pop!(kinships)
+                    push!(values, value)
+                    push!(rows, ID_to_index[IDⱼ])
+                end
+                for _ ∈ last_index:index-1
+                    push!(pointers, length(rows) + 1)
+                end
+                last_index = index
             end
         end
-        println("Converting the kinships into a sparse CSC matrix.")
-        # Convert COO format to CSC sparse matrix
-        matrix = SparseArrays.sparse!(rows, columns, values)
-        println("Slicing the matrix.")
-        # Slice to keep only the relevant kinships
-        indices = [indexed_pedigree[ID].rank for ID ∈ probandIDs]
-        matrix[indices, indices]
+        SparseMatrixCSC(
+            length(probandIDs),
+            length(probandIDs),
+            pointers,
+            rows,
+            values
+        )
     end
 end
 
