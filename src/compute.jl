@@ -476,11 +476,6 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                 push!(rows, indexed_pedigree[IDᵢ].rank)
                 push!(columns, indexed_pedigree[IDⱼ].rank)
                 push!(values, value)
-                if IDᵢ != IDⱼ
-                    push!(rows, indexed_pedigree[IDⱼ].rank)
-                    push!(columns, indexed_pedigree[IDᵢ].rank)
-                    push!(values, value)
-                end
             end
         end
         # Free no longer used space
@@ -585,11 +580,6 @@ function complete_sparse_phi(pedigree::Pedigree)
             push!(rows, individual.rank)
             push!(cols, kinship.first)
             push!(vals, kinship.second)
-            if individual.rank != kinship.first
-                push!(rows, kinship.first)
-                push!(cols, individual.rank)
-                push!(vals, kinship.second)
-            end
         end
         empty!(individual.kinship)
     end
@@ -602,11 +592,23 @@ end
 
 Return the mean kinship from a given kinship matrix.
 """
-function phiMean(phiMatrix::Union{Matrix{Float64}, SparseMatrixCSC{Float64, Int64}})
+function phiMean(phiMatrix::Matrix{Float64})
     total = sum(phiMatrix)
     diagonal = sum([phiMatrix[i, i] for i ∈ axes(phiMatrix, 1)])
     total -= diagonal
     total / (length(phiMatrix) - size(phiMatrix, 1))
+end
+
+"""
+    function phiMean(phiMatrix::Matrix{Float64})
+
+Return the mean kinship from a given kinship matrix.
+"""
+function phiMean(phiMatrix::SparseMatrixCSC{Float64, Int64})
+    total = sum(phiMatrix)
+    diagonal = sum([phiMatrix[i, i] for i ∈ axes(phiMatrix, 1)])
+    total -= diagonal
+    total * 2 / (length(phiMatrix) - size(phiMatrix, 1))
 end
 
 """
