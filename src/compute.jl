@@ -183,6 +183,7 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
         end
     end
     unique!(previous_generationIDs)
+    sort!(previous_generationIDs)
 end
 
 """
@@ -428,25 +429,31 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Make a parallel copy of the kinships
-            ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
+            # List all pairs to split them into chunks
+            pairs = [(IDᵢ, IDⱼ) for IDᵢ ∈ next_generationIDs for IDⱼ ∈ next_generationIDs]
+            chunks = Iterators.partition(pairs, length(pairs) ÷ Threads.nthreads())
             # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
-            individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-            Threads.@threads for i ∈ eachindex(individuals)
-                Threads.@threads for j ∈ eachindex(individuals)
-                    individualᵢ = individuals[i]
-                    individualⱼ = individuals[j]
-                    if individualᵢ.ID ≤ individualⱼ.ID
-                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
-                        if coefficient > 0
-                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+            tasks = map(chunks) do chunk
+                Threads.@spawn begin
+                    ϕs = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
+                    for (IDᵢ, IDⱼ) ∈ chunk
+                        if IDᵢ ≤ IDⱼ
+                            coefficient = phi(indexed_pedigree[IDᵢ], indexed_pedigree[IDⱼ], ϕ)
+                            if coefficient > 0
+                                push!(ϕs, (IDᵢ, IDⱼ) => coefficient)
+                            end
                         end
                     end
+                    ϕs
                 end
             end
-            ϕ = pop!(ϕs)
-            append!(ϕ, ϕs...)
-            sort!(ϕ)
+            # Collect the results
+            wait.(tasks)
+            empty!(ϕ)
+            while(!isempty(tasks))
+                task = popfirst!(tasks)
+                append!(ϕ, fetch(task))
+            end
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
