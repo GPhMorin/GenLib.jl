@@ -472,15 +472,14 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         rows = Int64[]
         columns = Int64[]
         values = Float64[]
-        for (IDᵢ, kinships) ∈ ϕ
+        while(!isempty(ϕ))
+            (IDᵢ, kinships) = pop!(ϕ)
             for (IDⱼ, value) ∈ kinships
                 push!(rows, indexed_pedigree[IDᵢ].rank)
                 push!(columns, indexed_pedigree[IDⱼ].rank)
                 push!(values, value)
             end
         end
-        # Free no longer used space
-        empty!(ϕ)
         # Convert COO format to CSC sparse matrix
         matrix = sparse(rows, columns, values)
         # Slice to keep only the relevant kinships
