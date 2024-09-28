@@ -474,7 +474,8 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         values = Float64[]
         while(!isempty(ϕ))
             (IDᵢ, kinships) = pop!(ϕ)
-            for (IDⱼ, value) ∈ kinships
+            while(!isempty(kinships))
+                (IDⱼ, value) = pop!(kinships)
                 push!(rows, indexed_pedigree[IDᵢ].rank)
                 push!(columns, indexed_pedigree[IDⱼ].rank)
                 push!(values, value)
