@@ -283,7 +283,8 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
 end
 
 """
-    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, ϕ::Dict{Tuple{Int32, Int32}, Float64})
+    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
+    ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}})
 
 Return the kinship coefficient between two individuals given a dictionary of the
 individuals' kinships.
