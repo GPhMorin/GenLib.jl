@@ -291,15 +291,17 @@ individuals' kinships.
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::Vector{Pair{Tuple{Int32, Int32}, Float64}})
+    ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}})
     value = 0.
     (individualᵢ, individualⱼ) = individualᵢ.ID ≤ individualⱼ.ID ?
         (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
-        slice = searchsorted(ϕ, (individualᵢ.ID, individualⱼ.ID) => 0, by = first)
-        if !isempty(slice)
-            value += ϕ[slice[1]].second
+        if haskey(ϕ, individualᵢ.ID)
+            slice = searchsorted(ϕ[individualᵢ.ID], individualⱼ.ID => 0, by = first)
+            if !isempty(slice)
+                value += ϕ[individualᵢ.ID][slice[1]].second
+            end
         end
     elseif individualᵢ.founder_index != 0
         # Individual i is a founder, so we climb the pedigree on individual j's side
@@ -410,9 +412,9 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         # quickly track the location of the founders in their kinship vector.
         indexed_pedigree = _index_pedigree(pedigree)
         # Initialize the kinship vector of the top founders
-        ϕ = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
+        ϕ = Dict{Int64, Vector{Pair{Int64, Float64}}}()
         for ID ∈ cut_vertices[1]
-            push!(ϕ, (ID, ID) => 0.5)
+            ϕ[ID] = [ID => 0.5]
         end
         # For each pair of generations…
         for k ∈ 1:length(cut_vertices)-1
@@ -430,7 +432,7 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                 indexed_pedigree[ID].founder_index = 1
             end
             # Make a parallel copy of the kinships
-            ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
+            ϕs = [Dict{Int64, Vector{Pair{Int64, Float64}}}() for _ ∈ 1:Threads.nthreads()]
             # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
             Threads.@threads :static for i ∈ eachindex(individuals)
@@ -440,31 +442,17 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                     if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
-                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
+                            if haskey(ϕs[Threads.threadid()], individualᵢ.ID)
+                                push!(ϕs[Threads.threadid()][individualᵢ.ID], individualⱼ.ID => coefficient)
+                            else
+                                ϕs[Threads.threadid()][individualᵢ.ID] = [individualⱼ.ID => coefficient]
+                            end
                         end
                     end
                 end
             end
             # Merge the vectors and sort them
-            ϕ = popfirst!(ϕs)
-            while !isempty(ϕs)
-                ϕ₂ = popfirst!(ϕs)
-                ϕ₃ = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
-                while !isempty(ϕ) && !isempty(ϕ₂)
-                    if ϕ[1].first < ϕ₂[1].first
-                        push!(ϕ₃, popfirst!(ϕ))
-                    else
-                        push!(ϕ₃, popfirst!(ϕ₂))
-                    end
-                end
-                while !isempty(ϕ)
-                    push!(ϕ₃, popfirst!(ϕ))
-                end
-                while !isempty(ϕ₂)
-                    push!(ϕ₃, popfirst!(ϕ₂))
-                end
-                ϕ = ϕ₃
-            end
+            ϕ = merge(ϕs...)
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
@@ -479,9 +467,8 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         rows = Int64[]
         columns = Int64[]
         values = Float64[]
-        for (key, value) ∈ ϕ
-            (IDᵢ, IDⱼ) = key
-            if IDᵢ ∈ probandIDs && IDⱼ ∈ probandIDs
+        for (IDᵢ, kinships) ∈ ϕ
+            for (IDⱼ, value) ∈ kinships
                 push!(rows, ID_to_index[IDᵢ])
                 push!(columns, ID_to_index[IDⱼ])
                 push!(values, value)
