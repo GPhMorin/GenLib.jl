@@ -183,6 +183,7 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
         end
     end
     unique!(previous_generationIDs)
+    sort!(previous_generationIDs)
 end
 
 """
@@ -432,8 +433,8 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
             # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-            Threads.@threads for i ∈ eachindex(individuals)
-                Threads.@threads for j ∈ eachindex(individuals)
+            Threads.@threads :static for i ∈ eachindex(individuals)
+                for j ∈ eachindex(individuals)
                     individualᵢ = individuals[i]
                     individualⱼ = individuals[j]
                     if individualᵢ.ID ≤ individualⱼ.ID
@@ -444,9 +445,26 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                     end
                 end
             end
-            ϕ = pop!(ϕs)
-            append!(ϕ, ϕs...)
-            sort!(ϕ)
+            # Merge the vectors and sort them
+            ϕ = popfirst!(ϕs)
+            while !isempty(ϕs)
+                ϕ₂ = popfirst!(ϕs)
+                ϕ₃ = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
+                while !isempty(ϕ) && !isempty(ϕ₂)
+                    if ϕ[1].first < ϕ₂[1].first
+                        push!(ϕ₃, popfirst!(ϕ))
+                    else
+                        push!(ϕ₃, popfirst!(ϕ₂))
+                    end
+                end
+                while !isempty(ϕ)
+                    push!(ϕ₃, popfirst!(ϕ))
+                end
+                while !isempty(ϕ₂)
+                    push!(ϕ₃, popfirst!(ϕ₂))
+                end
+                ϕ = ϕ₃
+            end
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
