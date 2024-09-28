@@ -600,9 +600,9 @@ function phiMean(phiMatrix::Matrix{Float64})
 end
 
 """
-    function phiMean(phiMatrix::Matrix{Float64})
+    function phiMean(phiMatrix::SparseMatrixCSC{Float64, Int64})
 
-Return the mean kinship from a given kinship matrix.
+Return the mean kinship from a given sparse kinship matrix.
 """
 function phiMean(phiMatrix::SparseMatrixCSC{Float64, Int64})
     total = sum(phiMatrix)
