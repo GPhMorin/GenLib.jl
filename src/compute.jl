@@ -184,6 +184,7 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
     end
     unique!(previous_generationIDs)
     sort!(previous_generationIDs)
+    sort!(previous_generationIDs)
 end
 
 """
@@ -429,8 +430,9 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Make a parallel copy of the kinships
-            ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
+            # List all pairs to split them into chunks
+            pairs = [(IDᵢ, IDⱼ) for IDᵢ ∈ next_generationIDs for IDⱼ ∈ next_generationIDs]
+            chunks = Iterators.partition(pairs, length(pairs) ÷ Threads.nthreads())
             # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
             Threads.@threads :static for i ∈ eachindex(individuals)
@@ -443,6 +445,7 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                             push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
                         end
                     end
+                    ϕs
                 end
             end
             # Merge the vectors and sort them
