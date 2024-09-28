@@ -428,27 +428,21 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Make a parallel copy of the kinships
-            ϕs = [Vector{Pair{Tuple{Int32, Int32}, Float64}}() for _ ∈ 1:Threads.nthreads()]
-            # Fill the vector in parallel, using the adapted algorithm from Karigl, 1981
-            individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-            Threads.@threads for i ∈ eachindex(individuals)
-                Threads.@threads for j ∈ eachindex(individuals)
-                    individualᵢ = individuals[i]
-                    individualⱼ = individuals[j]
-                    if individualᵢ.ID ≤ individualⱼ.ID
-                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
-                        if coefficient > 0
-                            push!(ϕs[Threads.threadid()], (individualᵢ.ID, individualⱼ.ID) => coefficient)
-                        end
+            # Make a vector for the new kinships
+            ϕs = Vector{Pair{Tuple{Int32, Int32}, Float64}}()
+            # Fill the vector in order, using the adapted algorithm from Karigl, 1981
+            individuals = [indexed_pedigree[ID] for ID ∈ sort(next_generationIDs)]
+            for i ∈ eachindex(individuals), j ∈ eachindex(individuals)
+                individualᵢ = individuals[i]
+                individualⱼ = individuals[j]
+                if individualᵢ.ID ≤ individualⱼ.ID
+                    coefficient = phi(individualᵢ, individualⱼ, ϕ)
+                    if coefficient > 0
+                        push!(ϕs, (individualᵢ.ID, individualⱼ.ID) => coefficient)
                     end
                 end
             end
-            println("Sorting...")
-            ϕ = pop!(ϕs)
-            append!(ϕ, ϕs...)
-            sort!(ϕ)
-            println("Sort done.")
+            ϕ = ϕs
         end
         if verbose
             println("Transforming the kinships into a sparse CSC matrix.")
