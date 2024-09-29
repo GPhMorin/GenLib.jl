@@ -598,7 +598,7 @@ function complete_sparse_phi(pedigree::Pedigree)
         end
     end
     # Convert COO format to CSC sparse matrix
-    SparseArrays.sparse!(rows, cols, vals)
+    sparse(rows, cols, vals)
 end
 
 """
