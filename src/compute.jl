@@ -444,9 +444,11 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
                             if has_key
-                                push!(ϕs[Threads.threadid()][individualᵢ.ID], individualⱼ.ID => coefficient)
+                                push!(ϕs[Threads.threadid()][individualᵢ.ID],
+                                    individualⱼ.ID => coefficient)
                             else
-                                ϕs[Threads.threadid()][individualᵢ.ID] = [individualⱼ.ID => coefficient]
+                                ϕs[Threads.threadid()][individualᵢ.ID] =
+                                    [individualⱼ.ID => coefficient]
                                 has_key = true
                             end
                         end
