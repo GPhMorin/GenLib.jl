@@ -471,32 +471,26 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         for (index, ID) ∈ enumerate(probandIDs)
             ID_to_index[ID] = index
         end
-        # Convert the dictionary of vectors to CSC matrix
-        pointers = [1]
+        # Convert the vector to COO matrix
         rows = Int64[]
-        values = Float64[]
-        last_index = 0
-        for (index, IDᵢ) ∈ enumerate(probandIDs)
-            kinships = pop!(ϕ, IDᵢ, nothing)      
-            if !isnothing(kinships)      
-                while(!isempty(kinships))
-                    (IDⱼ, value) = pop!(kinships)
-                    push!(values, value)
+        cols = Int64[]
+        vals = Float64[]
+        while(!isempty(ϕ))
+            (IDᵢ, kinships) = pop!(ϕ)
+            while(!isempty(kinships))
+                (IDⱼ, value) = pop!(kinships)
+                push!(rows, ID_to_index[IDᵢ])
+                push!(cols, ID_to_index[IDⱼ])
+                push!(vals, value)
+                if IDᵢ != IDⱼ
                     push!(rows, ID_to_index[IDⱼ])
+                    push!(cols, ID_to_index[IDᵢ])
+                    push!(vals, value)
                 end
-                for _ ∈ last_index:index-1
-                    push!(pointers, length(rows) + 1)
-                end
-                last_index = index
             end
         end
-        SparseMatrixCSC(
-            length(probandIDs),
-            length(probandIDs),
-            pointers,
-            rows,
-            values
-        )
+        # Convert COO format to CSC sparse matrix
+        sparse(rows, cols, vals)
     end
 end
 
