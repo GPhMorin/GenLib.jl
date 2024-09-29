@@ -437,10 +437,9 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
             Threads.@threads :static for i ∈ eachindex(individuals)
+                individualᵢ = individuals[i]
                 has_key = false
-                for j ∈ eachindex(individuals)
-                    individualᵢ = individuals[i]
-                    individualⱼ = individuals[j]
+                for individualⱼ ∈ individuals
                     if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
