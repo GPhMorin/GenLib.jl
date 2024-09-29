@@ -482,11 +482,6 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
                 push!(rows, ID_to_index[IDᵢ])
                 push!(cols, ID_to_index[IDⱼ])
                 push!(vals, value)
-                if IDᵢ != IDⱼ
-                    push!(rows, ID_to_index[IDⱼ])
-                    push!(cols, ID_to_index[IDᵢ])
-                    push!(vals, value)
-                end
             end
         end
         # Convert COO format to CSC sparse matrix
