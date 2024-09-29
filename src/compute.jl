@@ -590,15 +590,15 @@ function complete_sparse_phi(pedigree::Pedigree)
     cols = Int64[]
     vals = Float64[]
     for individual ∈ values(indexed_pedigree)
-        for kinship ∈ individual.kinship
+        while(!isempty(individual.kinship))
+            kinship = popfirst!(individual.kinship)
             push!(rows, individual.rank)
             push!(cols, kinship.first)
             push!(vals, kinship.second)
         end
-        empty!(individual.kinship)
     end
     # Convert COO format to CSC sparse matrix
-    sparse(rows, cols, vals)
+    SparseArrays.sparse!(rows, cols, vals)
 end
 
 """
