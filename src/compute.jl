@@ -457,11 +457,7 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
             for ϕᵢ ∈ ϕs
                 while !isempty(ϕᵢ)
                     (ID, kinships) = pop!(ϕᵢ)
-                    if haskey(ϕ, ID)
-                        push!(ϕ[ID], kinships...)
-                    else
-                        ϕ[ID] = kinships
-                    end
+                    ϕ[ID] = kinships
                 end
             end
         end
