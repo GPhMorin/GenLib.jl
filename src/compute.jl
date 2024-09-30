@@ -473,6 +473,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                     ϕ[ID] = kinships
                 end
             end
+            GC.gc()
         end
         ϕ
     end
