@@ -53,6 +53,9 @@ end
     @test gen.phiMean(phi) == 0.171875
     phi = gen.sparse_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
+    @test repr(MIME("text/plain"), phi) ==
+        "A dictionary with sparse kinship data:\n3 individuals;\n" *
+        "6 non-zero entries where IDᵢ ≤ IDⱼ."
     founder1 = ped[17]
     founder2 = ped[19]
     @test gen.phi(founder1, founder2) == 0

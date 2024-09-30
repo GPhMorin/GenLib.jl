@@ -466,6 +466,13 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
     end
 end
 
+function Base.show(io::IO, ::MIME"text/plain", ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}})
+    println(io, "A dictionary with sparse kinship data:")
+    println(io, "$(length(ϕ)) individuals;")
+    nz = sum([length(kinships) for kinships ∈ values(ϕ)])
+    print(io, "$(nz) non-zero entries where IDᵢ ≤ IDⱼ.")
+end
+
 """
     function phiMean(phiMatrix::Matrix{Float64})
 
