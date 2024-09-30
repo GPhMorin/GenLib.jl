@@ -468,8 +468,17 @@ end
 
 function probands_sparse_phi(pedigree::Pedigree)
     ϕ = Dict{Int64, Dict{Int64, Float64}}()
+    total_count = length(pedigree) * (length(pedigree) - 1) / 2 + length(pedigree)
+    percentile = ceil(total_count / 100)
+    count = 0
+    percentage = 0
     for individualᵢ ∈ values(pedigree), individualⱼ ∈ values(pedigree)
         if individualᵢ.rank == individualⱼ.rank
+            count += 1
+            if count % percentile == 0
+                percentage += 1
+                println("$percentage% processed.")
+            end
             coefficient = 0.5
             father = individualᵢ.father
             mother = individualᵢ.mother
@@ -507,6 +516,11 @@ function probands_sparse_phi(pedigree::Pedigree)
                 end
             end
         elseif individualᵢ.rank < individualⱼ.rank
+            count += 1
+            if count % percentile == 0
+                percentage += 1
+                println("$percentage% processed.")
+            end
             coefficient = 0.
             father = individualⱼ.father
             if !isnothing(father)
