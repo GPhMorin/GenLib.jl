@@ -290,45 +290,33 @@ individuals' kinships.
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}}, rank_based::Bool = false)
+    ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}})
     value = 0.
-    if rank_based
-        (individualᵢ, individualⱼ) = individualᵢ.rank ≤ individualⱼ.rank ?
-            (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
-    else
-        (individualᵢ, individualⱼ) = individualᵢ.ID ≤ individualⱼ.ID ?
-            (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
-    end
+    (individualᵢ, individualⱼ) = individualᵢ.ID ≤ individualⱼ.ID ?
+        (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
         if haskey(ϕ, individualᵢ.ID)
-            if rank_based
-                slice = searchsorted(ϕ[individualᵢ.rank], individualⱼ.rank => 0, by = first)
-                if !isempty(slice)
-                    value += ϕ[individualᵢ.rank][slice[1]].second
-                end
-            else
-                slice = searchsorted(ϕ[individualᵢ.ID], individualⱼ.ID => 0, by = first)
-                if !isempty(slice)
-                    value += ϕ[individualᵢ.ID][slice[1]].second
-                end
+            slice = searchsorted(ϕ[individualᵢ.ID], individualⱼ.ID => 0, by = first)
+            if !isempty(slice)
+                value += ϕ[individualᵢ.ID][slice[1]].second
             end
         end
     elseif individualᵢ.founder_index != 0
         # Individual i is a founder, so we climb the pedigree on individual j's side
         if !isnothing(individualⱼ.father)
-            value += phi(individualᵢ, individualⱼ.father, ϕ, rank_based) / 2
+            value += phi(individualᵢ, individualⱼ.father, ϕ) / 2
         end
         if !isnothing(individualⱼ.mother)
-            value += phi(individualᵢ, individualⱼ.mother, ϕ, rank_based) / 2
+            value += phi(individualᵢ, individualⱼ.mother, ϕ) / 2
         end
     elseif individualⱼ.founder_index != 0
         # Individual j is a founder, so we climb the pedigree on individual i's side
         if !isnothing(individualᵢ.father)
-            value += phi(individualⱼ, individualᵢ.father, ϕ, rank_based) / 2
+            value += phi(individualⱼ, individualᵢ.father, ϕ) / 2
         end
         if !isnothing(individualᵢ.mother)
-            value += phi(individualⱼ, individualᵢ.mother, ϕ, rank_based) / 2
+            value += phi(individualⱼ, individualᵢ.mother, ϕ) / 2
         end
     else
         # None of the individuals are founders, so we climb on the side of the individual
@@ -337,26 +325,26 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             # From the genealogical order, i cannot be an ancestor of j
             # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
             if !isnothing(individualᵢ.father)
-                value += phi(individualᵢ.father, individualⱼ, ϕ, rank_based) / 2
+                value += phi(individualᵢ.father, individualⱼ, ϕ) / 2
             end
             if !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.mother, individualⱼ, ϕ, rank_based) / 2
+                value += phi(individualᵢ.mother, individualⱼ, ϕ) / 2
             end
         elseif individualⱼ.rank > individualᵢ.rank
             # Reverse the order since i can be an ancestor of j
             # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
             if !isnothing(individualⱼ.father)
-                value += phi(individualⱼ.father, individualᵢ, ϕ, rank_based) / 2
+                value += phi(individualⱼ.father, individualᵢ, ϕ) / 2
             end
             if !isnothing(individualⱼ.mother)
-                value += phi(individualⱼ.mother, individualᵢ, ϕ, rank_based) / 2
+                value += phi(individualⱼ.mother, individualᵢ, ϕ) / 2
             end
         elseif individualᵢ.rank == individualⱼ.rank
             # Same individual
             # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
             value += 0.5
             if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.father, individualᵢ.mother, ϕ, rank_based) / 2
+                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
             end
         end
     end
