@@ -466,6 +466,81 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
     end
 end
 
+function probands_sparse_phi(pedigree::Pedigree)
+    ϕ = Dict{Int64, Dict{Int64, Float64}}()
+    for individualᵢ ∈ values(pedigree), individualⱼ ∈ values(pedigree)
+        if individualᵢ.rank == individualⱼ.rank
+            coefficient = 0.5
+            father = individualᵢ.father
+            mother = individualᵢ.mother
+            if !isnothing(father) && !isnothing(mother)
+                (ID₁, ID₂) = father.ID ≤ mother.ID ?
+                    (father.ID, mother.ID) : (mother.ID, father.ID)
+                if haskey(ϕ[ID₁], ID₂)
+                    coefficient += ϕ[ID₁][ID₂] / 2
+                end
+            end
+            if !haskey(ϕ, individualᵢ.ID)
+                ϕ[individualᵢ.ID] = Dict{Int64, Float64}()
+            end
+            ϕ[individualᵢ.ID][individualᵢ.ID] = coefficient
+            if !isnothing(father)
+                max_rank = maximum([child.rank for child ∈ father.children])
+                if max_rank == individualᵢ.rank
+                    delete!(ϕ, father.ID)
+                    for (ID, kinships) ∈ ϕ
+                        if ID < father.ID
+                            delete!(kinships, father.ID)
+                        end
+                    end
+                end
+            end
+            if !isnothing(mother)
+                max_rank = maximum([child.rank for child ∈ mother.children])
+                if max_rank == individualᵢ.rank
+                    delete!(ϕ, mother.ID)
+                    for (ID, kinships) ∈ ϕ
+                        if ID < mother.ID
+                            delete!(kinships, mother.ID)
+                        end
+                    end
+                end
+            end
+        elseif individualᵢ.rank < individualⱼ.rank
+            coefficient = 0.
+            father = individualⱼ.father
+            if !isnothing(father)
+                ID₁ = individualᵢ.ID ≤ father.ID ? individualᵢ.ID : father.ID
+                ID₂ = individualᵢ.ID ≤ father.ID ? father.ID : individualᵢ.ID
+                if haskey(ϕ, ID₁)
+                    if haskey(ϕ[ID₁], ID₂)
+                        coefficient += ϕ[ID₁][ID₂] / 2
+                    end
+                end
+            end
+            mother = individualⱼ.mother
+            if !isnothing(mother)
+                ID₁ = individualᵢ.ID ≤ mother.ID ? individualᵢ.ID : mother.ID
+                ID₂ = individualᵢ.ID ≤ mother.ID ? mother.ID : individualᵢ.ID
+                if haskey(ϕ, ID₁)
+                    if haskey(ϕ[ID₁], ID₂)
+                        coefficient += ϕ[ID₁][ID₂] / 2
+                    end
+                end
+            end
+            if coefficient > 0
+                ID₁ = individualᵢ.ID ≤ individualⱼ.ID ? individualᵢ.ID : individualⱼ.ID
+                ID₂ = individualᵢ.ID ≤ individualⱼ.ID ? individualⱼ.ID : individualᵢ.ID
+                if !haskey(ϕ, ID₁)
+                    ϕ[ID₁] = Dict{Int64, Float64}()
+                end
+                ϕ[ID₁][ID₂] = coefficient
+            end
+        end
+    end
+    ϕ
+end
+
 function Base.show(io::IO, ::MIME"text/plain", ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}})
     println(io, "A dictionary with sparse kinship data:")
     println(io, "$(length(ϕ)) individuals;")
