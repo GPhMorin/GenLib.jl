@@ -364,7 +364,7 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
 end
 
 """
-    probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+    sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         verbose::Bool = false)
 
 Return a sparse matrix of pairwise kinship coefficients between probands.
@@ -384,10 +384,10 @@ information about the cut vertices.
 import GenLib as gen
 geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)
-gen.probands_sparse_phi(ped)
+gen.sparse_phi(ped)
 ```
 """
-function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     verbose::Bool = false, compute::Bool = true)
     # Start from the probands and go up until the highest founder(s)
     cut_vertices = [probandIDs]
@@ -476,140 +476,6 @@ function probands_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro
         end
         ϕ
     end
-end
-
-"""
-    complete_sparse_phi(pedigree::Pedigree; verbose::Bool = false)
-
-Return a sparse matrix of pairwise kinship coefficients between all individuals of the given
-pedigree.
-
-The algorithm is a hybrid between the algorithms of
-[Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
-
-If `verbose` is `true`, print the information about the cut vertices. If `compute` is
-`true` (the default), compute the kinship matrix. If it is `false`, only print the
-information about the cut vertices.
-
-# Example
-
-```julia
-import GenLib as gen
-geneaJi = gen.geneaJi
-ped = gen.genealogy(geneaJi)
-gen.complete_sparse_phi(ped)
-```
-"""
-function complete_sparse_phi(pedigree::Pedigree;    
-    verbose::Bool = false, compute::Bool = true)
-    # Start from the probands and go up until the highest founder(s)
-    probandIDs = pro(pedigree)
-    cut_vertices = [probandIDs]
-    previous_generationIDs = _previous_generation(pedigree, probandIDs)
-    while !isempty(previous_generationIDs)
-        pushfirst!(cut_vertices, previous_generationIDs)
-        previous_generationIDs = _previous_generation(pedigree, previous_generationIDs)
-    end
-    # Drag the individuals down the generations
-    top_down = copy(cut_vertices)
-    for i ∈ 1:length(cut_vertices)-1
-        top_down[i + 1] = union(top_down[i + 1], top_down[i])
-    end
-    cut_vertices = top_down
-    # Describe each pair of generations, if desired
-    if verbose || !compute
-        for i ∈ 1:length(cut_vertices)-1
-            previous_generationIDs = cut_vertices[i]
-            next_generationIDs = cut_vertices[i+1]
-            println("Step $i of $(length(cut_vertices)-1): " *
-                "$(length(previous_generationIDs)) founders, " *
-                "$(length(next_generationIDs)) probands, " *
-                "$(length(∩(previous_generationIDs, next_generationIDs))) both.")
-        end
-    end
-    # Stop here if the user only wants to print information about each pair of generations
-    if compute
-        # Add the `founder_index` attribute to the individuals and make them mutable so we can
-        # quickly track the location of the founders in their kinship vector.
-        indexed_pedigree = _index_pedigree(pedigree)
-        # Initialize the kinship vector of the top founders
-        ϕ = Dict{Int64, Vector{Pair{Int64, Float64}}}()
-        for ID ∈ cut_vertices[1]
-            ϕ[pedigree[ID].rank] = [pedigree[ID].rank => 0.5]
-        end
-        # For each pair of generations…
-        for k ∈ 1:length(cut_vertices)-1
-            previous_generationIDs = cut_vertices[k]
-            next_generationIDs = cut_vertices[k+1]
-            # Describe each pair of generations, if desired
-            if verbose
-                println("Running step $k of $(length(cut_vertices)-1) " *
-                    "($(length(previous_generationIDs)) founders, " *
-                    "$(length(next_generationIDs)) probands, " *
-                    "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
-            end
-            # Assign the index to each individual from the previous generation
-            for ID ∈ previous_generationIDs
-                indexed_pedigree[ID].founder_index = 1
-            end
-            # Make a parallel copy of the kinships
-            ϕs = [Dict{Int64, Vector{Pair{Int64, Float64}}}() for _ ∈ 1:Threads.nthreads()]
-            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
-            ranks = [indexed_pedigree[ID].rank for ID ∈ next_generationIDs]
-            sorted_next_generationIDs = next_generationIDs[sortperm(ranks)]
-            individuals = [indexed_pedigree[ID] for ID ∈ sorted_next_generationIDs]
-            new_individuals = [individual for individual ∈ individuals
-                if individual.ID ∉ previous_generationIDs]
-            recurring_individuals = [individual for individual ∈ individuals
-                if individual.ID ∈ previous_generationIDs]
-            Threads.@threads :static for i ∈ eachindex(recurring_individuals)
-                individualᵢ = recurring_individuals[i]
-                for individualⱼ ∈ new_individuals
-                    coefficient = phi(individualᵢ, individualⱼ, ϕ, true)
-                    if coefficient > 0
-                        if haskey(ϕs[Threads.threadid()], individualᵢ.rank)
-                            push!(ϕs[Threads.threadid()][individualᵢ.rank],
-                                individualⱼ.rank => coefficient)
-                        else
-                            ϕs[Threads.threadid()][individualᵢ.rank] =
-                                [individualⱼ.rank => coefficient]
-                        end
-                    end
-                end
-            end
-            Threads.@threads :static for i ∈ eachindex(new_individuals)
-                individualᵢ = new_individuals[i]
-                has_key = false
-                for individualⱼ ∈ new_individuals
-                    if individualᵢ.rank ≤ individualⱼ.rank
-                        coefficient = phi(individualᵢ, individualⱼ, ϕ, true)
-                        if coefficient > 0
-                            if has_key
-                                push!(ϕs[Threads.threadid()][individualᵢ.rank],
-                                    individualⱼ.rank => coefficient)
-                            else
-                                ϕs[Threads.threadid()][individualᵢ.rank] =
-                                    [individualⱼ.rank => coefficient]
-                                has_key = true
-                            end
-                        end
-                    end
-                end
-            end
-            # Merge the dictionaries
-            for ϕᵢ ∈ ϕs
-                while !isempty(ϕᵢ)
-                    (rank, kinships) = pop!(ϕᵢ)
-                    if haskey(ϕ, rank)
-                        append!(ϕ[rank], kinships)
-                    else
-                        ϕ[rank] = kinships
-                    end
-                end
-            end
-        end
-    end
-    ϕ
 end
 
 """
