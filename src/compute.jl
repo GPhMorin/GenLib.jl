@@ -510,8 +510,8 @@ function probands_sparse_phi(pedigree::Pedigree)
             coefficient = 0.
             father = individualⱼ.father
             if !isnothing(father)
-                ID₁ = individualᵢ.ID ≤ father.ID ? individualᵢ.ID : father.ID
-                ID₂ = individualᵢ.ID ≤ father.ID ? father.ID : individualᵢ.ID
+                (ID₁, ID₂) = individualᵢ.ID ≤ father.ID ?
+                    (individualᵢ.ID, father.ID) : (father.ID, individualᵢ.ID)
                 if haskey(ϕ, ID₁)
                     if haskey(ϕ[ID₁], ID₂)
                         coefficient += ϕ[ID₁][ID₂] / 2
@@ -520,8 +520,8 @@ function probands_sparse_phi(pedigree::Pedigree)
             end
             mother = individualⱼ.mother
             if !isnothing(mother)
-                ID₁ = individualᵢ.ID ≤ mother.ID ? individualᵢ.ID : mother.ID
-                ID₂ = individualᵢ.ID ≤ mother.ID ? mother.ID : individualᵢ.ID
+                (ID₁, ID₂) = individualᵢ.ID ≤ mother.ID ?
+                    (individualᵢ.ID, mother.ID) : (mother.ID, individualᵢ.ID)
                 if haskey(ϕ, ID₁)
                     if haskey(ϕ[ID₁], ID₂)
                         coefficient += ϕ[ID₁][ID₂] / 2
@@ -529,8 +529,8 @@ function probands_sparse_phi(pedigree::Pedigree)
                 end
             end
             if coefficient > 0
-                ID₁ = individualᵢ.ID ≤ individualⱼ.ID ? individualᵢ.ID : individualⱼ.ID
-                ID₂ = individualᵢ.ID ≤ individualⱼ.ID ? individualⱼ.ID : individualᵢ.ID
+                (ID₁, ID₂) = individualᵢ.ID ≤ individualⱼ.ID ?
+                    (individualᵢ.ID, individualⱼ.ID) : (individualⱼ.ID, individualᵢ.ID)
                 if !haskey(ϕ, ID₁)
                     ϕ[ID₁] = Dict{Int64, Float64}()
                 end
