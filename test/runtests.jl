@@ -51,10 +51,12 @@ end
     @test phi == [0.591796875 0.37109375 0.072265625; 0.37109375 0.591796875 0.072265625;
         0.072265625 0.072265625 0.53515625]
     @test gen.phiMean(phi) == 0.171875
-    phi = gen.sparse_phi(ped, verbose = true)
+    phi = gen.vector_phi(ped, verbose = true)
+    @test gen.phiMean(phi) == 0.171875
+    phi = gen.dict_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
     @test phi[0, 0] == 0.
-    @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
+    @test repr(MIME("text/plain"), phi) == "3×3 VectorKinshipMatrix with 6 stored entries."
     @test sort(collect(keys(phi))) == gen.pro(ped)
     founder1 = ped[17]
     founder2 = ped[19]
