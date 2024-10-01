@@ -53,6 +53,8 @@ end
     @test gen.phiMean(phi) == 0.171875
     phi = gen.sparse_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
+    phi = gen.probands_sparse_phi(ped, verbose = true)
+    @test gen.phiMean(phi) == 0.171875
     founder1 = ped[17]
     founder2 = ped[19]
     @test gen.phi(founder1, founder2) == 0
