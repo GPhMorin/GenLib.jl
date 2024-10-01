@@ -297,21 +297,6 @@ KinshipMatrix(pedigree::Pedigree) = KinshipMatrix(
     Dict{Int64, Int64}(individual.rank => ID for (ID, individual) ∈ pedigree)
 )
 
-Base.length(ϕ::KinshipMatrix) = length(ϕ.dict)
-Base.keys(ϕ::KinshipMatrix) = [ϕ.rank_to_ID[key] for key ∈ keys(ϕ.dict)]
-Base.values(ϕ::KinshipMatrix) = values(ϕ.dict)
-Base.empty!(ϕ::KinshipMatrix) = empty!(ϕ.dict)
-Base.iterate(ϕ::KinshipMatrix) = iterate(ϕ.dict)
-Base.iterate(ϕ::KinshipMatrix, i) = iterate(ϕ.dict, i)
-Base.pop!(ϕ::KinshipMatrix) = pop!(ϕ.dict)
-
-function Base.setindex!(ϕ::KinshipMatrix, value::Float64, rank₁::Int64, rank₂::Int64)
-    if !haskey(ϕ.dict, rank₁)
-        ϕ.dict[rank₁] = Vector{Pair{Int64, Float64}}()
-    end
-    push!(ϕ.dict[rank₁], rank₂ => value)
-end
-
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
     rank₁ = ϕ.ID_to_rank[ID₁]
     rank₂ = ϕ.ID_to_rank[ID₂]
@@ -328,88 +313,12 @@ function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
     end
 end
 
-function Base.delete!(ϕ::KinshipMatrix, rank::Int64)
-    delete!(ϕ.dict, rank)
-    for (rank₂, kinships) ∈ ϕ.dict
-        if rank₂ < rank
-            index = searchsortedfirst(kinships, rank => 0, by = x -> x.first)
-            if index ≤ length(kinships) && kinships[index].first == rank
-                deleteat!(kinships, index)
-            end
-        end
-    end
-end
-
 function Base.show(io::IO, ::MIME"text/plain", ϕ::KinshipMatrix)
     nz = 0
-    for kinships ∈ values(ϕ)
+    for kinships ∈ values(ϕ.dict)
         nz += length(kinships)
     end
-    print(io, "$(length(ϕ))×$(length(ϕ)) KinshipMatrix with $nz stored entries.")
-end
-
-"""
-    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::Dict{Int64, Vector{Pair{Int64, Float64}}})
-
-Return the kinship coefficient between two individuals given a dictionary of the
-individuals' kinships.
-
-Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
-"""
-function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::KinshipMatrix)
-    value = 0.
-    if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
-        # Both individuals are founders, so we already know their kinship coefficient
-        value += ϕ[individualᵢ.ID, individualⱼ.ID]
-    elseif individualᵢ.founder_index != 0
-        # Individual i is a founder, so we climb the pedigree on individual j's side
-        if !isnothing(individualⱼ.father)
-            value += phi(individualᵢ, individualⱼ.father, ϕ) / 2
-        end
-        if !isnothing(individualⱼ.mother)
-            value += phi(individualᵢ, individualⱼ.mother, ϕ) / 2
-        end
-    elseif individualⱼ.founder_index != 0
-        # Individual j is a founder, so we climb the pedigree on individual i's side
-        if !isnothing(individualᵢ.father)
-            value += phi(individualⱼ, individualᵢ.father, ϕ) / 2
-        end
-        if !isnothing(individualᵢ.mother)
-            value += phi(individualⱼ, individualᵢ.mother, ϕ) / 2
-        end
-    else
-        # None of the individuals are founders, so we climb on the side of the individual
-        # that appears lowest in the pedigree
-        if individualᵢ.rank > individualⱼ.rank
-            # From the genealogical order, i cannot be an ancestor of j
-            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
-            if !isnothing(individualᵢ.father)
-                value += phi(individualᵢ.father, individualⱼ, ϕ) / 2
-            end
-            if !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.mother, individualⱼ, ϕ) / 2
-            end
-        elseif individualⱼ.rank > individualᵢ.rank
-            # Reverse the order since i can be an ancestor of j
-            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
-            if !isnothing(individualⱼ.father)
-                value += phi(individualⱼ.father, individualᵢ, ϕ) / 2
-            end
-            if !isnothing(individualⱼ.mother)
-                value += phi(individualⱼ.mother, individualᵢ, ϕ) / 2
-            end
-        elseif individualᵢ.rank == individualⱼ.rank
-            # Same individual
-            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
-            value += 0.5
-            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
-            end
-        end
-    end
-    value
+    print(io, "$(length(ϕ.dict))×$(length(ϕ.dict)) KinshipMatrix with $nz stored entries.")
 end
 
 """
@@ -536,13 +445,13 @@ Return the mean kinship from a given sparse kinship matrix.
 """
 function phiMean(ϕ::KinshipMatrix)
     total = 0.
-    for kinships ∈ values(ϕ)
+    for kinships ∈ values(ϕ.dict)
         for pair ∈ kinships
             total += pair.second
         end
         total -= kinships[1].second
     end
-    count = length(ϕ) * (length(ϕ) - 1) / 2
+    count = length(ϕ.dict) * (length(ϕ.dict) - 1) / 2
     total / count
 end
 
