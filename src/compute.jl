@@ -292,6 +292,7 @@ end
 KinshipMatrix() = KinshipMatrix(Dict{Int64, Dict{Int64, Float64}}())
 
 Base.length(ϕ::KinshipMatrix) = length(ϕ.dict)
+Base.keys(ϕ::KinshipMatrix) = keys(ϕ.dict)
 Base.values(ϕ::KinshipMatrix) = values(ϕ.dict)
 Base.empty!(ϕ::KinshipMatrix) = empty!(ϕ.dict)
 Base.iterate(ϕ::KinshipMatrix) = iterate(ϕ.dict)
