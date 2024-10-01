@@ -320,19 +320,6 @@ function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
     end
 end
 
-function Base.delete!(ϕ::KinshipMatrix, ID::Int64)
-    empty!(ϕ.dict[ID])
-    delete!(ϕ.dict, ID)
-    for (ID₂, kinships) ∈ ϕ.dict
-        if ID₂ < ID
-            slice = searchsorted(ϕ.dict[ID₂], Pair(ID, 0.), by = x -> x.first)
-            if !isempty(slice)
-                deleteat!(kinships, slice[1])
-            end
-        end
-    end
-end
-
 function Base.show(io::IO, ::MIME"text/plain", ϕ::KinshipMatrix)
     nz = 0
     for kinships ∈ values(ϕ)
