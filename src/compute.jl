@@ -283,40 +283,59 @@ end
 """
     struct KinshipMatrix
 
-A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
+A minimal structure wrapping an `Dict` with kinships accessed by IDs or ranks.
 """
 struct KinshipMatrix
-    dict::Dict{Int64, Dict{Int64, Float64}}
+    dict::Dict{Int64, Vector{Pair{Int64, Float64}}}
+    ID_to_rank::Dict{Int64, Int64}
+    rank_to_ID::Dict{Int64, Int64}
 end
 
-KinshipMatrix() = KinshipMatrix(Dict{Int64, Dict{Int64, Float64}}())
+KinshipMatrix(pedigree::Pedigree) = KinshipMatrix(
+    Dict{Int64, Vector{Pair{Int64, Float64}}}(),
+    Dict{Int64, Int64}(ID => individual.rank for (ID, individual) ∈ pedigree),
+    Dict{Int64, Int64}(individual.rank => ID for (ID, individual) ∈ pedigree)
+)
 
 Base.length(ϕ::KinshipMatrix) = length(ϕ.dict)
-Base.keys(ϕ::KinshipMatrix) = keys(ϕ.dict)
+Base.keys(ϕ::KinshipMatrix) = [ϕ.rank_to_ID[key] for key ∈ keys(ϕ.dict)]
 Base.values(ϕ::KinshipMatrix) = values(ϕ.dict)
 Base.empty!(ϕ::KinshipMatrix) = empty!(ϕ.dict)
 Base.iterate(ϕ::KinshipMatrix) = iterate(ϕ.dict)
 Base.iterate(ϕ::KinshipMatrix, i) = iterate(ϕ.dict, i)
 Base.pop!(ϕ::KinshipMatrix) = pop!(ϕ.dict)
 
-function Base.setindex!(ϕ::KinshipMatrix, value::Float64, ID₁::Int64, ID₂::Int64)
-    (ID₁, ID₂) = ID₁ ≤ ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
-    if !haskey(ϕ.dict, ID₁)
-        ϕ.dict[ID₁] = Dict{Int64, Float64}()
+function Base.setindex!(ϕ::KinshipMatrix, value::Float64, rank₁::Int64, rank₂::Int64)
+    if !haskey(ϕ.dict, rank₁)
+        ϕ.dict[rank₁] = Vector{Pair{Int64, Float64}}()
     end
-    ϕ.dict[ID₁][ID₂] = value
+    push!(ϕ.dict[rank₁], rank₂ => value)
 end
 
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
-    (ID₁, ID₂) = ID₁ ≤ ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
-    haskey(ϕ.dict, ID₁) && haskey(ϕ.dict[ID₁], ID₂) ? ϕ.dict[ID₁][ID₂] : 0.
+    rank₁ = ϕ.ID_to_rank[ID₁]
+    rank₂ = ϕ.ID_to_rank[ID₂]
+    (rank₁, rank₂) = rank₁ ≤ rank₂ ? (rank₁, rank₂) : (rank₂, rank₁)
+    if !haskey(ϕ.dict, rank₁)
+        0.
+    else
+        slice = searchsorted(ϕ.dict[rank₁], rank₂ => 0, by = x -> x.first)
+        if !isempty(slice)
+            ϕ.dict[rank₁][slice[1]].second
+        else
+            0.
+        end
+    end
 end
 
-function Base.delete!(ϕ::KinshipMatrix, ID::Int64)
-    delete!(ϕ.dict, ID)
-    for (ID₂, kinships) ∈ ϕ.dict
-        if ID₂ < ID
-            delete!(kinships, ID)
+function Base.delete!(ϕ::KinshipMatrix, rank::Int64)
+    delete!(ϕ.dict, rank)
+    for (rank₂, kinships) ∈ ϕ.dict
+        if rank₂ < rank
+            index = searchsortedfirst(kinships, rank => 0, by = x -> x.first)
+            if index ≤ length(kinships) && kinships[index].first == rank
+                deleteat!(kinships, index)
+            end
         end
     end
 end
@@ -394,117 +413,6 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
 end
 
 """
-    sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
-        verbose::Bool = false)
-
-Return a sparse matrix of pairwise kinship coefficients between probands.
-
-If no probands are given, return the sparse matrix for all probands in the pedigree.
-
-The algorithm is a hybrid between the algorithms of
-[Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
-
-If `verbose` is `true`, print the information about the cut vertices. If `compute` is
-`true` (the default), compute the kinship matrix. If it is `false`, only print the
-information about the cut vertices.
-
-# Example
-
-```julia
-import GenLib as gen
-geneaJi = gen.geneaJi
-ped = gen.genealogy(geneaJi)
-gen.sparse_phi(ped)
-```
-"""
-function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
-    verbose::Bool = false, compute::Bool = true)
-    # Start from the probands and go up until the highest founder(s)
-    cut_vertices = [probandIDs]
-    previous_generationIDs = _previous_generation(pedigree, probandIDs)
-    while !isempty(previous_generationIDs)
-        pushfirst!(cut_vertices, previous_generationIDs)
-        previous_generationIDs = _previous_generation(pedigree, previous_generationIDs)
-    end
-    # Drag the individuals down the generations for as long as they are required
-    top_down = copy(cut_vertices)
-    bottom_up = copy(cut_vertices)
-    reverse!(bottom_up)
-    for i ∈ 1:length(cut_vertices)-1
-        top_down[i + 1] = union(top_down[i + 1], top_down[i])
-        bottom_up[i + 1] = union(bottom_up[i + 1], bottom_up[i])
-    end
-    reverse!(bottom_up)
-    cut_vertices = [∩(i, j) for (i, j) ∈ zip(top_down, bottom_up)]
-    # Describe each pair of generations, if desired
-    if verbose || !compute
-        for i ∈ 1:length(cut_vertices)-1
-            previous_generationIDs = cut_vertices[i]
-            next_generationIDs = cut_vertices[i+1]
-            println("Step $i of $(length(cut_vertices)-1): " *
-                "$(length(previous_generationIDs)) founders, " *
-                "$(length(next_generationIDs)) probands, " *
-                "$(length(∩(previous_generationIDs, next_generationIDs))) both.")
-        end
-    end
-    # Stop here if the user only wants to print information about each pair of generations
-    if compute
-        # Add the `founder_index` attribute to the individuals and make them mutable so we can
-        # quickly track the location of the founders in their kinship vector.
-        indexed_pedigree = _index_pedigree(pedigree)
-        # Initialize the kinship vector of the top founders
-        ϕ = KinshipMatrix()
-        for ID ∈ cut_vertices[1]
-            ϕ[ID, ID] = 0.5
-        end
-        # For each pair of generations…
-        for k ∈ 1:length(cut_vertices)-1
-            previous_generationIDs = cut_vertices[k]
-            next_generationIDs = cut_vertices[k+1]
-            # Describe each pair of generations, if desired
-            if verbose
-                println("Running step $k of $(length(cut_vertices)-1) " *
-                    "($(length(previous_generationIDs)) founders, " *
-                    "$(length(next_generationIDs)) probands, " *
-                    "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
-            end
-            # Assign the index to each individual from the previous generation
-            for ID ∈ previous_generationIDs
-                indexed_pedigree[ID].founder_index = 1
-            end
-            # Make a parallel copy of the kinships
-            ϕs = [KinshipMatrix() for _ ∈ 1:Threads.nthreads()]
-            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
-            individuals = [indexed_pedigree[ID] for ID ∈ sort(next_generationIDs)]
-            Threads.@threads :static for i ∈ eachindex(individuals)
-                j = Threads.threadid()
-                individualᵢ = individuals[i]
-                for individualⱼ ∈ individuals
-                    if individualᵢ.ID ≤ individualⱼ.ID
-                        coefficient = phi(individualᵢ, individualⱼ, ϕ)
-                        if coefficient > 0
-                            ϕs[j][individualᵢ.ID, individualⱼ.ID] = coefficient
-                        end
-                    end
-                end
-            end
-            # Merge the dictionaries
-            empty!(ϕ)
-            for ϕᵢ ∈ ϕs
-                while !isempty(ϕᵢ)
-                    (IDᵢ, kinships) = pop!(ϕᵢ)
-                    while !isempty(kinships)
-                        (IDⱼ, coefficient) = pop!(kinships)
-                        ϕ[IDᵢ, IDⱼ] = coefficient
-                    end
-                end
-            end
-        end
-        ϕ
-    end
-end
-
-"""
     probands_sparse_phi(pedigree::Pedigree; verbose::Bool = false)
 
 Return a sparse matrix of pairwise kinship coefficients between probands.
@@ -512,7 +420,7 @@ Return a sparse matrix of pairwise kinship coefficients between probands.
 This slower algorithm removes a parent as soon as their kinships are no longer needed.
 """
 function probands_sparse_phi(pedigree::Pedigree; verbose::Bool = false)
-    ϕ = KinshipMatrix()
+    ϕ = KinshipMatrix(pedigree)
     if verbose
         total_count = length(pedigree) * (length(pedigree) - 1) / 2 + length(pedigree)
         percentile = ceil(total_count / 100)
@@ -532,19 +440,42 @@ function probands_sparse_phi(pedigree::Pedigree; verbose::Bool = false)
             father = individualᵢ.father
             mother = individualᵢ.mother
             if !isnothing(father) && !isnothing(mother)
-                coefficient += ϕ[father.ID, mother.ID] / 2
+                (rank₁, rank₂) = father.rank ≤ mother.rank ?
+                    (father.rank, mother.rank) : (mother.rank, father.rank)
+                if haskey(ϕ.dict, rank₁)
+                    slice = searchsorted(ϕ.dict[rank₁], rank₂ => 0, by = x -> x.first)
+                    if !isempty(slice)
+                        coefficient += ϕ.dict[rank₁][slice[1]].second / 2
+                    end
+                end
             end
-            ϕ[individualᵢ.ID, individualᵢ.ID] = coefficient
+            ϕ.dict[individualᵢ.rank] = [individualᵢ.rank => coefficient]
             if !isnothing(father)
                 max_rank = maximum([child.rank for child ∈ father.children])
                 if max_rank == individualᵢ.rank
-                    delete!(ϕ, father.ID)
+                    delete!(ϕ.dict, father.rank)
+                    for (rank₂, kinships) ∈ ϕ.dict
+                        if rank₂ < father.rank
+                            index = searchsortedfirst(kinships, father.rank => 0, by = x -> x.first)
+                            if index ≤ length(kinships) && kinships[index].first == father.rank
+                                deleteat!(kinships, index)
+                            end
+                        end
+                    end
                 end
             end
             if !isnothing(mother)
                 max_rank = maximum([child.rank for child ∈ mother.children])
                 if max_rank == individualᵢ.rank
-                    delete!(ϕ, mother.ID)
+                    delete!(ϕ.dict, mother.rank)
+                    for (rank₂, kinships) ∈ ϕ.dict
+                        if rank₂ < mother.rank
+                            index = searchsortedfirst(kinships, mother.rank => 0, by = x -> x.first)
+                            if index ≤ length(kinships) && kinships[index].first == mother.rank
+                                deleteat!(kinships, index)
+                            end
+                        end
+                    end
                 end
             end
         elseif individualᵢ.rank < individualⱼ.rank
@@ -558,14 +489,28 @@ function probands_sparse_phi(pedigree::Pedigree; verbose::Bool = false)
             coefficient = 0.
             father = individualⱼ.father
             if !isnothing(father)
-                coefficient += ϕ[individualᵢ.ID, father.ID] / 2
+                (rank₁, rank₂) = individualᵢ.rank ≤ father.rank ?
+                    (individualᵢ.rank, father.rank) : (father.rank, individualᵢ.rank)
+                if haskey(ϕ.dict, rank₁)
+                    slice = searchsorted(ϕ.dict[rank₁], rank₂ => 0, by = x -> x.first)
+                    if !isempty(slice)
+                        coefficient += ϕ.dict[rank₁][slice[1]].second / 2
+                    end
+                end
             end
             mother = individualⱼ.mother
             if !isnothing(mother)
-                coefficient += ϕ[individualᵢ.ID, mother.ID] / 2
+                (rank₁, rank₂) = individualᵢ.rank ≤ mother.rank ?
+                    (individualᵢ.rank, mother.rank) : (mother.rank, individualᵢ.rank)
+                if haskey(ϕ.dict, rank₁)
+                    slice = searchsorted(ϕ.dict[rank₁], rank₂ => 0, by = x -> x.first)
+                    if !isempty(slice)
+                        coefficient += ϕ.dict[rank₁][slice[1]].second / 2
+                    end
+                end
             end
             if coefficient > 0
-                ϕ[individualᵢ.ID, individualⱼ.ID] = coefficient
+                push!(ϕ.dict[individualᵢ.rank], individualⱼ.rank => coefficient)
             end
         end
     end
@@ -591,11 +536,11 @@ Return the mean kinship from a given sparse kinship matrix.
 """
 function phiMean(ϕ::KinshipMatrix)
     total = 0.
-    for (ID, kinships) ∈ ϕ
-        for coefficient ∈ values(kinships)
-            total += coefficient
+    for kinships ∈ values(ϕ)
+        for pair ∈ kinships
+            total += pair.second
         end
-        total -= kinships[ID]
+        total -= kinships[1].second
     end
     count = length(ϕ) * (length(ϕ) - 1) / 2
     total / count
