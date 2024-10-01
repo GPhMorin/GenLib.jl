@@ -84,10 +84,10 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct DictKinshipMatrix <: KinshipMatrix
-    dict::Dict{Int64, Dict{Int64, Float64}}
+    dict::SwissDict{Int64, Dict{Int64, Float64}}
 end
 
-DictKinshipMatrix() = DictKinshipMatrix(Dict{Int64, Dict{Int64, Float64}}())
+DictKinshipMatrix() = DictKinshipMatrix(SwissDict{Int64, SwissDict{Int64, Float64}}())
 
 function Base.getindex(ϕ::DictKinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
@@ -627,7 +627,7 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                         if !isnothing(individualᵢ.father) && !isnothing(individualⱼ.mother)
                             coefficient += phi(individualᵢ.father, individualⱼ.mother, ϕ) / 2
                         end
-                        ϕ.dict[individualᵢ.ID] = Dict{Int64, Float64}()
+                        ϕ.dict[individualᵢ.ID] = SwissDict{Int64, Float64}()
                         ϕ.dict[individualᵢ.ID][individualⱼ.ID] = coefficient
                     elseif individualᵢ.ID < individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
