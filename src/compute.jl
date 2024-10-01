@@ -357,7 +357,7 @@ end
 
 """
     phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::VectorKinshipMatrix)
+    ϕ::T) where T <: KinshipMatrix
 
 Return the kinship coefficient between two individuals given a dictionary of the
 individuals' kinships.
@@ -365,7 +365,7 @@ individuals' kinships.
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::VectorKinshipMatrix)
+    ϕ::T) where T <: KinshipMatrix
     value = 0.
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
@@ -532,70 +532,6 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         end
         ϕ
     end
-end
-
-"""
-    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::T) where T <: KinshipMatrix
-
-Return the kinship coefficient between two individuals given a dictionary of the
-individuals' kinships.
-
-Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
-"""
-function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    ϕ::T) where T <: KinshipMatrix
-    value = 0.
-    if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
-        # Both individuals are founders, so we already know their kinship coefficient
-        value += ϕ[individualᵢ.ID, individualⱼ.ID]
-    elseif individualᵢ.founder_index != 0
-        # Individual i is a founder, so we climb the pedigree on individual j's side
-        if !isnothing(individualⱼ.father)
-            value += phi(individualᵢ, individualⱼ.father, ϕ) / 2
-        end
-        if !isnothing(individualⱼ.mother)
-            value += phi(individualᵢ, individualⱼ.mother, ϕ) / 2
-        end
-    elseif individualⱼ.founder_index != 0
-        # Individual j is a founder, so we climb the pedigree on individual i's side
-        if !isnothing(individualᵢ.father)
-            value += phi(individualⱼ, individualᵢ.father, ϕ) / 2
-        end
-        if !isnothing(individualᵢ.mother)
-            value += phi(individualⱼ, individualᵢ.mother, ϕ) / 2
-        end
-    else
-        # None of the individuals are founders, so we climb on the side of the individual
-        # that appears lowest in the pedigree
-        if individualᵢ.rank > individualⱼ.rank
-            # From the genealogical order, i cannot be an ancestor of j
-            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
-            if !isnothing(individualᵢ.father)
-                value += phi(individualᵢ.father, individualⱼ, ϕ) / 2
-            end
-            if !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.mother, individualⱼ, ϕ) / 2
-            end
-        elseif individualⱼ.rank > individualᵢ.rank
-            # Reverse the order since i can be an ancestor of j
-            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
-            if !isnothing(individualⱼ.father)
-                value += phi(individualⱼ.father, individualᵢ, ϕ) / 2
-            end
-            if !isnothing(individualⱼ.mother)
-                value += phi(individualⱼ.mother, individualᵢ, ϕ) / 2
-            end
-        elseif individualᵢ.rank == individualⱼ.rank
-            # Same individual
-            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
-            value += 0.5
-            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
-            end
-        end
-    end
-    value
 end
 
 """
