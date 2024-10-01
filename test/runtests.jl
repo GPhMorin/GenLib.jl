@@ -55,6 +55,7 @@ end
     @test gen.phiMean(phi) == 0.171875
     @test phi[1, 2] == 0.37109375
     @test phi[0, 0] == 0.
+    @test phi[17, 19] == 0.
     @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
     founder1 = ped[17]
     founder2 = ped[19]
