@@ -286,10 +286,10 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct KinshipMatrix
-    dict::Dict{Int64, Dict{Int64, Float64}}
+    dict::Dict{Int64, Vector{Pair{Int64, Float64}}}
 end
 
-KinshipMatrix() = KinshipMatrix(Dict{Int64, Dict{Int64, Float64}}())
+KinshipMatrix() = KinshipMatrix(Dict{Int64, Vector{Pair{Int64, Float64}}}())
 
 Base.length(ϕ::KinshipMatrix) = length(ϕ.dict)
 Base.keys(ϕ::KinshipMatrix) = keys(ϕ.dict)
@@ -300,15 +300,21 @@ Base.pop!(ϕ::KinshipMatrix) = pop!(ϕ.dict)
 
 function Base.setindex!(ϕ::KinshipMatrix, value::Float64, ID₁::Int64, ID₂::Int64)
     if !haskey(ϕ.dict, ID₁)
-        ϕ.dict[ID₁] = Dict{Int64, Float64}()
+        ϕ.dict[ID₁] = Vector{Pair{Int64, Float64}}()
     end
-    ϕ.dict[ID₁][ID₂] = value
+    index = searchsortedfirst(ϕ.dict[ID₁], Pair(ID₂, 0.), by = x -> x.first)
+    insert!(ϕ.dict[ID₁], index, Pair(ID₂, value))
 end
 
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
     if haskey(ϕ.dict, ID₁)
-        return haskey(ϕ.dict[ID₁], ID₂) ? ϕ.dict[ID₁][ID₂] : 0.
+        slice = searchsorted(ϕ.dict[ID₁], Pair(ID₂, 0.), by = x -> x.first)
+        if !isempty(slice)
+            return ϕ.dict[ID₁][slice[1]].second
+        else
+            return 0.
+        end
     else
         return 0.
     end
@@ -319,7 +325,10 @@ function Base.delete!(ϕ::KinshipMatrix, ID::Int64)
     delete!(ϕ.dict, ID)
     for (ID₂, kinships) ∈ ϕ.dict
         if ID₂ < ID
-            delete!(kinships, ID)
+            slice = searchsorted(ϕ.dict[ID₂], Pair(ID, 0.), by = x -> x.first)
+            if !isempty(slice)
+                deleteat!(kinships, slice[1])
+            end
         end
     end
 end
@@ -483,8 +492,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 j = Threads.threadid()
                 individualᵢ = individuals[i]
                 for individualⱼ ∈ individuals
-                    if individualᵢ.ID ≤ individualⱼ.ID &&
-                        (individualᵢ.founder_index == 0 || individualⱼ.founder_index == 0)
+                    if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
                             ϕs[j][individualᵢ.ID, individualⱼ.ID] = coefficient
@@ -492,22 +500,18 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                     end
                 end
             end
-            # Remove the individuals that are not probands
-            non_recurringIDs = setdiff(previous_generationIDs, next_generationIDs)
-            for ID ∈ non_recurringIDs
-                delete!(ϕ, ID)
-            end
+            empty!(ϕ.dict)
             # Merge the kinships
             while !(isempty(ϕs))
                 ϕᵢ = pop!(ϕs)
                 while !(isempty(ϕᵢ))
                     (IDᵢ, kinships) = pop!(ϕᵢ)
                     if !haskey(ϕ.dict, IDᵢ)
-                        ϕ.dict[IDᵢ] = Dict{Int64, Float64}()
+                        ϕ.dict[IDᵢ] = Vector{Pair{Int64, Float64}}()
                     end
                     while !(isempty(kinships))
-                        (IDⱼ, coefficient) = pop!(kinships)
-                        ϕ.dict[IDᵢ][IDⱼ] = coefficient
+                        (IDⱼ, coefficient) = popfirst!(kinships)
+                        push!(ϕ.dict[IDᵢ], Pair(IDⱼ, coefficient))
                     end
                 end
             end
@@ -535,11 +539,11 @@ Return the mean kinship from a given sparse kinship matrix.
 """
 function phiMean(ϕ::KinshipMatrix)
     total = 0.
-    for (ID, kinships) ∈ ϕ
-        for coefficient ∈ values(kinships)
-            total += coefficient
+    for kinships ∈ values(ϕ)
+        for pair ∈ kinships
+            total += pair.second
         end
-        total -= kinships[ID]
+        total -= kinships[1].second
     end
     count = length(ϕ) * (length(ϕ) - 1) / 2
     total / count
