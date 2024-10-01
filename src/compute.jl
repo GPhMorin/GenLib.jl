@@ -298,18 +298,17 @@ KinshipMatrix(pedigree::Pedigree) = KinshipMatrix(
 )
 
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
-    rank₁ = ϕ.ID_to_rank[ID₁]
-    rank₂ = ϕ.ID_to_rank[ID₂]
+    rank₁ = haskey(ϕ.ID_to_rank, ID₁) ? ϕ.ID_to_rank[ID₁] : nothing
+    rank₂ = haskey(ϕ.ID_to_rank, ID₂) ? ϕ.ID_to_rank[ID₂] : nothing
+    if isnothing(rank₁) || isnothing(rank₂)
+        return 0.
+    end
     (rank₁, rank₂) = rank₁ ≤ rank₂ ? (rank₁, rank₂) : (rank₂, rank₁)
     if !haskey(ϕ.dict, rank₁)
-        0.
+        return 0.
     else
         slice = searchsorted(ϕ.dict[rank₁], rank₂ => 0, by = x -> x.first)
-        if !isempty(slice)
-            ϕ.dict[rank₁][slice[1]].second
-        else
-            0.
-        end
+        return !isempty(slice) ? ϕ.dict[rank₁][slice[1]].second : 0.
     end
 end
 
