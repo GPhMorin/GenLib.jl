@@ -53,6 +53,7 @@ end
     @test gen.phiMean(phi) == 0.171875
     phi = gen.vector_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
+    @test phi[0, 0] == 0.
     phi = gen.dict_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
     @test phi[0, 0] == 0.
