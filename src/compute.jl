@@ -300,7 +300,6 @@ Base.iterate(ϕ::KinshipMatrix, i) = iterate(ϕ.dict, i)
 Base.pop!(ϕ::KinshipMatrix) = pop!(ϕ.dict)
 
 function Base.setindex!(ϕ::KinshipMatrix, value::Float64, ID₁::Int64, ID₂::Int64)
-    (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
     if !haskey(ϕ.dict, ID₁)
         ϕ.dict[ID₁] = Dict{Int64, Float64}()
     end
@@ -317,6 +316,7 @@ function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
 end
 
 function Base.delete!(ϕ::KinshipMatrix, ID::Int64)
+    empty!(ϕ.dict[ID])
     delete!(ϕ.dict, ID)
     for (ID₂, kinships) ∈ ϕ.dict
         if ID₂ < ID
@@ -367,14 +367,7 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
     else
         # None of the individuals are founders, so we climb on the side of the individual
         # that appears lowest in the pedigree
-        if individualᵢ.rank == individualⱼ.rank
-            # Same individual
-            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
-            value += 0.5
-            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
-                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
-            end
-        else
+        if individualᵢ.rank > individualⱼ.rank
             # From the genealogical order, i cannot be an ancestor of j
             # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
             if !isnothing(individualᵢ.father)
@@ -382,6 +375,22 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             end
             if !isnothing(individualᵢ.mother)
                 value += phi(individualᵢ.mother, individualⱼ, ϕ) / 2
+            end
+        elseif individualⱼ.rank > individualᵢ.rank
+            # Reverse the order since i can be an ancestor of j
+            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
+            if !isnothing(individualⱼ.father)
+                value += phi(individualⱼ.father, individualᵢ, ϕ) / 2
+            end
+            if !isnothing(individualⱼ.mother)
+                value += phi(individualⱼ.mother, individualᵢ, ϕ) / 2
+            end
+        elseif individualᵢ.rank == individualⱼ.rank
+            # Same individual
+            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
+            value += 0.5
+            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
             end
         end
     end
@@ -475,7 +484,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 j = Threads.threadid()
                 individualᵢ = individuals[i]
                 for individualⱼ ∈ individuals
-                    if individualᵢ.rank ≤ individualⱼ.rank &&
+                    if individualᵢ.ID ≤ individualⱼ.ID &&
                         (individualᵢ.founder_index == 0 || individualⱼ.founder_index == 0)
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
@@ -490,12 +499,16 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 delete!(ϕ, ID)
             end
             # Merge the kinships
-            for ϕᵢ ∈ ϕs
-                while !isempty(ϕᵢ)
+            while !(isempty(ϕs))
+                ϕᵢ = pop!(ϕs)
+                while !(isempty(ϕᵢ))
                     (IDᵢ, kinships) = pop!(ϕᵢ)
-                    while !isempty(kinships)
+                    if !haskey(ϕ.dict, IDᵢ)
+                        ϕ.dict[IDᵢ] = Dict{Int64, Float64}()
+                    end
+                    while !(isempty(kinships))
                         (IDⱼ, coefficient) = pop!(kinships)
-                        ϕ[IDᵢ, IDⱼ] = coefficient
+                        ϕ.dict[IDᵢ][IDⱼ] = coefficient
                     end
                 end
             end
