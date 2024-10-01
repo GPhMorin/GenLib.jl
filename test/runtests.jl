@@ -55,7 +55,7 @@ end
     @test gen.phiMean(phi) == 0.171875
     phi = gen.probands_sparse_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
-    @test repr(MIME("text/plain"), phi) == "3×3 kinship matrix with 6 stored entries."
+    @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
     @test sort(collect(keys(phi))) == gen.pro(ped)
     founder1 = ped[17]
     founder2 = ped[19]

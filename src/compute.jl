@@ -326,7 +326,7 @@ function Base.show(io::IO, ::MIME"text/plain", ϕ::KinshipMatrix)
     for kinships ∈ values(ϕ)
         nz += length(kinships)
     end
-    print(io, "$(length(ϕ))×$(length(ϕ)) kinship matrix with $nz stored entries.")
+    print(io, "$(length(ϕ))×$(length(ϕ)) KinshipMatrix with $nz stored entries.")
 end
 
 """
