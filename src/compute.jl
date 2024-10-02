@@ -84,10 +84,10 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct DictKinshipMatrix <: KinshipMatrix
-    dict::RobinDict{Int64, Dict{Int64, Float64}}
+    dict::Dict{Int64, Dict{Int64, Float64}}
 end
 
-DictKinshipMatrix() = DictKinshipMatrix(RobinDict{Int64, SwissDict{Int64, Float64}}())
+DictKinshipMatrix() = DictKinshipMatrix(Dict{Int64, Dict{Int64, Float64}}())
 
 function Base.getindex(ϕ::DictKinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
@@ -614,21 +614,24 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
+            # Fill the dictionary, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ sort(next_generationIDs)]
-            for individualᵢ ∈ individuals
-                for individualⱼ ∈ individuals
+            for i ∈ eachindex(individuals)
+                individual = individuals[i]
+                if individual.founder_index == 0
+                    coefficient = phi(individual, individual, ϕ)
+                    ϕ.dict[individual.ID] = Dict{Int64, Float64}(
+                        individual.ID => coefficient
+                    )
+                end
+            end
+            for i ∈ eachindex(individuals)
+                individualᵢ = individuals[i]
+                for j ∈ eachindex(individuals)
+                    individualⱼ = individuals[j]
                     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
                         # Both are founders, so we already know their kinship coefficient
                         continue
-                    end
-                    if individualᵢ.ID == individualⱼ.ID
-                        coefficient = 0.5
-                        if !isnothing(individualᵢ.father) && !isnothing(individualⱼ.mother)
-                            coefficient += phi(individualᵢ.father, individualⱼ.mother, ϕ) / 2
-                        end
-                        ϕ.dict[individualᵢ.ID] = SwissDict{Int64, Float64}()
-                        ϕ.dict[individualᵢ.ID][individualⱼ.ID] = coefficient
                     elseif individualᵢ.ID < individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
@@ -644,7 +647,8 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             )
             for IDᵢ ∈ non_recurringIDs
                 delete!(ϕ.dict, IDᵢ)
-                for IDⱼ ∈ non_recurringIDs
+                Threads.@threads for i ∈ eachindex(non_recurringIDs)
+                    IDⱼ = non_recurringIDs[i]
                     if IDᵢ > IDⱼ
                         delete!(ϕ.dict[IDⱼ], IDᵢ)
                     end
