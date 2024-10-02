@@ -655,6 +655,7 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
             end
             sizehint!(ϕ.dict, length(next_generationIDs))
+            GC.gc()
         end
         ϕ
     end
