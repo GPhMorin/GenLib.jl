@@ -614,17 +614,12 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             for ID ∈ previous_generationIDs
                 indexed_pedigree[ID].founder_index = 1
             end
-            # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
+            # Compute in parallel, using the adapted algorithm from Karigl, 1981
+            channel = Channel{Tuple{Int64, Int64, Float64}}(Inf)
             individuals = [indexed_pedigree[ID] for ID ∈ sort(next_generationIDs)]
-            for i ∈ eachindex(individuals)
-                individual = individuals[i]
-                if individual.founder_index == 0
-                    ϕ.dict[individual.ID] = Dict{Int64, Float64}()
-                end
-            end
             Threads.@threads for i ∈ eachindex(individuals)
                 individualᵢ = individuals[i]
-                for j ∈ eachindex(individuals)
+                Threads.@threads for j ∈ eachindex(individuals)
                     individualⱼ = individuals[j]
                     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
                         # Both are founders, so we already know their kinship coefficient
@@ -632,7 +627,7 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                     elseif individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
-                            ϕ.dict[individualᵢ.ID][individualⱼ.ID] = coefficient
+                            put!(channel, (individualᵢ.ID, individualⱼ.ID, coefficient))
                         end
                     end
                 end
@@ -643,6 +638,8 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 rev = true
             )
             for IDᵢ ∈ non_recurringIDs
+                empty!(ϕ.dict[IDᵢ])
+                sizehint!(ϕ.dict[IDᵢ], 0)
                 delete!(ϕ.dict, IDᵢ)
                 Threads.@threads for i ∈ eachindex(non_recurringIDs)
                     IDⱼ = non_recurringIDs[i]
@@ -651,6 +648,15 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                     end
                 end
             end
+            # Insert the new kinships
+            while !isempty(channel)
+                (IDᵢ, IDⱼ, coefficient) = take!(channel)
+                if !haskey(ϕ.dict, IDᵢ)
+                    ϕ.dict[IDᵢ] = Dict{Int64, Float64}()
+                end
+                ϕ.dict[IDᵢ][IDⱼ] = coefficient
+            end
+            # Size hint the dictionaries
             Threads.@threads for ID ∈ next_generationIDs
                 sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
             end
