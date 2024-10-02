@@ -42,7 +42,7 @@ function Base.show(io::IO, ::MIME"text/plain", ϕ::T) where T <: KinshipMatrix
     for kinships ∈ values(ϕ)
         nz += length(kinships)
     end
-    print(io, "$(length(ϕ))×$(length(ϕ)) VectorKinshipMatrix with $nz stored entries.")
+    print(io, "$(length(ϕ))×$(length(ϕ)) KinshipMatrix with $nz stored entries.")
 end
 
 """
@@ -651,6 +651,10 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                     end
                 end
             end
+            Threads.@threads for ID ∈ next_generationIDs
+                sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
+            end
+            sizehint!(ϕ.dict, length(next_generationIDs))
         end
         ϕ
     end

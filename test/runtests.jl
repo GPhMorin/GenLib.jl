@@ -57,7 +57,7 @@ end
     phi = gen.dict_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
     @test phi[0, 0] == 0.
-    @test repr(MIME("text/plain"), phi) == "3×3 VectorKinshipMatrix with 6 stored entries."
+    @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
     @test sort(collect(keys(phi))) == gen.pro(ped)
     founder1 = ped[17]
     founder2 = ped[19]
