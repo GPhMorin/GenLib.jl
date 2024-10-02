@@ -83,7 +83,7 @@ end
 
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
-struct DictKinshipMatrix <: KinshipMatrix
+mutable struct DictKinshipMatrix <: KinshipMatrix
     dict::Dict{Int64, Dict{Int64, Float64}}
 end
 
@@ -621,10 +621,7 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                 individualᵢ = individuals[i]
                 Threads.@threads for j ∈ eachindex(individuals)
                     individualⱼ = individuals[j]
-                    if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
-                        # Both are founders, so we already know their kinship coefficient
-                        continue
-                    elseif individualᵢ.ID ≤ individualⱼ.ID
+                    if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
                             put!(channel, (individualᵢ.ID, individualⱼ.ID, coefficient))
@@ -632,41 +629,16 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                     end
                 end
             end
-            # Remove the kinships that are no longer needed
-            non_recurringIDs = sort(
-                setdiff(previous_generationIDs, next_generationIDs),
-                rev = true
-            )
-            for IDᵢ ∈ non_recurringIDs
-                empty!(ϕ.dict[IDᵢ])
-                sizehint!(ϕ.dict[IDᵢ], 0)
-                delete!(ϕ.dict, IDᵢ)
-                Threads.@threads for i ∈ eachindex(non_recurringIDs)
-                    IDⱼ = non_recurringIDs[i]
-                    if IDᵢ > IDⱼ
-                        delete!(ϕ.dict[IDⱼ], IDᵢ)
-                    end
-                end
-            end
-            # Size hint the dictionaries
+            # Reinitialize the dictionary
+            ϕ.dict = Dict{Int64, Dict{Int64, Float64}}()
             sizehint!(ϕ.dict, length(next_generationIDs))
-            Threads.@threads for ID ∈ next_generationIDs
-                if haskey(ϕ.dict, ID)
-                    sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
-                end
+            for ID ∈ next_generationIDs
+                ϕ.dict[ID] = Dict{Int64, Float64}()
             end
-            GC.gc()
             # Insert the new kinships
             while !isempty(channel)
                 (IDᵢ, IDⱼ, coefficient) = take!(channel)
-                if !haskey(ϕ.dict, IDᵢ)
-                    ϕ.dict[IDᵢ] = Dict{Int64, Float64}()
-                end
                 ϕ.dict[IDᵢ][IDⱼ] = coefficient
-            end
-            # Size hint the dictionaries
-            Threads.@threads for ID ∈ next_generationIDs
-                sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
             end
             GC.gc()
         end
