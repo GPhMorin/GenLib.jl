@@ -84,10 +84,10 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct DictKinshipMatrix <: KinshipMatrix
-    dict::Dict{Int64, SwissDict{Int64, Float64}}
+    dict::RobinDict{Int64, SwissDict{Int64, Float64}}
 end
 
-DictKinshipMatrix() = DictKinshipMatrix(SwissDict{Int64, Dict{Int64, Float64}}())
+DictKinshipMatrix() = DictKinshipMatrix(RobinDict{Int64, Dict{Int64, Float64}}())
 
 function Base.getindex(ϕ::DictKinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
