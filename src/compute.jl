@@ -648,6 +648,14 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
                     end
                 end
             end
+            # Size hint the dictionaries
+            sizehint!(ϕ.dict, length(next_generationIDs))
+            Threads.@threads for ID ∈ next_generationIDs
+                if haskey(ϕ.dict, ID)
+                    sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
+                end
+            end
+            GC.gc()
             # Insert the new kinships
             while !isempty(channel)
                 (IDᵢ, IDⱼ, coefficient) = take!(channel)
@@ -660,7 +668,6 @@ function dict_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
             Threads.@threads for ID ∈ next_generationIDs
                 sizehint!(ϕ.dict[ID], length(ϕ.dict[ID]))
             end
-            sizehint!(ϕ.dict, length(next_generationIDs))
             GC.gc()
         end
         ϕ
