@@ -37,45 +37,35 @@ Base.iterate(ϕ::T) where T <: KinshipMatrix = iterate(ϕ.dict)
 Base.iterate(ϕ::T, i) where T <: KinshipMatrix = iterate(ϕ.dict, i)
 Base.pop!(ϕ::T) where T <: KinshipMatrix = pop!(ϕ.dict)
 
-function Base.show(io::IO, ::MIME"text/plain", ϕ::T) where T <: KinshipMatrix
-    nz = 0
-    for kinships ∈ values(ϕ)
-        nz += length(kinships)
-    end
-    print(io, "$(length(ϕ))×$(length(ϕ)) KinshipMatrix with $nz stored entries.")
-end
-
 """
     struct VectorKinshipMatrix <: KinshipMatrix
 
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct VectorKinshipMatrix <: KinshipMatrix
-    dict::Dict{Int64, Vector{Pair{Int64, Float64}}}
+    values::Vector{Vector{Pair{Int64, Float64}}}
+    ID_to_index::Dict{Int64, Int64}
 end
 
-VectorKinshipMatrix() = VectorKinshipMatrix(Dict{Int64, Vector{Pair{Int64, Float64}}}())
-
-function Base.setindex!(ϕ::VectorKinshipMatrix, value::Float64, ID₁::Int64, ID₂::Int64)
-    if !haskey(ϕ.dict, ID₁)
-        ϕ.dict[ID₁] = Vector{Pair{Int64, Float64}}()
-    end
-    index = searchsortedfirst(ϕ.dict[ID₁], Pair(ID₂, 0.), by = x -> x.first)
-    insert!(ϕ.dict[ID₁], index, Pair(ID₂, value))
-end
+VectorKinshipMatrix(ϕ::Vector{Vector{Pair{Int64, Float64}}}, IDs::Vector{Int64}) =
+    VectorKinshipMatrix(
+    ϕ,
+    Dict(ID => index for (index, ID) ∈ enumerate(IDs))
+)
 
 function Base.getindex(ϕ::VectorKinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
-    if haskey(ϕ.dict, ID₁)
-        slice = searchsorted(ϕ.dict[ID₁], Pair(ID₂, 0.), by = x -> x.first)
-        if !isempty(slice)
-            return ϕ.dict[ID₁][slice[1]].second
-        else
-            return 0.
-        end
-    else
-        return 0.
+    slice = searchsorted(ϕ[ID_to_index[ID₁]], ID₂ => 0, by = first)
+    !isempty(slice) ? ϕ.dict[ID₁][slice[1]].second : 0.
+end
+
+function Base.show(io::IO, ::MIME"text/plain", ϕ::T) where T <: VectorKinshipMatrix
+    nz = 0
+    for kinships ∈ (ϕ.values)
+        nz += length(kinships)
     end
+    print(io, "$(length(ϕ.values))×$(length(ϕ.values)) KinshipMatrix " *
+        "with $nz stored entries.")
 end
 
 """
@@ -91,11 +81,15 @@ DictKinshipMatrix() = DictKinshipMatrix(Dict{Int64, Dict{Int64, Float64}}())
 
 function Base.getindex(ϕ::DictKinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
-    if haskey(ϕ.dict, ID₁)
-        return haskey(ϕ.dict[ID₁], ID₂) ? ϕ.dict[ID₁][ID₂] : 0.
-    else
-        return 0.
+    return haskey(ϕ.dict[ID₁], ID₂) ? ϕ.dict[ID₁][ID₂] : 0.
+end
+
+function Base.show(io::IO, ::MIME"text/plain", ϕ::T) where T <: DictKinshipMatrix
+    nz = 0
+    for kinships ∈ values(ϕ)
+        nz += length(kinships)
     end
+    print(io, "$(length(ϕ))×$(length(ϕ)) KinshipMatrix with $nz stored entries.")
 end
 
 """
@@ -420,6 +414,79 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
 end
 
 """
+    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
+    ϕ::T) where T <: KinshipMatrix
+
+Return the kinship coefficient between two individuals given a dictionary of the
+individuals' kinships.
+
+Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+"""
+function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
+    ϕ::Vector{Vector{Pair{Int64, Float64}}})
+    value = 0.
+    if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
+        # Both individuals are founders, so we already know their kinship coefficient
+        (individualᵢ, individualⱼ) = individualᵢ.ID < individualⱼ.ID ?
+            (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
+        slice = searchsorted(
+            ϕ[individualᵢ.founder_index],
+            individualⱼ.ID => 0,
+            by = first
+        )
+        if !isempty(slice)
+            value += ϕ[individualᵢ.founder_index][slice[1]].second
+        end
+    elseif individualᵢ.founder_index != 0
+        # Individual i is a founder, so we climb the pedigree on individual j's side
+        if !isnothing(individualⱼ.father)
+            value += phi(individualᵢ, individualⱼ.father, ϕ) / 2
+        end
+        if !isnothing(individualⱼ.mother)
+            value += phi(individualᵢ, individualⱼ.mother, ϕ) / 2
+        end
+    elseif individualⱼ.founder_index != 0
+        # Individual j is a founder, so we climb the pedigree on individual i's side
+        if !isnothing(individualᵢ.father)
+            value += phi(individualⱼ, individualᵢ.father, ϕ) / 2
+        end
+        if !isnothing(individualᵢ.mother)
+            value += phi(individualⱼ, individualᵢ.mother, ϕ) / 2
+        end
+    else
+        # None of the individuals are founders, so we climb on the side of the individual
+        # that appears lowest in the pedigree
+        if individualᵢ.rank > individualⱼ.rank
+            # From the genealogical order, i cannot be an ancestor of j
+            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
+            if !isnothing(individualᵢ.father)
+                value += phi(individualᵢ.father, individualⱼ, ϕ) / 2
+            end
+            if !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.mother, individualⱼ, ϕ) / 2
+            end
+        elseif individualⱼ.rank > individualᵢ.rank
+            # Reverse the order since i can be an ancestor of j
+            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
+            if !isnothing(individualⱼ.father)
+                value += phi(individualⱼ.father, individualᵢ, ϕ) / 2
+            end
+            if !isnothing(individualⱼ.mother)
+                value += phi(individualⱼ.mother, individualᵢ, ϕ) / 2
+            end
+        elseif individualᵢ.rank == individualⱼ.rank
+            # Same individual
+            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
+            value += 0.5
+            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
+            end
+        end
+    end
+    value
+end
+
+"""
     vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
         verbose::Bool = false)
 
@@ -446,7 +513,7 @@ gen.sparse_phi(ped)
 function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     verbose::Bool = false, compute::Bool = true)
     # Start from the probands and go up until the highest founder(s)
-    cut_vertices = [probandIDs]
+    cut_vertices = [sort(probandIDs)]
     previous_generationIDs = _previous_generation(pedigree, probandIDs)
     while !isempty(previous_generationIDs)
         pushfirst!(cut_vertices, previous_generationIDs)
@@ -479,14 +546,14 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         # quickly track the location of the founders in their kinship vector.
         indexed_pedigree = _index_pedigree(pedigree)
         # Initialize the kinship vector of the top founders
-        ϕ = VectorKinshipMatrix()
+        ϕ = Vector{Vector{Pair{Int64, Float64}}}()
         for ID ∈ cut_vertices[1]
-            ϕ[ID, ID] = 0.5
+            push!(ϕ, [ID => 0.5])
         end
         # For each pair of generations…
         for k ∈ 1:length(cut_vertices)-1
-            previous_generationIDs = cut_vertices[k]
-            next_generationIDs = cut_vertices[k+1]
+            previous_generationIDs = sort(cut_vertices[k])
+            next_generationIDs = sort(cut_vertices[k+1])
             # Describe each pair of generations, if desired
             if verbose
                 println("Running step $k of $(length(cut_vertices)-1) " *
@@ -495,42 +562,30 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                     "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
             end
             # Assign the index to each individual from the previous generation
-            for ID ∈ previous_generationIDs
-                indexed_pedigree[ID].founder_index = 1
+            for (index, ID) ∈ enumerate(previous_generationIDs)
+                indexed_pedigree[ID].founder_index = index
             end
             # Make a parallel copy of the kinships
-            ϕs = [VectorKinshipMatrix() for _ ∈ 1:Threads.nthreads()]
+            ϕ₂ = Vector{Vector{Pair{Int64, Float64}}}()
+            for _ ∈ 1:length(next_generationIDs)
+                push!(ϕ₂, Vector{Pair{Int64, Float64}}())
+            end
             # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
-            Threads.@threads :static for i ∈ eachindex(individuals)
-                j = Threads.threadid()
+            Threads.@threads for i ∈ eachindex(individuals)
                 individualᵢ = individuals[i]
                 for individualⱼ ∈ individuals
                     if individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0
-                            ϕs[j][individualᵢ.ID, individualⱼ.ID] = coefficient
+                            push!(ϕ₂[i], individualⱼ.ID => coefficient)
                         end
                     end
                 end
             end
-            empty!(ϕ.dict)
-            # Merge the kinships
-            while !(isempty(ϕs))
-                ϕᵢ = pop!(ϕs)
-                while !(isempty(ϕᵢ))
-                    (IDᵢ, kinships) = pop!(ϕᵢ)
-                    if !haskey(ϕ.dict, IDᵢ)
-                        ϕ.dict[IDᵢ] = Vector{Pair{Int64, Float64}}()
-                    end
-                    while !(isempty(kinships))
-                        (IDⱼ, coefficient) = popfirst!(kinships)
-                        push!(ϕ.dict[IDᵢ], Pair(IDⱼ, coefficient))
-                    end
-                end
-            end
+            ϕ = ϕ₂
         end
-        ϕ
+        VectorKinshipMatrix(ϕ, sort(cut_vertices[end]))
     end
 end
 
@@ -665,13 +720,13 @@ Return the mean kinship from a given sparse kinship matrix.
 """
 function phiMean(ϕ::VectorKinshipMatrix)
     total = 0.
-    for kinships ∈ values(ϕ)
+    for kinships ∈ ϕ.values
         for pair ∈ kinships
             total += pair.second
         end
         total -= kinships[1].second
     end
-    count = length(ϕ) * (length(ϕ) - 1) / 2
+    count = length(ϕ.values) * (length(ϕ.values) - 1) / 2
     total / count
 end
 
