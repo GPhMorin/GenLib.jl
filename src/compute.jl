@@ -33,7 +33,7 @@ end
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
     slice = searchsorted(ϕ.dict[ID₁], ID₂ => 0, by = first)
-    !isempty(slice) ? ϕ.dict[ID₁][slice[1]].second : 0.
+    !isempty(slice) ? ϕ.dict[ID₁][first(slice)].second : 0.
 end
 
 function Base.show(io::IO, ::MIME"text/plain", ϕ::KinshipMatrix)
@@ -268,7 +268,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
     # quickly track the location of the founders in their kinship matrix.
     indexed_pedigree = _index_pedigree(pedigree)
     # Initialize the kinship matrix of the top founders
-    Ψ = zeros(length(cut_vertices[1]), length(cut_vertices[1]))
+    Ψ = zeros(length(first(cut_vertices)), length(first(cut_vertices)))
     for i ∈ axes(Ψ, 1)
         Ψ[i, i] = 0.5
     end
@@ -325,7 +325,7 @@ function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
             by = first
         )
         if !isempty(slice)
-            value += ϕ[individualᵢ.ID][slice[1]].second
+            value += ϕ[individualᵢ.ID][first(slice)].second
         end
     elseif individualᵢ.founder_index != 0
         # Individual i is a founder, so we climb the pedigree on individual j's side
@@ -439,7 +439,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
     indexed_pedigree = _index_pedigree(pedigree)
     # Initialize the kinship vector of the top founders
     ϕ = Dict{Int64, Vector{Pair{Int64, Float64}}}()
-    for ID ∈ cut_vertices[1]
+    for ID ∈ first(cut_vertices)
         ϕ[ID] = [ID => 0.5]
     end
     # For each pair of generations…
@@ -464,11 +464,8 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             indexed_pedigree[ID].founder_index = i
         end
         # Make a parallel copy of the kinships
-        for ID ∈ setdiff(next_generationIDs, previous_generationIDs)
-            ϕ[ID] = Vector{Pair{Int64, Float64}}()
-        end
-        ϕ₂ = [Vector{Pair{Int64, Float64}}() for _ ∈ recurringIDs]
-        sizehint!(ϕ, length(next_generationIDs))
+        ϕ₂ = Dict{Int64, Vector{Pair{Int64, Float64}}}(ID => Vector{Pair{Int64, Float64}}()
+            for ID ∈ next_generationIDs)
         # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
         individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
         Threads.@threads for i ∈ eachindex(individuals)
@@ -481,12 +478,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                     coefficient = phi(individualᵢ, individualⱼ, ϕ)
                     if coefficient > 0.
                         # Only store the non-zero kinships
-                        if individualᵢ.founder_index > 0
-                            push!(ϕ₂[individualᵢ.founder_index],
-                                individualⱼ.ID => coefficient)
-                        else
-                            push!(ϕ[individualᵢ.ID], individualⱼ.ID => coefficient)
-                        end
+                        push!(ϕ₂[individualᵢ.ID], individualⱼ.ID => coefficient)
                     end
                 end
             end
@@ -494,39 +486,34 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         # Add the new kinships to the recurring individuals
         Threads.@threads for i ∈ eachindex(recurringIDs)
             ID = recurringIDs[i]
-            counter = length(ϕ[ID])
-            while counter > 0 && !isempty(ϕ₂[i])
+            counter = length(ϕ₂[ID])
+            while counter > 0 && !isempty(ϕ[ID])
                 if indexed_pedigree[first(ϕ[ID]).first].founder_index == -1
                     # Do not copy the kinships that are no longer needed
                     popfirst!(ϕ[ID])
-                    counter -= 1
                     continue
                 end
-                if first(ϕ[ID]).first < first(ϕ₂[i]).first
-                    push!(ϕ[ID], popfirst!(ϕ[ID]))
-                    counter -= 1
+                if first(ϕ[ID]).first < first(ϕ₂[ID]).first
+                    push!(ϕ₂[ID], popfirst!(ϕ[ID]))
                 else
-                    push!(ϕ[ID], popfirst!(ϕ₂[i]))
+                    push!(ϕ₂[ID], popfirst!(ϕ₂[ID]))
+                    counter -= 1
                 end
             end
-            while !isempty(ϕ₂[i])
-                push!(ϕ[ID], popfirst!(ϕ₂[i]))
-            end
-            while counter > 0
+            while !isempty(ϕ[ID])
                 if indexed_pedigree[first(ϕ[ID]).first].founder_index == -1
                     # Do not copy the kinships that are no longer needed
                     popfirst!(ϕ[ID])
                 else
-                    push!(ϕ[ID], popfirst!(ϕ[ID]))
+                    push!(ϕ₂[ID], popfirst!(ϕ[ID]))
                 end
+            end
+            while counter > 0
+                push!(ϕ₂[ID], popfirst!(ϕ₂[ID]))
                 counter -= 1
             end
         end
-        # Delete the kinships that are no longer needed
-        for ID ∈ non_recurringIDs
-            delete!(ϕ, ID)
-        end
-        sizehint!(ϕ, length(next_generationIDs))
+        ϕ = ϕ₂
     end
     KinshipMatrix(ϕ)
 end
@@ -554,7 +541,7 @@ function phiMean(ϕ::KinshipMatrix)
         for pair ∈ kinships
             total += pair.second
         end
-        total -= kinships[1].second
+        total -= first(kinships).second
     end
     count = length(ϕ.dict) * (length(ϕ.dict) - 1) / 2
     total / count
@@ -574,7 +561,7 @@ function _lowest_founders(pedigree::Pedigree)
     for founderID ∈ founderIDs
         deepest = pedigree[founderID]
         while length(deepest.children) == 1
-            deepest = deepest.children[1]
+            deepest = first(deepest.children)
         end
         push!(deepestIDs, deepest.ID)
     end
