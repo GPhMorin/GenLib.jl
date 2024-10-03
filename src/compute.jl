@@ -465,70 +465,13 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         Threads.@threads for i ∈ eachindex(individuals)
             individualᵢ = individuals[i]
             for individualⱼ ∈ individuals
-                if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
-                    # Both are founders, so we already know their kinship coefficient
-                    continue
-                elseif individualᵢ.ID ≤ individualⱼ.ID
+                if individualᵢ.ID ≤ individualⱼ.ID
                     coefficient = phi(individualᵢ, individualⱼ, ϕ)
                     if coefficient > 0.
                         # Only store the non-zero kinships
                         push!(ϕ₂[individualᵢ.proband_index], individualⱼ.ID => coefficient)
                     end
                 end
-            end
-        end
-        # Add the new kinships to the recurring individuals
-        non_recurringIDs = setdiff(next_generationIDs, previous_generationIDs)
-        Threads.@threads for ID ∈ non_recurringIDs
-            individual = indexed_pedigree[ID]
-            individual.founder_index = -1
-        end
-        recurringIDs = ∩(previous_generationIDs, next_generationIDs)
-        Threads.@threads for i ∈ eachindex(recurringIDs)
-            ID = recurringIDs[i]
-            individual = indexed_pedigree[ID]
-            counter = length(ϕ₂[individual.proband_index])
-            while counter > 0 && !isempty(ϕ[individual.founder_index])
-                if indexed_pedigree[
-                        first(ϕ[individual.founder_index]).first
-                    ].founder_index == -1
-                    # Do not copy the kinships that are no longer needed
-                    popfirst!(ϕ[individual.founder_index])
-                    continue
-                end
-                if first(ϕ[individual.founder_index]).first <
-                    first(ϕ₂[individual.proband_index]).first
-                    push!(
-                        ϕ₂[individual.proband_index],
-                        popfirst!(ϕ[individual.founder_index])
-                    )
-                else
-                    push!(
-                        ϕ₂[individual.proband_index],
-                        popfirst!(ϕ₂[individual.proband_index])
-                    )
-                    counter -= 1
-                end
-            end
-            while !isempty(ϕ[individual.founder_index])
-                if indexed_pedigree[
-                        first(ϕ[individual.founder_index]).first
-                    ].founder_index == -1
-                    # Do not copy the kinships that are no longer needed
-                    popfirst!(ϕ[individual.founder_index])
-                else
-                    push!(
-                        ϕ₂[individual.proband_index],
-                        popfirst!(ϕ[individual.founder_index])
-                    )
-                end
-            end
-            while counter > 0
-                push!(
-                    ϕ₂[individual.proband_index],
-                    popfirst!(ϕ₂[individual.proband_index])
-                )
-                counter -= 1
             end
         end
         ϕ = ϕ₂
