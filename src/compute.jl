@@ -362,7 +362,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         individualᵢ.founder_index = 1
         if !isnothing(father) && father.proband_index == 0
             if all(child.founder_index != 0 for child ∈ father.children)
-                setdiff!(matrix_IDs, father.ID)
+                delete!(matrix_IDs, father.ID)
                 delete!(ϕ, father.ID)
                 for ID ∈ keys(ϕ)
                     if ID < father.ID
@@ -373,7 +373,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         end
         if !isnothing(mother) && mother.proband_index == 0
             if all(child.founder_index != 0 for child ∈ mother.children)
-                setdiff!(matrix_IDs, mother.ID)
+                delete!(matrix_IDs, mother.ID)
                 delete!(ϕ, mother.ID)
                 for ID ∈ keys(ϕ)
                     if ID < mother.ID
