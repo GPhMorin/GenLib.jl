@@ -596,26 +596,33 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             # Add the new kinships to the recurring individuals
             Threads.@threads for i ∈ eachindex(recurringIDs)
                 IDᵢ = recurringIDs[i]
-                ϕ₃ = Vector{Pair{Int64, Float64}}()
-                while !isempty(ϕ[IDᵢ]) && !isempty(ϕ₂[i])
+                counter = length(ϕ[IDᵢ])
+                while counter > 0 && !isempty(ϕ₂[i])
                     if indexed_pedigree[first(ϕ[IDᵢ]).first].founder_index == -1
                         # Do not copy the kinships that are no longer needed
                         popfirst!(ϕ[IDᵢ])
+                        counter -= 1
                         continue
                     end
                     if first(ϕ[IDᵢ]).first < first(ϕ₂[i]).first
-                        push!(ϕ₃, popfirst!(ϕ[IDᵢ]))
+                        push!(ϕ[IDᵢ], popfirst!(ϕ[IDᵢ]))
+                        counter -= 1
                     else
-                        push!(ϕ₃, popfirst!(ϕ₂[i]))
+                        push!(ϕ[IDᵢ], popfirst!(ϕ₂[i]))
                     end
                 end
                 while !isempty(ϕ₂[i])
-                    push!(ϕ₃, popfirst!(ϕ₂[i]))
+                    push!(ϕ[IDᵢ], popfirst!(ϕ₂[i]))
                 end
-                while !isempty(ϕ[IDᵢ])
-                    push!(ϕ₃, popfirst!(ϕ[IDᵢ]))
+                while counter > 0
+                    if indexed_pedigree[first(ϕ[IDᵢ]).first].founder_index == -1
+                        # Do not copy the kinships that are no longer needed
+                        popfirst!(ϕ[IDᵢ])
+                    else
+                        push!(ϕ[IDᵢ], popfirst!(ϕ[IDᵢ]))
+                    end
+                    counter -= 1
                 end
-                ϕ[IDᵢ] = ϕ₃
             end
             # Delete the kinships that are no longer needed
             non_recurringIDs = setdiff(previous_generationIDs, next_generationIDs)
