@@ -562,6 +562,7 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             for ID ∈ setdiff(next_generationIDs, previous_generationIDs)
                 ϕ[ID] = Vector{Pair{Int64, Float64}}()
             end
+            sizehint!(ϕ, length(next_generationIDs))
             # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
             Threads.@threads for i ∈ eachindex(individuals)
