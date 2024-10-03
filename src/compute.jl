@@ -609,10 +609,10 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                         push!(ϕ₃, popfirst!(ϕ₂[i]))
                     end
                 end
-                while !(isempty(ϕ₂[i]))
+                while !isempty(ϕ₂[i])
                     push!(ϕ₃, popfirst!(ϕ₂[i]))
                 end
-                while !(isempty(ϕ[IDᵢ]))
+                while !isempty(ϕ[IDᵢ])
                     push!(ϕ₃, popfirst!(ϕ[IDᵢ]))
                 end
                 ϕ[IDᵢ] = ϕ₃
