@@ -582,6 +582,7 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                     elseif individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
                         if coefficient > 0.
+                            # Only store the non-zero kinships
                             if individualᵢ.founder_index > 0
                                 push!(ϕ₂[individualᵢ.founder_index],
                                     individualⱼ.ID => coefficient)
@@ -598,6 +599,7 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 ϕ₃ = Vector{Pair{Int64, Float64}}()
                 while !isempty(ϕ[IDᵢ]) && !isempty(ϕ₂[i])
                     if indexed_pedigree[first(ϕ[IDᵢ]).first].founder_index == -1
+                        # Do not copy the kinships that are no longer needed
                         popfirst!(ϕ[IDᵢ])
                         continue
                     end
