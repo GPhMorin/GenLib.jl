@@ -483,6 +483,155 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
 end
 
 """
+    phi2(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
+        ϕ::Vector{Vector{Pair{Int64, Float64}}})
+
+Return the kinship coefficient between two individuals given a vector of the
+individuals' kinships.
+
+Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
+"""
+function phi2(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
+    ϕ::Vector{Vector{Pair{Int64, Float64}}})
+    value = 0.
+    if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
+        # Both individuals are founders, so we already know their kinship coefficient
+        (individualᵢ, individualⱼ) = individualᵢ.ID < individualⱼ.ID ?
+            (individualᵢ, individualⱼ) : (individualⱼ, individualᵢ)
+        slice = searchsorted(
+            ϕ[individualᵢ.founder_index],
+            individualⱼ.ID => 0,
+            by = first
+        )
+        if !isempty(slice)
+            value += ϕ[individualᵢ.founder_index][first(slice)].second
+        end
+    elseif individualᵢ.founder_index != 0
+        # Individual i is a founder, so we climb the pedigree on individual j's side
+        if !isnothing(individualⱼ.father)
+            value += phi(individualᵢ, individualⱼ.father, ϕ) / 2
+        end
+        if !isnothing(individualⱼ.mother)
+            value += phi(individualᵢ, individualⱼ.mother, ϕ) / 2
+        end
+    elseif individualⱼ.founder_index != 0
+        # Individual j is a founder, so we climb the pedigree on individual i's side
+        if !isnothing(individualᵢ.father)
+            value += phi(individualⱼ, individualᵢ.father, ϕ) / 2
+        end
+        if !isnothing(individualᵢ.mother)
+            value += phi(individualⱼ, individualᵢ.mother, ϕ) / 2
+        end
+    else
+        # None of the individuals are founders, so we climb on the side of the individual
+        # that appears lowest in the pedigree
+        if individualᵢ.rank > individualⱼ.rank
+            # From the genealogical order, i cannot be an ancestor of j
+            # Φᵢⱼ = (Φₚⱼ + Φₘⱼ) / 2, if i is not an ancestor of j (Karigl, 1981)
+            if !isnothing(individualᵢ.father)
+                value += phi(individualᵢ.father, individualⱼ, ϕ) / 2
+            end
+            if !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.mother, individualⱼ, ϕ) / 2
+            end
+        elseif individualⱼ.rank > individualᵢ.rank
+            # Reverse the order since i can be an ancestor of j
+            # Φⱼᵢ = (Φₚᵢ + Φₘᵢ) / 2, if j is not an ancestor of i (Karigl, 1981)
+            if !isnothing(individualⱼ.father)
+                value += phi(individualⱼ.father, individualᵢ, ϕ) / 2
+            end
+            if !isnothing(individualⱼ.mother)
+                value += phi(individualⱼ.mother, individualᵢ, ϕ) / 2
+            end
+        elseif individualᵢ.rank == individualⱼ.rank
+            # Same individual
+            # Φₐₐ = (1 + Φₚₘ) / 2 (Karigl, 1981)
+            value += 0.5
+            if !isnothing(individualᵢ.father) && !isnothing(individualᵢ.mother)
+                value += phi(individualᵢ.father, individualᵢ.mother, ϕ) / 2
+            end
+        end
+    end
+    value
+end
+
+function minimal_sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree))
+    isolated_pedigree = branching(pedigree, pro = probandIDs)
+    indexed_pedigree = _index_pedigree(isolated_pedigree)
+    for (index, ID) ∈ enumerate(probandIDs)
+        indexed_pedigree[ID].proband_index = index
+    end
+    ϕ = Vector{Vector{Pair{Int64, Float64}}}()
+    index_to_ID = Dict{Int64, Int64}()
+    for individualᵢ ∈ values(indexed_pedigree)
+        for individualⱼ ∈ values(indexed_pedigree)
+            if individualᵢ.rank > individualⱼ.rank
+                continue
+            end
+            if individualᵢ.rank < individualⱼ.rank
+                coefficient = phi(individualᵢ, individualⱼ, ϕ)
+                if coefficient > 0.
+                    push!(ϕ[individualᵢ.founder_index], individualⱼ.ID => coefficient)
+                end
+                continue
+            end
+            if individualᵢ.rank == individualⱼ.rank
+                push!(ϕ, [individualᵢ.ID => phi(individualᵢ, individualⱼ, ϕ)])
+                index = length(ϕ)
+                individualᵢ.founder_index = index
+                index_to_ID[index] = individualᵢ.ID
+            end
+            father = individualᵢ.father
+            if !isnothing(father)
+                if father.founder_index != -1 && father.proband_index == 0
+                    max_rank = maximum(child.rank for child ∈ father.children)
+                    if individualᵢ.rank == max_rank
+                        last_ID = index_to_ID[lastindex(ϕ)]
+                        last_kinships = pop!(ϕ)
+                        new_index = father.founder_index
+                        indexed_pedigree[last_ID].founder_index = new_index
+                        ϕ[new_index] = last_kinships
+                        index_to_ID[new_index] = last_ID
+                        Threads.@threads for kinships ∈ ϕ
+                            kinship = searchsorted(kinships, father.ID => 0, by = first)
+                            if !isempty(kinship)
+                                deleteat!(kinships, first(kinship))
+                            end
+                        end
+                        father.founder_index = -1
+                    end
+                end
+            end
+            mother = individualᵢ.mother
+            if !isnothing(mother)
+                if mother.founder_index == -1 && mother.proband_index == 0
+                    max_ID = maximum(child.ID for child ∈ mother.children)
+                    if individualᵢ.ID == max_ID
+                        last_ID = index_to_ID[lastindex(ϕ)]
+                        last_kinships = pop!(ϕ)
+                        new_index = mother.founder_index
+                        indexed_pedigree[last_ID].founder_index = new_index
+                        ϕ[new_index] = last_kinships
+                        index_to_ID[new_index] = last_ID
+                        Threads.@threads for kinships ∈ ϕ
+                            kinship = searchsorted(kinships, mother.ID => 0, by = first)
+                            if !isempty(kinship)
+                                deleteat!(kinships, first(kinship))
+                            end
+                        end
+                        mother.founder_index = -1
+                    end
+                end
+            end
+        end
+    end
+    ID_to_index = Dict{Int64, Int64}(
+        ID => indexed_pedigree[ID].founder_index for ID ∈ probandIDs
+    )
+    KinshipMatrix(ϕ, ID_to_index)
+end
+
+"""
     function phiMean(ϕ::Matrix{Float64})
 
 Return the mean kinship from a given kinship matrix.
