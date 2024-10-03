@@ -317,13 +317,16 @@ gen.sparse_phi(ped)
 """
 function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree))
     isolated_pedigree = branching(pedigree, pro = probandIDs)
+    indexed_pedigree = _index_pedigree(isolated_pedigree)
+    for (index, ID) ∈ enumerate(probandIDs)
+        indexed_pedigree[ID].proband_index = index
+    end
     ϕ = RobinDict{Int64, RobinDict{Int64, Float64}}()
-    visited_IDs = Set{Int64}()
     matrix_IDs = Set{Int64}()
-    queue = founder(isolated_pedigree)
+    queue = founder(pedigree)
     while !isempty(queue)
         IDᵢ = popfirst!(queue)
-        individualᵢ = pedigree[IDᵢ]
+        individualᵢ = indexed_pedigree[IDᵢ]
         ϕ[IDᵢ] = RobinDict{Int64, Float64}()
         coefficient = 0.5
         father = individualᵢ.father
@@ -356,9 +359,9 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             end
         end
         push!(matrix_IDs, individualᵢ.ID)
-        push!(visited_IDs, individualᵢ.ID)
-        if !isnothing(father) && father.ID ∉ probandIDs
-            if all(child.ID ∈ visited_IDs for child ∈ father.children)
+        individualᵢ.founder_index = 1
+        if !isnothing(father) && father.proband_index == 0
+            if all(child.founder_index != 0 for child ∈ father.children)
                 setdiff!(matrix_IDs, father.ID)
                 delete!(ϕ, father.ID)
                 for ID ∈ keys(ϕ)
@@ -368,8 +371,8 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 end
             end
         end
-        if !isnothing(mother) && mother.ID ∉ probandIDs
-            if all(child.ID ∈ visited_IDs for child ∈ mother.children)
+        if !isnothing(mother) && mother.proband_index == 0
+            if all(child.founder_index != 0 for child ∈ mother.children)
                 setdiff!(matrix_IDs, mother.ID)
                 delete!(ϕ, mother.ID)
                 for ID ∈ keys(ϕ)
@@ -381,7 +384,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
         end
         for child ∈ individualᵢ.children
             if !isnothing(child.father) && !isnothing(child.mother)
-                if child.father.ID ∈ matrix_IDs && child.mother.ID ∈ matrix_IDs
+                if child.father.founder_index != 0 && child.mother.founder_index != 0
                     push!(queue, child.ID)
                 end
             else
