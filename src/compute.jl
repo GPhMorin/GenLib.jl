@@ -55,8 +55,8 @@ VectorKinshipMatrix(ϕ::Vector{Vector{Pair{Int64, Float64}}}, IDs::Vector{Int64}
 
 function Base.getindex(ϕ::VectorKinshipMatrix, ID₁::Int64, ID₂::Int64)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
-    slice = searchsorted(ϕ[ID_to_index[ID₁]], ID₂ => 0, by = first)
-    !isempty(slice) ? ϕ.dict[ID₁][slice[1]].second : 0.
+    slice = searchsorted(ϕ.values[ϕ.ID_to_index[ID₁]], ID₂ => 0, by = first)
+    !isempty(slice) ? ϕ.values[ID₁][slice[1]].second : 0.
 end
 
 function Base.show(io::IO, ::MIME"text/plain", ϕ::T) where T <: VectorKinshipMatrix

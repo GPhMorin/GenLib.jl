@@ -54,6 +54,7 @@ end
     phi = gen.vector_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
     @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
+    @test phi[1, 2] == 0.37109375
     phi = gen.dict_phi(ped, verbose = true)
     @test gen.phiMean(phi) == 0.171875
     @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
