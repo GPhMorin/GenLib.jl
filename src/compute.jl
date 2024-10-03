@@ -317,14 +317,14 @@ gen.sparse_phi(ped)
 """
 function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree))
     isolated_pedigree = branching(pedigree, pro = probandIDs)
-    ϕ = Dict{Int64, Dict{Int64, Float64}}()
+    ϕ = RobinDict{Int64, RobinDict{Int64, Float64}}()
     visited_IDs = Set{Int64}()
     matrix_IDs = Set{Int64}()
     queue = founder(isolated_pedigree)
     while !isempty(queue)
         IDᵢ = popfirst!(queue)
         individualᵢ = pedigree[IDᵢ]
-        ϕ[IDᵢ] = Dict{Int64, Float64}()
+        ϕ[IDᵢ] = RobinDict{Int64, Float64}()
         coefficient = 0.5
         father = individualᵢ.father
         mother = individualᵢ.mother
