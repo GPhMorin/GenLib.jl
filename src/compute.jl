@@ -555,13 +555,21 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                     "$(length(∩(previous_generationIDs, next_generationIDs))) both).")
             end
             # Assign the index to each individual from the previous generation
-            for (index, ID) ∈ enumerate(previous_generationIDs)
-                indexed_pedigree[ID].founder_index = index
+            recurringIDs = ∩(previous_generationIDs, next_generationIDs)
+            index = 1
+            for ID ∈ previous_generationIDs
+                if ID ∈ recurringIDs
+                    indexed_pedigree[ID].founder_index = index
+                    index += 1
+                else
+                    indexed_pedigree[ID].founder_index = -1
+                end
             end
             # Make a parallel copy of the kinships
             for ID ∈ setdiff(next_generationIDs, previous_generationIDs)
                 ϕ[ID] = Vector{Pair{Int64, Float64}}()
             end
+            ϕ₂ = [Vector{Pair{Int64, Float64}}() for _ ∈ recurringIDs]
             sizehint!(ϕ, length(next_generationIDs))
             # Fill the dictionary in parallel, using the adapted algorithm from Karigl, 1981
             individuals = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
@@ -573,25 +581,36 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                         continue
                     elseif individualᵢ.ID ≤ individualⱼ.ID
                         coefficient = phi(individualᵢ, individualⱼ, ϕ)
-                        if coefficient > 0
-                            push!(ϕ[individualᵢ.ID], individualⱼ.ID => coefficient)
+                        if coefficient > 0.
+                            if individualᵢ.founder_index > 0
+                                push!(ϕ₂[individualᵢ.founder_index],
+                                    individualⱼ.ID => coefficient)
+                            else
+                                push!(ϕ[individualᵢ.ID], individualⱼ.ID => coefficient)
+                            end
                         end
                     end
                 end
             end
+            # Add the new kinships to the recurring individuals
+            Threads.@threads for i ∈ eachindex(recurringIDs)
+                IDᵢ = recurringIDs[i]
+                while !isempty(ϕ₂[i])
+                    push!(ϕ[IDᵢ], pop!(ϕ₂[i]))
+                end
+                sort!(ϕ[IDᵢ], by = first)
+            end
             # Delete the kinships that are no longer needed
             non_recurringIDs = setdiff(previous_generationIDs, next_generationIDs)
-            for ID ∈ non_recurringIDs
-                delete!(ϕ, ID)
-            end
-            sizehint!(ϕ, length(next_generationIDs))
             for IDᵢ ∈ non_recurringIDs
+                delete!(ϕ, IDᵢ)
                 Threads.@threads for IDⱼ ∈ next_generationIDs
                     if IDᵢ > IDⱼ
                         deleteat!(ϕ[IDⱼ], searchsorted(ϕ[IDⱼ], IDᵢ => 0, by = first))
                     end
                 end
             end
+            sizehint!(ϕ, length(next_generationIDs))
         end
         VectorKinshipMatrix(ϕ)
     end
