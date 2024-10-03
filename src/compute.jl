@@ -595,10 +595,21 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             # Add the new kinships to the recurring individuals
             Threads.@threads for i ∈ eachindex(recurringIDs)
                 IDᵢ = recurringIDs[i]
-                while !isempty(ϕ₂[i])
-                    push!(ϕ[IDᵢ], pop!(ϕ₂[i]))
+                ϕ₃ = Vector{Pair{Int64, Float64}}()
+                while !isempty(ϕ[IDᵢ]) && !isempty(ϕ₂[i])
+                    if first(ϕ[IDᵢ]).first < first(ϕ₂[i]).first
+                        push!(ϕ₃, popfirst!(ϕ[IDᵢ]))
+                    else
+                        push!(ϕ₃, popfirst!(ϕ₂[i]))
+                    end
                 end
-                sort!(ϕ[IDᵢ], by = first)
+                while !(isempty(ϕ₂[i]))
+                    push!(ϕ₃, popfirst!(ϕ₂[i]))
+                end
+                while !(isempty(ϕ[IDᵢ]))
+                    push!(ϕ₃, popfirst!(ϕ[IDᵢ]))
+                end
+                ϕ[IDᵢ] = ϕ₃
             end
             # Delete the kinships that are no longer needed
             non_recurringIDs = setdiff(previous_generationIDs, next_generationIDs)
