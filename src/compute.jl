@@ -597,6 +597,10 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
                 IDᵢ = recurringIDs[i]
                 ϕ₃ = Vector{Pair{Int64, Float64}}()
                 while !isempty(ϕ[IDᵢ]) && !isempty(ϕ₂[i])
+                    if indexed_pedigree[first(ϕ[IDᵢ]).first].founder_index == -1
+                        popfirst!(ϕ[IDᵢ])
+                        continue
+                    end
                     if first(ϕ[IDᵢ]).first < first(ϕ₂[i]).first
                         push!(ϕ₃, popfirst!(ϕ[IDᵢ]))
                     else
@@ -613,13 +617,8 @@ function vector_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             end
             # Delete the kinships that are no longer needed
             non_recurringIDs = setdiff(previous_generationIDs, next_generationIDs)
-            for IDᵢ ∈ non_recurringIDs
-                delete!(ϕ, IDᵢ)
-                Threads.@threads for IDⱼ ∈ next_generationIDs
-                    if IDᵢ > IDⱼ
-                        deleteat!(ϕ[IDⱼ], searchsorted(ϕ[IDⱼ], IDᵢ => 0, by = first))
-                    end
-                end
+            for ID ∈ non_recurringIDs
+                delete!(ϕ, ID)
             end
             sizehint!(ϕ, length(next_generationIDs))
         end
