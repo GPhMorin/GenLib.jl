@@ -324,8 +324,21 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
     ϕ = RobinDict{Int64, RobinDict{Int64, Float64}}()
     matrix_IDs = Set{Int64}()
     queue = founder(pedigree)
+    depths = [_max_depth(individual) for individual ∈ values(isolated_pedigree)]
+    n_per_depth = [count(i -> i == depth, depths) for depth ∈ depths]
+    max_depth = maximum(depths)
+    for depth ∈ unique(depths)
+        println("Depth $depth / $max_depth: $(count(i -> i == depth, depths)) individuals")
+    end
+    current_depth = 0
     while !isempty(queue)
         IDᵢ = popfirst!(queue)
+        depth = popfirst!(depths)
+        n = popfirst!(n_per_depth)
+        if depth != current_depth
+            current_depth = depth
+            println("Running: $current_depth / $max_depth ($n individuals)")
+        end
         individualᵢ = indexed_pedigree[IDᵢ]
         ϕ[IDᵢ] = RobinDict{Int64, Float64}()
         coefficient = 0.5
