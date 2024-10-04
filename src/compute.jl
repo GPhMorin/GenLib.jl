@@ -28,7 +28,7 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct KinshipMatrix
-    dict::Dict{Int, Dict{Int, Float64}}
+    dict::Dict{Int, Dict{Int, Float32}}
 end
 
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int, ID₂::Int)
@@ -92,7 +92,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
 end
 
 """
-    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
+    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float32})
 
 Return the kinship coefficient between two individuals given a matrix of the founders'
 kinships.
@@ -100,7 +100,7 @@ kinships.
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    Ψ::Matrix{Float64})
+    Ψ::Matrix{Float32})
     value = 0.
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
@@ -265,7 +265,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
     # quickly track the location of the founders in their kinship matrix.
     indexed_pedigree = _index_pedigree(pedigree)
     # Initialize the kinship matrix of the top founders
-    Ψ = zeros(length(first(cut_vertices)), length(first(cut_vertices)))
+    Ψ = zeros(Float32, length(first(cut_vertices)), length(first(cut_vertices)))
     for i ∈ axes(Ψ, 1)
         Ψ[i, i] = 0.5
     end
@@ -285,7 +285,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
             indexed_pedigree[ID].founder_index = index
         end
         # Fill the matrix in parallel, using the adapted algorithm from Karigl, 1981
-        ϕ = Matrix{Float64}(undef, length(next_generationIDs), length(next_generationIDs))
+        ϕ = Matrix{Float32}(undef, length(next_generationIDs), length(next_generationIDs))
         probands = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
         Threads.@threads for i ∈ eachindex(probands)
             Threads.@threads for j ∈ eachindex(probands)
@@ -321,7 +321,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     for (index, ID) ∈ enumerate(probandIDs)
         indexed_pedigree[ID].proband_index = index
     end
-    ϕ = RobinDict{Int, RobinDict{Int, Float64}}()
+    ϕ = RobinDict{Int, RobinDict{Int, Float32}}()
     matrix_IDs = Set{Int}()
     queue = founder(pedigree)
     depths = [_max_depth(individual) for individual ∈ values(isolated_pedigree)]
@@ -340,7 +340,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
             println("Running: $current_depth / $max_depth ($n individuals)")
         end
         individualᵢ = indexed_pedigree[IDᵢ]
-        ϕ[IDᵢ] = RobinDict{Int, Float64}()
+        ϕ[IDᵢ] = RobinDict{Int, Float32}()
         coefficient = 0.5
         father = individualᵢ.father
         mother = individualᵢ.mother
@@ -409,11 +409,11 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
 end
 
 """
-    function phiMean(ϕ::Matrix{Float64})
+    function phiMean(ϕ::Matrix{Float32})
 
 Return the mean kinship from a given kinship matrix.
 """
-function phiMean(ϕ::Matrix{Float64})
+function phiMean(ϕ::Matrix{Float32})
     total = sum(ϕ)
     diagonal = sum([ϕ[i, i] for i ∈ axes(ϕ, 1)])
     total -= diagonal
@@ -460,7 +460,7 @@ end
 Return the coefficients of inbreeding of a vector of individuals.
 """
 function f(pedigree::Pedigree, IDs::Vector{Int})
-    coefficients = Float64[]
+    coefficients = Float32[]
     for ID ∈ IDs
         individual = pedigree[ID]
         if isnothing(individual.father) || isnothing(individual.mother)
@@ -482,7 +482,7 @@ mutable struct PossibleDescendant <: AbstractIndividual
     father::Union{Nothing, PossibleDescendant}
     mother::Union{Nothing, PossibleDescendant}
     children::Vector{PossibleDescendant}
-    contribution::Float64
+    contribution::Float32
 end
 
 """
@@ -523,7 +523,7 @@ function gc(
     ancestors::Vector{Int} = founder(pedigree))
     
     # Ported from GENLIB's Congen
-    matrix = zeros(length(pro), length(ancestors))
+    matrix = zeros(Float32, length(pro), length(ancestors))
     contribution_pedigree = Pedigree{PossibleDescendant}()
     for individual ∈ collect(values(pedigree))
         father = individual.father
