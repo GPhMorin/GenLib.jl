@@ -1,11 +1,11 @@
 """
     mutable struct Candidate <: AbstractIndividual
-        ID::Int64
+        ID::Int
         father::Union{Nothing, Candidate}
         mother::Union{Nothing, Candidate}
         children::Vector{Candidate}
-        sex::Int64
-        rank::Int64
+        sex::Int
+        rank::Int
         is_ancestor::Bool
         is_descendant::Bool
     end
@@ -14,12 +14,12 @@ A mutable structure used internally to mark whether
 an individual is an ancestor and/or a descendant.
 """
 mutable struct Candidate <: AbstractIndividual
-    ID::Int64
+    ID::Int
     father::Union{Nothing, Candidate}
     mother::Union{Nothing, Candidate}
     children::Vector{Candidate}
-    sex::Int64
-    rank::Int64
+    sex::Int
+    rank::Int
     is_ancestor::Bool
     is_descendant::Bool
 end
@@ -56,15 +56,15 @@ function _mark_descendants!(individual::Candidate)
 end
 
 """
-    branching(pedigree::Pedigree; pro::Union{Vector{Int64}, Nothing} = nothing,
-    ancestors::Union{Vector{Int64}, Nothing} = nothing)
+    branching(pedigree::Pedigree; pro::Union{Vector{Int}, Nothing} = nothing,
+    ancestors::Union{Vector{Int}, Nothing} = nothing)
 
 Return a pedigree that filters individuals who are in the paths
 between select probands and ancestors.
 """
 function branching(pedigree::Pedigree;
-    pro::Union{Vector{Int64}, Nothing} = nothing,
-    ancestors::Union{Vector{Int64}, Nothing} = nothing)
+    pro::Union{Vector{Int}, Nothing} = nothing,
+    ancestors::Union{Vector{Int}, Nothing} = nothing)
     isolated_pedigree = Pedigree{Individual}()
     marking_pedigree = Pedigree{Candidate}()
     for individual ∈ values(pedigree)
@@ -118,7 +118,7 @@ function branching(pedigree::Pedigree;
                 isolated_pedigree[individual.ID] = Individual(individual.ID,
                 isnothing(father) ? nothing : isolated_pedigree[father.ID],
                 isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
-                Int64[],
+                Int[],
                 individual.sex,
                 rank)
                 if !isnothing(father)
@@ -140,7 +140,7 @@ function branching(pedigree::Pedigree;
                 isolated_pedigree[individual.ID] = Individual(individual.ID,
                 isnothing(father) ? nothing : isolated_pedigree[father.ID],
                 isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
-                Int64[],
+                Int[],
                 individual.sex,
                 rank)
                 if !isnothing(father)
@@ -168,7 +168,7 @@ function branching(pedigree::Pedigree;
                 isolated_pedigree[individual.ID] = Individual(individual.ID,
                 isnothing(father) ? nothing : isolated_pedigree[father.ID],
                 isnothing(mother) ? nothing : isolated_pedigree[mother.ID],
-                Int64[],
+                Int[],
                 individual.sex,
                 rank)
                 if !isnothing(father)

@@ -74,7 +74,7 @@ pop = gen.population(pop140)
 ```
 """
 function _pop(filename::String)
-    population::Dict{Int64, String} = Dict()
+    population::Dict{Int, String} = Dict()
     open(filename) do file
         is_firstline = true
         while !eof(file)
@@ -84,7 +84,7 @@ function _pop(filename::String)
                 continue
             end
             (ind, pop) = split(line)
-            ind = parse(Int64, ind)
+            ind = parse(Int, ind)
             population[ind] = pop
         end
     end

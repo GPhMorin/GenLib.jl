@@ -16,10 +16,10 @@ gen.genout(ped)
 ```
 """
 function genout(pedigree::Pedigree; sorted::Bool = false)
-    inds = Int64[]
-    fathers = Int64[]
-    mothers = Int64[]
-    sexes = Int64[]
+    inds = Int32[]
+    fathers = Int32[]
+    mothers = Int32[]
+    sexes = Int32[]
     if !sorted
         for (ID, individual) ∈ pedigree
             push!(inds, ID)

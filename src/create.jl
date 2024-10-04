@@ -7,42 +7,42 @@ abstract type AbstractIndividual end
 
 """
     struct IntIndividual <: AbstractIndividual
-        ID::Int64
-        father::Int64
-        mother::Int64
-        sex::Int64
-        max_depth::Int64
+        ID::Int
+        father::Int
+        mother::Int
+        sex::Int
+        max_depth::Int
     end
 
 The temporary unit structure of a [`GenLib.Pedigree`](@ref).
 """
 mutable struct IntIndividual <: AbstractIndividual
-    ID::Int64
-    father::Int64
-    mother::Int64
-    sex::Int64
-    max_depth::Int64
+    ID::Int
+    father::Int
+    mother::Int
+    sex::Int
+    max_depth::Int
 end
 
 """
     struct Individual <: AbstractIndividual
-        ID::Int64
+        ID::Int
         father::Union{Nothing, Individual}
         mother::Union{Nothing, Individual}
         children::Vector{Individual}
-        sex::Int64
-        rank::Int64
+        sex::Int
+        rank::Int
     end
 
 The unit structure of a [`GenLib.Pedigree`](@ref).
 """
 struct Individual <: AbstractIndividual
-    ID::Int64
+    ID::Int
     father::Union{Nothing, Individual}
     mother::Union{Nothing, Individual}
     children::Vector{Individual}
-    sex::Int64
-    rank::Int64
+    sex::Int
+    rank::Int
 end
 
 function Base.show(io::IO, individual::T) where T <: AbstractIndividual
@@ -58,20 +58,20 @@ end
 A minimal structure wrapping an `OrderedDict` with individuals accessed by ID.
 """
 struct Pedigree{T}
-    dict::OrderedDict{Int64, T}
+    dict::OrderedDict{Int, T}
 end
 
-Pedigree{T}() where T <: AbstractIndividual = Pedigree(OrderedDict{Int64, T}())
+Pedigree{T}() where T <: AbstractIndividual = Pedigree(OrderedDict{Int, T}())
 
 Base.copy(p::Pedigree{T}) where T <: AbstractIndividual = Pedigree{T}(copy(p.dict))
 Base.length(p::Pedigree{T}) where T <: AbstractIndividual = length(p.dict)
-Base.setindex!(p::Pedigree{T}, value::T, key::Int64) where T <: AbstractIndividual =
+Base.setindex!(p::Pedigree{T}, value::T, key::Int) where T <: AbstractIndividual =
     setindex!(p.dict, value, key)
-Base.getindex(p::Pedigree{T}, key::Int64) where T <: AbstractIndividual = p.dict[key]
+Base.getindex(p::Pedigree{T}, key::Int) where T <: AbstractIndividual = p.dict[key]
 Base.keys(p::Pedigree{T}) where T <: AbstractIndividual = keys(p.dict)
 Base.values(p::Pedigree{T}) where T <: AbstractIndividual = values(p.dict)
 Base.iterate(p::Pedigree{T}) where T <: AbstractIndividual = iterate(p.dict)
-Base.iterate(p::Pedigree{T}, i) where T <: AbstractIndividual = iterate(p.dict, i)
+Base.iterate(p::Pedigree{T}, i::Int) where T <: AbstractIndividual = iterate(p.dict, i)
 
 function Base.show(io::IO, ::MIME"text/plain", pedigree::Pedigree)
     n = 0
@@ -169,10 +169,10 @@ function genealogy(filename::String; sort = true)
                 continue
             end
             (ind, father, mother, sex) = split(line)
-            ind = parse(Int64, ind)
-            father = parse(Int64, father)
-            mother = parse(Int64, mother)
-            sex = parse(Int64, sex)
+            ind = parse(Int, ind)
+            father = parse(Int, father)
+            mother = parse(Int, mother)
+            sex = parse(Int, sex)
             pedigree[ind] = IntIndividual(
                 ind,
                 father,

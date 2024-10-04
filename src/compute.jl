@@ -1,25 +1,25 @@
 """
     mutable struct IndexedIndividual <: AbstractIndividual
-        ID::Int64
+        ID::Int
         father::Union{Nothing, IndexedIndividual}
         mother::Union{Nothing, IndexedIndividual}
-        sex::Int64
+        sex::Int
         children::Vector{IndexedIndividual}
-        rank::Int64
-        founder_index::Int64
+        rank::Int
+        founder_index::Int
     end
 
 An individual with an index to access the founder's kinships in the Ψ matrix.
 """
 mutable struct IndexedIndividual <: AbstractIndividual
-    ID::Int64
+    ID::Int
     father::Union{Nothing, IndexedIndividual}
     mother::Union{Nothing, IndexedIndividual}
-    sex::Int64
+    sex::Int
     children::Vector{IndexedIndividual}
-    rank::Int64
-    founder_index::Int64
-    proband_index::Int64
+    rank::Int
+    founder_index::Int
+    proband_index::Int
 end
 
 """
@@ -28,10 +28,10 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct KinshipMatrix
-    dict::Dict{Int64, Dict{Int64, Float64}}
+    dict::Dict{Int, Dict{Int, Float64}}
 end
 
-function Base.getindex(ϕ::KinshipMatrix, ID₁::Int64, ID₂::Int64)
+function Base.getindex(ϕ::KinshipMatrix, ID₁::Int, ID₂::Int)
     (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
     haskey(ϕ.dict[ID₁], ID₂) ? ϕ.dict[ID₁][ID₂] : 0.
 end
@@ -183,12 +183,12 @@ function _index_pedigree(pedigree::Pedigree)
 end
 
 """
-    _next_generation(pedigree::Pedigree, previous_generationIDs::Vector{Int64})
+    _next_generation(pedigree::Pedigree, previous_generationIDs::Vector{Int})
 
 Return the next generation of a given set of individuals.
 """
-function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int64})
-    previous_generationIDs = Int64[]
+function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int})
+    previous_generationIDs = Int[]
     for ID ∈ next_generationIDs
         individual = pedigree[ID]
         father = individual.father
@@ -204,7 +204,7 @@ function _previous_generation(pedigree::Pedigree, next_generationIDs::Vector{Int
 end
 
 """
-    phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+    phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
         verbose::Bool = false)
 
 Return a square matrix of pairwise kinship coefficients between probands.
@@ -227,7 +227,7 @@ ped = gen.genealogy(geneaJi)
 gen.phi(ped)
 ```
 """
-function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
+function phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
     verbose::Bool = false, compute::Bool = true)
     # Start from the probands and go up until the highest founder(s)
     cut_vertices = [probandIDs]
@@ -301,7 +301,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree);
 end
 
 """
-    function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree))
+    function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
 
 An implementation of Kirkpatrick et al.'s algorithm to compute the kinship matrix.
 
@@ -315,14 +315,14 @@ geneaJi = gen.geneaJi
 ped = gen.genealogy(geneaJi)
 gen.sparse_phi(ped)
 """
-function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree))
+function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     isolated_pedigree = branching(pedigree, pro = probandIDs)
     indexed_pedigree = _index_pedigree(isolated_pedigree)
     for (index, ID) ∈ enumerate(probandIDs)
         indexed_pedigree[ID].proband_index = index
     end
-    ϕ = RobinDict{Int64, RobinDict{Int64, Float64}}()
-    matrix_IDs = Set{Int64}()
+    ϕ = RobinDict{Int, RobinDict{Int, Float64}}()
+    matrix_IDs = Set{Int}()
     queue = founder(pedigree)
     depths = [_max_depth(individual) for individual ∈ values(isolated_pedigree)]
     n_per_depth = [count(i -> i == depth, depths) for depth ∈ depths]
@@ -340,7 +340,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(pedigree
             println("Running: $current_depth / $max_depth ($n individuals)")
         end
         individualᵢ = indexed_pedigree[IDᵢ]
-        ϕ[IDᵢ] = RobinDict{Int64, Float64}()
+        ϕ[IDᵢ] = RobinDict{Int, Float64}()
         coefficient = 0.5
         father = individualᵢ.father
         mother = individualᵢ.mother
@@ -443,7 +443,7 @@ of a lineage of only children.
 """
 function _lowest_founders(pedigree::Pedigree)
     founderIDs = founder(pedigree)
-    deepestIDs = Int64[]
+    deepestIDs = Int[]
     for founderID ∈ founderIDs
         deepest = pedigree[founderID]
         while length(deepest.children) == 1
@@ -455,11 +455,11 @@ function _lowest_founders(pedigree::Pedigree)
 end
 
 """
-    f(pedigree::Pedigree, IDs::Vector{Int64})
+    f(pedigree::Pedigree, IDs::Vector{Int})
 
 Return the coefficients of inbreeding of a vector of individuals.
 """
-function f(pedigree::Pedigree, IDs::Vector{Int64})
+function f(pedigree::Pedigree, IDs::Vector{Int})
     coefficients = Float64[]
     for ID ∈ IDs
         individual = pedigree[ID]
@@ -478,7 +478,7 @@ end
 An individual with its ancestor's contribution.
 """
 mutable struct PossibleDescendant <: AbstractIndividual
-    ID::Int64
+    ID::Int
     father::Union{Nothing, PossibleDescendant}
     mother::Union{Nothing, PossibleDescendant}
     children::Vector{PossibleDescendant}
@@ -486,11 +486,11 @@ mutable struct PossibleDescendant <: AbstractIndividual
 end
 
 """
-    _contribute!(individual::Individual, depth::Int64 = 0)
+    _contribute!(individual::Individual, depth::Int = 0)
 
 Recursively compute the genetic contributions of an individual.
 """
-function _contribute!(individual::PossibleDescendant, depth::Int64 = 0)
+function _contribute!(individual::PossibleDescendant, depth::Int = 0)
     # Ported from GENLIB's ExploreConGenProposant
     if isempty(individual.children)
         individual.contribution += 0.5 ^ depth
@@ -502,8 +502,8 @@ function _contribute!(individual::PossibleDescendant, depth::Int64 = 0)
 end
 
 """
-    gc(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
-        ancestors::Vector{Int64} = founder(pedigree))
+    gc(pedigree::Pedigree; pro::Vector{Int} = pro(pedigree),
+        ancestors::Vector{Int} = founder(pedigree))
 
 Return a matrix of the genetic contribution of each ancestor (columns) to each proband
 (rows).
@@ -519,8 +519,8 @@ contributions = gen.gc(ped)
 """
 function gc(
     pedigree::Pedigree;
-    pro::Vector{Int64} = pro(pedigree),
-    ancestors::Vector{Int64} = founder(pedigree))
+    pro::Vector{Int} = pro(pedigree),
+    ancestors::Vector{Int} = founder(pedigree))
     
     # Ported from GENLIB's Congen
     matrix = zeros(length(pro), length(ancestors))

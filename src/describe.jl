@@ -66,11 +66,11 @@ function depth(pedigree::Pedigree)
 end
 
 """
-    _completeness!(completeness::Vector{Int64}, individual::Individual, depth::Int64)
+    _completeness!(completeness::Vector{Int}, individual::Individual, depth::Int)
 
 Return the completeness of an individual filled recursively.
 """
-function _completeness!(completeness::Vector{Int64}, individual::Individual, depth::Int64)
+function _completeness!(completeness::Vector{Int}, individual::Individual, depth::Int)
     if !isnothing(individual.father) || !isnothing(individual.mother)
         if length(completeness) < depth + 1
             push!(completeness, 0)
@@ -88,8 +88,8 @@ function _completeness!(completeness::Vector{Int64}, individual::Individual, dep
 end
 
 """
-    completeness(pedigree::Pedigree; pro::Vector{Int64} = pro(pedigree),
-    genNo::Vector{Int64} = Int64[], type::String = "MEAN")
+    completeness(pedigree::Pedigree; pro::Vector{Int} = pro(pedigree),
+    genNo::Vector{Int} = Int[], type::String = "MEAN")
 
 Return a dataframe with the completeness at each generation (one row per generation).
 
@@ -98,12 +98,12 @@ genNo: A vector of the generations to output. The probands are at generation 0.
 type: If ```"MEAN"```, the mean completeness for each generation. If ```"IND"```, the
 completeness for each generation for each proband.
 """
-function completeness(pedigree::Pedigree, pro::Vector{Int64} = pro(pedigree);
-    genNo::Vector{Int64} = Int64[], type::String = "MEAN")
-    completenesses = Vector{Vector{Int64}}()
+function completeness(pedigree::Pedigree, pro::Vector{Int} = pro(pedigree);
+    genNo::Vector{Int} = Int[], type::String = "MEAN")
+    completenesses = Vector{Vector{Int}}()
     for ID ∈ pro
         proband = pedigree[ID]
-        push!(completenesses, _completeness!(Int64[], proband, 0))
+        push!(completenesses, _completeness!(Int[], proband, 0))
     end
     max_depth = maximum([length(completeness) for completeness ∈ completenesses])
     matrix = zeros(max_depth, length(pro))
@@ -125,17 +125,17 @@ function completeness(pedigree::Pedigree, pro::Vector{Int64} = pro(pedigree);
 end
 
 """
-    rec(pedigree::Pedigree, probandIDs::Vector{Int64} = pro(genealogy),
-    ancestorIDs::Vector{Int64} = founder(genealogy))
+    rec(pedigree::Pedigree, probandIDs::Vector{Int} = pro(genealogy),
+    ancestorIDs::Vector{Int} = founder(genealogy))
 
 Return the number of descendants of each ancestor.
 """
 function rec(
     pedigree::Pedigree,
-    probandIDs::Vector{Int64} = pro(pedigree),
-    ancestorIDs::Vector{Int64} = founder(pedigree))
+    probandIDs::Vector{Int} = pro(pedigree),
+    ancestorIDs::Vector{Int} = founder(pedigree))
     
-    coverage = Vector{Int64}()
+    coverage = Vector{Int}()
     for ancestorID ∈ ancestorIDs
         descendantIDs = descendant(pedigree, ancestorID)
         descendantIDs = filter!(x -> x ∈ probandIDs, descendantIDs)
@@ -146,26 +146,26 @@ end
 
 """
     mutable struct Occurrent <: AbstractIndividual
-        ID::Int64
+        ID::Int
         father::Union{Nothing, Occurrent}
         mother::Union{Nothing, Occurrent}
         is_ancestor::Bool
-        occurrence::Int64
+        occurrence::Int
     end
 
 An individual with a number of occurrences and whether they are an ancestor.
 """
 mutable struct Occurrent <: AbstractIndividual
-    ID::Int64
+    ID::Int
     father::Union{Nothing, Occurrent}
     mother::Union{Nothing, Occurrent}
     is_ancestor::Bool
-    occurrence::Int64
+    occurrence::Int
 end
 
 """
-    occ(pedigree::Pedigree; pro::Vector{Int64} = pro(genealogy),
-    ancestors::Vector{Int64} = founder(genealogy), typeOcc::String = "IND")
+    occ(pedigree::Pedigree; pro::Vector{Int} = pro(genealogy),
+    ancestors::Vector{Int} = founder(genealogy), typeOcc::String = "IND")
 
 Return a matrix of ancestors' occurrences.
 
@@ -183,11 +183,11 @@ occ = gen.occ(ped, typeOcc = "TOTAL")
 """
 function occ(
     pedigree::Pedigree;
-    pro::Vector{Int64} = pro(pedigree),
-    ancestors::Vector{Int64} = founder(pedigree),
+    pro::Vector{Int} = pro(pedigree),
+    ancestors::Vector{Int} = founder(pedigree),
     typeOcc::String = "IND")
     
-    occurrence_matrix = Matrix{Int64}(undef, length(ancestors), length(pro))
+    occurrence_matrix = Matrix{Int}(undef, length(ancestors), length(pro))
     occurrence_pedigree = Pedigree{Occurrent}()
     for individual ∈ collect(values(pedigree))
         father = individual.father
@@ -239,7 +239,7 @@ end
 Return the paths from an individual to their ancestors.
 """
 function _get_paths(pedigree::Pedigree, individual::Individual)
-    paths = Vector{Vector{Int64}}([[individual.ID]])
+    paths = Vector{Vector{Int}}([[individual.ID]])
     if !isnothing(individual.father)
         fathers_paths = _get_paths(pedigree, individual.father)
         for path ∈ fathers_paths
@@ -258,18 +258,18 @@ function _get_paths(pedigree::Pedigree, individual::Individual)
 end
 
 """
-    _findDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
+    _findDistance(pedigree::Pedigree, descendantID::Int, ancestorID::Int)
 
 Return a vector of distances between an individual and their ancestor.
 """
 function _findDistance(
     pedigree::Pedigree,
-    descendantID::Int64,
-    ancestorID::Int64)
+    descendantID::Int,
+    ancestorID::Int)
     
     descendant = pedigree[descendantID]
     paths = _get_paths(pedigree, descendant)
-    lengths = Vector{Int64}()
+    lengths = Vector{Int}()
     for path ∈ paths
         if path[1] ≡ ancestorID
             push!(lengths, length(path) - 1)
@@ -279,21 +279,21 @@ function _findDistance(
 end
 
 """
-    _findMinDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
+    _findMinDistance(pedigree::Pedigree, descendantID::Int, ancestorID::Int)
 
 Return the minimum distance between an individual and their ancestor.
 """
-function _findMinDistance(pedigree::Pedigree, descendantID::Int64, ancestorID::Int64)
+function _findMinDistance(pedigree::Pedigree, descendantID::Int, ancestorID::Int)
     lengths = _findDistance(pedigree, descendantID, ancestorID)
     minimum(lengths)
 end
 
 """
-    findDistance(pedigree::Pedigree, IDs::Vector{Int64}, ancestorID::Int64)
+    findDistance(pedigree::Pedigree, IDs::Vector{Int}, ancestorID::Int)
 
 Return the distance between two individuals and their ancestor.
 """
-function findDistance(pedigree::Pedigree, IDs::Vector{Int64}, ancestorID::Int64)
+function findDistance(pedigree::Pedigree, IDs::Vector{Int}, ancestorID::Int)
     distance₁ = _findMinDistance(pedigree, IDs[1], ancestorID)
     distance₂ = _findMinDistance(pedigree, IDs[2], ancestorID)
     distance₁ + distance₂
