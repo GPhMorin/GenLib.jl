@@ -28,23 +28,17 @@ end
 A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
 """
 struct KinshipMatrix
-    values::Vector{Vector{Pair{Int, Float64}}}
-    ID_to_index::Dict{Int, Int}
-    ID_to_rank::Dict{Int, Int}
+    dict::Dict{Int32, Dict{Int32, Float32}}
 end
 
 function Base.getindex(ϕ::KinshipMatrix, ID₁::Int, ID₂::Int)
-    (ID₁, ID₂) = ϕ.ID_to_rank[ID₁] < ϕ.ID_to_rank[ID₂] ? (ID₁, ID₂) : (ID₂, ID₁)
-    kinship = searchsorted(
-        ϕ.values[ϕ.ID_to_index[ID₁]],
-        ϕ.ID_to_rank[ID₂] => 0, by = first
-    )
-    isempty(kinship) ? 0 : ϕ.values[ϕ.ID_to_index[ID₁]][first(kinship)].second
+    (ID₁, ID₂) = ID₁ < ID₂ ? (ID₁, ID₂) : (ID₂, ID₁)
+    haskey(ϕ.dict[ID₁], ID₂) ? ϕ.dict[ID₁][ID₂] : 0.
 end
 
 function Base.show(io::IO, ::MIME"text/plain", ϕ::KinshipMatrix)
-    nz = sum(length(kinships) for kinships ∈ ϕ.values)
-    print(io, "$(length(ϕ.values))×$(length(ϕ.values)) KinshipMatrix " *
+    nz = sum(length(kinships) for kinships ∈ values(ϕ.dict))
+    print(io, "$(length(ϕ.dict))×$(length(ϕ.dict)) KinshipMatrix " *
         "with $nz stored entries.")
 end
 
@@ -331,8 +325,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
         indexed_pedigree[ID].proband_index = index
     end
     # Initialize the kinship matrix
-    ϕ = Vector{Vector{Pair{Int, Float32}}}()
-    index_to_ID = Dict{Int, Int}()
+    ϕ = Dict{Int32, Dict{Int32, Float32}}()
     # Initialize the queue with the probands
     IDs = Set{Int}()
     queue = founder(pedigree)
@@ -344,8 +337,6 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
         println("Depth $depth / $max_depth: $(count(i -> i == depth, depths)) individuals")
     end
     current_depth = 0
-    # Reassign a rank to the individuals
-    rank = 1
     while !isempty(queue)
         IDᵢ = popfirst!(queue)
         # Print information about the steps of the algorithm
@@ -356,127 +347,67 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
             println("Running: $current_depth / $max_depth ($n individuals)")
         end
         individualᵢ = indexed_pedigree[IDᵢ]
-        # Initialize the kinship array for the individual
-        push!(ϕ, Vector{Pair{Int, Float32}}())
-        # The founder index is used to retrieve the kinship of the individual
-        individualᵢ.founder_index = lastindex(ϕ)
-        index_to_ID[lastindex(ϕ)] = IDᵢ
-        # Assign a new rank to the individual
-        individualᵢ.rank = rank
-        rank += 1
+        # Initialize the kinship dictionary for the individual
+        ϕ[IDᵢ] = Dict{Int32, Float32}()
         father = individualᵢ.father
         mother = individualᵢ.mother
         # Kinship with previous individuals
         for IDⱼ ∈ IDs
-            individualⱼ = indexed_pedigree[IDⱼ]
             coefficient = 0.
             if !isnothing(father)
                 # In order to make the kinships as sparse as possible,
                 # we only store the kinship with the lowest ranked founder
                 # and the kinship is inserted in rank order for faster lookup
-                (individual₁, individual₂) = father.rank < individualⱼ.rank ?
-                    (father, individualⱼ) : (individualⱼ, father)
-                kinship = searchsorted(
-                    ϕ[individual₁.founder_index],
-                    individual₂.rank => 0,
-                    by = first
-                )
-                if !isempty(kinship)
-                    coefficient += ϕ[individual₁.founder_index][first(kinship)].second / 2
+                (ID₁, ID₂) = IDⱼ < father.ID ? (IDⱼ, father.ID) : (father.ID, IDⱼ)
+                if haskey(ϕ[ID₁], ID₂)
+                    coefficient += ϕ[ID₁][ID₂] / 2
                 end
             end
             if !isnothing(mother)
                 # Same thing but on the mother's side
-                (individual₁, individual₂) = mother.rank < individualⱼ.rank ?
-                    (mother, individualⱼ) : (individualⱼ, mother)
-                kinship = searchsorted(
-                    ϕ[individual₁.founder_index],
-                    individual₂.rank => 0,
-                    by = first
-                )
-                if !isempty(kinship)
-                    coefficient += ϕ[individual₁.founder_index][first(kinship)].second / 2
+                (ID₁, ID₂) = IDⱼ < mother.ID ? (IDⱼ, mother.ID) : (mother.ID, IDⱼ)
+                if haskey(ϕ[ID₁], ID₂)
+                    coefficient += ϕ[ID₁][ID₂] / 2
                 end
             end
             if coefficient > 0.
-                # Store the non-zero kinship with the lowest ranked individual
-                push!(ϕ[individualⱼ.founder_index], individualᵢ.rank => coefficient)
+                # Store the non-zero kinship with the lowest ID
+                (ID₁, ID₂) = IDⱼ < IDᵢ ? (IDⱼ, IDᵢ) : (IDᵢ, IDⱼ)
+                ϕ[ID₁][ID₂] = coefficient
             end
         end
         # Kinship with self
         coefficient = 0.5
         if !isnothing(father) && !isnothing(mother)
-            (individual₁, individual₂) = father.rank < mother.rank ?
-                (father, mother) : (mother, father)
-            kinship = searchsorted(
-                ϕ[individual₁.founder_index],
-                individual₂.rank => 0,
-                by = first
-            )
-            if !isempty(kinship)
-                coefficient += ϕ[individual₁.founder_index][first(kinship)].second / 2
+            (ID₁, ID₂) = father.ID < mother.ID ?
+                (father.ID, mother.ID) : (mother.ID, father.ID)
+            if haskey(ϕ[ID₁], ID₂)
+                coefficient += ϕ[ID₁][ID₂] / 2
             end
         end
-        push!(ϕ[individualᵢ.founder_index], individualᵢ.rank => coefficient)
+        ϕ[IDᵢ][IDᵢ] = coefficient
+        # Mark the individual as processed
+        individualᵢ.founder_index = 1
+        push!(IDs, IDᵢ)
         # If all of a parent's children are processed, we can remove the parent
         if !isnothing(father) && father.proband_index == 0
             if all(child.founder_index != 0 for child ∈ father.children)
                 delete!(IDs, father.ID)
-                last_ID = index_to_ID[lastindex(ϕ)]
-                individual = indexed_pedigree[last_ID]
-                new_index = father.founder_index
-                father.founder_index = -1
-                kinships = pop!(ϕ)
-                if individual.ID != father.ID
-                    ϕ[new_index] = kinships
-                    individual.founder_index = new_index
-                    index_to_ID[new_index] = last_ID
-                end
+                delete!(ϕ, father.ID)
                 for ID ∈ IDs
-                    individual = indexed_pedigree[ID]
-                    if individual.rank < father.rank
-                        kinship = searchsorted(
-                            ϕ[individual.founder_index],
-                            father.rank => 0,
-                            by = first
-                        )
-                        if !isempty(kinship)
-                            deleteat!(ϕ[individual.founder_index], first(kinship))
-                        end
-                    end
+                    delete!(ϕ[ID], father.ID)
                 end
             end
         end
         if !isnothing(mother) && mother.proband_index == 0
             if all(child.founder_index != 0 for child ∈ mother.children)
                 delete!(IDs, mother.ID)
-                last_ID = index_to_ID[lastindex(ϕ)]
-                individual = indexed_pedigree[last_ID]
-                new_index = mother.founder_index
-                mother.founder_index = -1
-                kinships = pop!(ϕ)
-                if individual.ID != mother.ID
-                    ϕ[new_index] = kinships
-                    individual.founder_index = new_index
-                    index_to_ID[new_index] = last_ID
-                end
+                delete!(ϕ, mother.ID)
                 for ID ∈ IDs
-                    individual = indexed_pedigree[ID]
-                    if individual.rank < mother.rank
-                        kinship = searchsorted(
-                            ϕ[individual.founder_index],
-                            mother.rank => 0,
-                            by = first
-                        )
-                        if !isempty(kinship)
-                            deleteat!(ϕ[individual.founder_index], first(kinship))
-                        end
-                    end
+                    delete!(ϕ[ID], mother.ID)
                 end
             end
         end
-        # Add the individual to the list of IDs that are already processed
-        push!(IDs, individualᵢ.ID)
         for child ∈ individualᵢ.children
             if !isnothing(child.father) && !isnothing(child.mother)
                 if child.father.founder_index != 0 && child.mother.founder_index != 0
@@ -487,15 +418,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
             end
         end
     end
-    ID_to_index = Dict{Int, Int}(
-        individual.ID => individual.founder_index
-        for individual ∈ values(indexed_pedigree)
-    )
-    ID_to_rank = Dict{Int, Int}(
-        individual.ID => individual.rank
-        for individual ∈ values(indexed_pedigree)
-    )
-    KinshipMatrix(ϕ, ID_to_index, ID_to_rank)
+    KinshipMatrix(ϕ)
 end
 
 """
@@ -516,10 +439,10 @@ end
 Return the mean kinship from a given sparse kinship matrix.
 """
 function phiMean(ϕ::KinshipMatrix)
-    total = sum(sum(kinship.second for kinship ∈ kinships) for kinships ∈ ϕ.values)
-    diagonal = sum([first(kinships).second for kinships ∈ ϕ.values])
+    total = sum(sum(values(kinships)) for kinships ∈ values(ϕ.dict))
+    diagonal = sum([ϕ.dict[ID][ID] for ID ∈ keys(ϕ.dict)])
     total -= diagonal
-    count = length(ϕ.values) * (length(ϕ.values) - 1) / 2
+    count = length(ϕ.dict) * (length(ϕ.dict) - 1) / 2
     total / count
 end
 
