@@ -395,7 +395,9 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
                 delete!(IDs, father.ID)
                 delete!(ϕ, father.ID)
                 for ID ∈ IDs
-                    delete!(ϕ[ID], father.ID)
+                    if ID < father.ID
+                        delete!(ϕ[ID], father.ID)
+                    end
                 end
             end
         end
@@ -404,7 +406,9 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
                 delete!(IDs, mother.ID)
                 delete!(ϕ, mother.ID)
                 for ID ∈ IDs
-                    delete!(ϕ[ID], mother.ID)
+                    if ID < mother.ID
+                        delete!(ϕ[ID], mother.ID)
+                    end
                 end
             end
         end
