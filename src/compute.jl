@@ -327,8 +327,8 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     # Initialize the kinship matrix
     ϕ = Dict{Int32, Dict{Int32, Float32}}()
     # Initialize the queue with the probands
-    IDs = Set{Int}()
-    queue = founder(pedigree)
+    previous_individuals = Vector{Union{IndexedIndividual, Nothing}}()
+    queue = [indexed_pedigree[ID] for ID ∈ founder(pedigree)]
     # Print information about the steps of the algorithm
     depths = [_max_depth(individual) for individual ∈ values(isolated_pedigree)]
     n_per_depth = [count(i -> i == depth, depths) for depth ∈ depths]
@@ -338,7 +338,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     end
     current_depth = 0
     while !isempty(queue)
-        IDᵢ = popfirst!(queue)
+        individualᵢ = popfirst!(queue)
         # Print information about the steps of the algorithm
         depth = popfirst!(depths)
         n = popfirst!(n_per_depth)
@@ -346,68 +346,93 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
             current_depth = depth
             println("Running: $current_depth / $max_depth ($n individuals)")
         end
-        individualᵢ = indexed_pedigree[IDᵢ]
-        # Initialize the kinship dictionary for the individual
-        ϕ[IDᵢ] = Dict{Int32, Float32}()
         father = individualᵢ.father
         mother = individualᵢ.mother
+        # Initialize the kinship dictionary for the individual
+        ϕ[individualᵢ.ID] = Dict{Int32, Float32}()
         # Kinship with previous individuals
-        for IDⱼ ∈ IDs
+        for individualⱼ ∈ previous_individuals
+            if isnothing(individualⱼ)
+                continue
+            end
             coefficient = 0.
             if !isnothing(father)
                 # In order to make the kinships as sparse as possible,
                 # we only store the kinship with the lowest ranked founder
                 # and the kinship is inserted in rank order for faster lookup
-                (ID₁, ID₂) = IDⱼ < father.ID ? (IDⱼ, father.ID) : (father.ID, IDⱼ)
-                if haskey(ϕ[ID₁], ID₂)
-                    coefficient += ϕ[ID₁][ID₂] / 2
+                if individualⱼ.ID < father.ID
+                    if haskey(ϕ[individualⱼ.ID], father.ID)
+                        coefficient += ϕ[individualⱼ.ID][father.ID] / 2
+                    end
+                else
+                    if haskey(ϕ[father.ID], individualⱼ.ID)
+                        coefficient += ϕ[father.ID][individualⱼ.ID] / 2
+                    end
                 end
             end
             if !isnothing(mother)
                 # Same thing but on the mother's side
-                (ID₁, ID₂) = IDⱼ < mother.ID ? (IDⱼ, mother.ID) : (mother.ID, IDⱼ)
-                if haskey(ϕ[ID₁], ID₂)
-                    coefficient += ϕ[ID₁][ID₂] / 2
+                if individualⱼ.ID < mother.ID
+                    if haskey(ϕ[individualⱼ.ID], mother.ID)
+                        coefficient += ϕ[individualⱼ.ID][mother.ID] / 2
+                    end
+                else
+                    if haskey(ϕ[mother.ID], individualⱼ.ID)
+                        coefficient += ϕ[mother.ID][individualⱼ.ID] / 2
+                    end
                 end
             end
             if coefficient > 0.
                 # Store the non-zero kinship with the lowest ID
-                (ID₁, ID₂) = IDⱼ < IDᵢ ? (IDⱼ, IDᵢ) : (IDᵢ, IDⱼ)
-                ϕ[ID₁][ID₂] = coefficient
+                if individualᵢ.ID < individualⱼ.ID
+                    ϕ[individualᵢ.ID][individualⱼ.ID] = coefficient
+                else
+                    ϕ[individualⱼ.ID][individualᵢ.ID] = coefficient
+                end
             end
         end
         # Kinship with self
         coefficient = 0.5
         if !isnothing(father) && !isnothing(mother)
-            (ID₁, ID₂) = father.ID < mother.ID ?
-                (father.ID, mother.ID) : (mother.ID, father.ID)
-            if haskey(ϕ[ID₁], ID₂)
-                coefficient += ϕ[ID₁][ID₂] / 2
+            if father.ID < mother.ID
+                if haskey(ϕ[father.ID], mother.ID)
+                    coefficient += ϕ[father.ID][mother.ID] / 2
+                end
+            else
+                if haskey(ϕ[mother.ID], father.ID)
+                    coefficient += ϕ[mother.ID][father.ID] / 2
+                end
             end
         end
-        ϕ[IDᵢ][IDᵢ] = coefficient
+        ϕ[individualᵢ.ID][individualᵢ.ID] = coefficient
         # Mark the individual as processed
-        individualᵢ.founder_index = 1
-        push!(IDs, IDᵢ)
+        push!(previous_individuals, individualᵢ)
+        individualᵢ.founder_index = lastindex(previous_individuals)
         # If all of a parent's children are processed, we can remove the parent
         if !isnothing(father) && father.proband_index == 0
             if all(child.founder_index != 0 for child ∈ father.children)
-                delete!(IDs, father.ID)
+                previous_individuals[father.founder_index] = nothing
                 delete!(ϕ, father.ID)
-                for ID ∈ IDs
-                    if ID < father.ID
-                        delete!(ϕ[ID], father.ID)
+                for individual ∈ previous_individuals
+                    if isnothing(individual)
+                        continue
+                    end
+                    if individual.ID < father.ID
+                        delete!(ϕ[individual.ID], father.ID)
                     end
                 end
             end
         end
         if !isnothing(mother) && mother.proband_index == 0
             if all(child.founder_index != 0 for child ∈ mother.children)
-                delete!(IDs, mother.ID)
+                previous_individuals[mother.founder_index] = nothing
                 delete!(ϕ, mother.ID)
-                for ID ∈ IDs
-                    if ID < mother.ID
-                        delete!(ϕ[ID], mother.ID)
+                for individual ∈ previous_individuals
+                    if isnothing(individual)
+                        continue
+                    end
+                    if individual.ID < mother.ID
+                        delete!(ϕ[individual.ID], mother.ID)
                     end
                 end
             end
@@ -415,10 +440,10 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
         for child ∈ individualᵢ.children
             if !isnothing(child.father) && !isnothing(child.mother)
                 if child.father.founder_index != 0 && child.mother.founder_index != 0
-                    push!(queue, child.ID)
+                    push!(queue, child)
                 end
             else
-                push!(queue, child.ID)
+                push!(queue, child)
             end
         end
     end
@@ -430,7 +455,7 @@ end
 
 Return the mean kinship from a given kinship matrix.
 """
-function phiMean(ϕ::Matrix{Float32})
+function phiMean(ϕ::Matrix{Float32})::Float32
     total = sum(ϕ)
     diagonal = sum([ϕ[i, i] for i ∈ axes(ϕ, 1)])
     total -= diagonal
@@ -442,7 +467,7 @@ end
 
 Return the mean kinship from a given sparse kinship matrix.
 """
-function phiMean(ϕ::KinshipMatrix)
+function phiMean(ϕ::KinshipMatrix)::Float32
     total = sum(sum(values(kinships)) for kinships ∈ values(ϕ.dict))
     diagonal = sum([ϕ.dict[ID][ID] for ID ∈ keys(ϕ.dict)])
     total -= diagonal
