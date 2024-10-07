@@ -329,23 +329,8 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     # Initialize the queue with the probands
     previous_individuals = Vector{Union{IndexedIndividual, Nothing}}()
     queue = [indexed_pedigree[ID] for ID ∈ founder(pedigree)]
-    # Print information about the steps of the algorithm
-    depths = [_max_depth(individual) for individual ∈ values(isolated_pedigree)]
-    n_per_depth = [count(i -> i == depth, depths) for depth ∈ depths]
-    max_depth = maximum(depths)
-    for depth ∈ unique(depths)
-        println("Depth $depth / $max_depth: $(count(i -> i == depth, depths)) individuals")
-    end
-    current_depth = 0
     while !isempty(queue)
         individualᵢ = popfirst!(queue)
-        # Print information about the steps of the algorithm
-        depth = popfirst!(depths)
-        n = popfirst!(n_per_depth)
-        if depth != current_depth
-            current_depth = depth
-            println("Running: $current_depth / $max_depth ($n individuals)")
-        end
         father = individualᵢ.father
         mother = individualᵢ.mother
         # Initialize the kinship dictionary for the individual
