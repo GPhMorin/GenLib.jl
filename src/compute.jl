@@ -328,7 +328,11 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     ϕ = Dict{Int32, Dict{Int32, Float32}}()
     # Initialize the queue with the probands
     individuals_to_visit = Set{IndexedIndividual}()
-    queue = [indexed_pedigree[ID] for ID ∈ founder(pedigree)]
+    queue = Deque{IndexedIndividual}()
+    for ID ∈ founder(isolated_pedigree)
+        individual = indexed_pedigree[ID]
+        push!(queue, individual)
+    end
     while !isempty(queue)
         individualᵢ = popfirst!(queue)
         father = individualᵢ.father
