@@ -327,7 +327,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
     # Initialize the kinship matrix
     ϕ = Dict{Int32, Dict{Int32, Float32}}()
     # Initialize the queue with the probands
-    previous_individuals = Vector{Union{IndexedIndividual, Nothing}}()
+    individuals_to_visit = Set{IndexedIndividual}()
     queue = [indexed_pedigree[ID] for ID ∈ founder(pedigree)]
     while !isempty(queue)
         individualᵢ = popfirst!(queue)
@@ -336,10 +336,7 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
         # Initialize the kinship dictionary for the individual
         ϕ[individualᵢ.ID] = Dict{Int32, Float32}()
         # Kinship with previous individuals
-        for individualⱼ ∈ previous_individuals
-            if isnothing(individualⱼ)
-                continue
-            end
+        for individualⱼ ∈ individuals_to_visit
             coefficient = 0.
             if !isnothing(father)
                 # In order to make the kinships as sparse as possible,
@@ -391,17 +388,15 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
         end
         ϕ[individualᵢ.ID][individualᵢ.ID] = coefficient
         # Mark the individual as processed
-        push!(previous_individuals, individualᵢ)
-        individualᵢ.founder_index = lastindex(previous_individuals)
+        push!(individuals_to_visit, individualᵢ)
+        individualᵢ.founder_index = length(individuals_to_visit)
         # If all of a parent's children are processed, we can remove the parent
         if !isnothing(father) && father.proband_index == 0
             if all(child.founder_index != 0 for child ∈ father.children)
-                previous_individuals[father.founder_index] = nothing
+                delete!(individuals_to_visit, father)
+                empty!(ϕ[father.ID])
                 delete!(ϕ, father.ID)
-                for individual ∈ previous_individuals
-                    if isnothing(individual)
-                        continue
-                    end
+                for individual ∈ individuals_to_visit
                     if individual.ID < father.ID
                         delete!(ϕ[individual.ID], father.ID)
                     end
@@ -410,12 +405,10 @@ function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
         end
         if !isnothing(mother) && mother.proband_index == 0
             if all(child.founder_index != 0 for child ∈ mother.children)
-                previous_individuals[mother.founder_index] = nothing
+                delete!(individuals_to_visit, mother)
+                empty!(ϕ[mother.ID])
                 delete!(ϕ, mother.ID)
-                for individual ∈ previous_individuals
-                    if isnothing(individual)
-                        continue
-                    end
+                for individual ∈ individuals_to_visit
                     if individual.ID < mother.ID
                         delete!(ϕ[individual.ID], mother.ID)
                     end
