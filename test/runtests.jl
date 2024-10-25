@@ -51,10 +51,6 @@ end
     @test phi == [0.591796875 0.37109375 0.072265625; 0.37109375 0.591796875 0.072265625;
         0.072265625 0.072265625 0.53515625]
     @test gen.phiMean(phi) == 0.171875
-    phi = gen.sparse_phi(ped)
-    @test gen.phiMean(phi) == 0.171875
-    @test repr(MIME("text/plain"), phi) == "3×3 KinshipMatrix with 6 stored entries."
-    @test phi[1, 2] == 0.37109375
     founder1 = ped[17]
     founder2 = ped[19]
     @test gen.phi(founder1, founder2) == 0

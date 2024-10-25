@@ -24,28 +24,6 @@ mutable struct IndexedIndividual <: AbstractIndividual
 end
 
 """
-    struct KinshipMatrix
-
-A minimal structure wrapping an `Dict` with kinships of individuals accessed by IDs.
-"""
-struct KinshipMatrix
-    dict::Dict{Int32, Dict{Int32, Float32}}
-    ID_to_rank::Dict{Int32, Int}
-end
-
-function Base.getindex(ϕ::KinshipMatrix, ID₁::Int, ID₂::Int)
-    (rank₁, rank₂) = (ϕ.ID_to_rank[ID₁], ϕ.ID_to_rank[ID₂])
-    (rank₁, rank₂) = rank₁ < rank₂ ? (rank₁, rank₂) : (rank₂, rank₁)
-    haskey(ϕ.dict[rank₁], rank₂) ? ϕ.dict[rank₁][rank₂] : 0.
-end
-
-function Base.show(io::IO, ::MIME"text/plain", ϕ::KinshipMatrix)
-    nz = sum(length(kinships) for kinships ∈ values(ϕ.dict))
-    print(io, "$(length(ϕ.dict))×$(length(ϕ.dict)) KinshipMatrix " *
-        "with $nz stored entries.")
-end
-
-"""
     phi(individualᵢ::Individual, individualⱼ::Individual)
 
 Return the kinship coefficient between two individuals.
@@ -95,7 +73,7 @@ function phi(individualᵢ::Individual, individualⱼ::Individual)
 end
 
 """
-    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float32})
+    phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual, Ψ::Matrix{Float64})
 
 Return the kinship coefficient between two individuals given a matrix of the founders'
 kinships.
@@ -103,7 +81,7 @@ kinships.
 Adapted from [Karigl, 1981](@ref), and [Kirkpatrick et al., 2019](@ref).
 """
 function phi(individualᵢ::IndexedIndividual, individualⱼ::IndexedIndividual,
-    Ψ::Matrix{Float32})
+    Ψ::Matrix{Float64})
     value = 0.
     if individualᵢ.founder_index != 0 && individualⱼ.founder_index != 0
         # Both individuals are founders, so we already know their kinship coefficient
@@ -268,7 +246,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
     # quickly track the location of the founders in their kinship matrix.
     indexed_pedigree = _index_pedigree(pedigree)
     # Initialize the kinship matrix of the top founders
-    Ψ = zeros(Float32, length(first(cut_vertices)), length(first(cut_vertices)))
+    Ψ = zeros(Float64, length(first(cut_vertices)), length(first(cut_vertices)))
     for i ∈ axes(Ψ, 1)
         Ψ[i, i] = 0.5
     end
@@ -288,7 +266,7 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
             indexed_pedigree[ID].founder_index = index
         end
         # Fill the matrix in parallel, using the adapted algorithm from Karigl, 1981
-        ϕ = Matrix{Float32}(undef, length(next_generationIDs), length(next_generationIDs))
+        ϕ = Matrix{Float64}(undef, length(next_generationIDs), length(next_generationIDs))
         probands = [indexed_pedigree[ID] for ID ∈ next_generationIDs]
         Threads.@threads for i ∈ eachindex(probands)
             Threads.@threads for j ∈ eachindex(probands)
@@ -304,171 +282,15 @@ function phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree);
 end
 
 """
-    function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
-
-An implementation of Kirkpatrick et al.'s algorithm to compute the kinship matrix.
-
-Based on this interpretation: https://lineagekit.github.io/lineagekit/use_cases/kinship.html
-
-# Example
-
-```julia
-import GenLib as gen
-geneaJi = gen.geneaJi
-ped = gen.genealogy(geneaJi)
-gen.sparse_phi(ped)
-"""
-function sparse_phi(pedigree::Pedigree, probandIDs::Vector{Int} = pro(pedigree))
-    # Remove unrelated individuals
-    isolated_pedigree = branching(pedigree, pro = probandIDs)
-    # Index the pedigree for faster access
-    indexed_pedigree = _index_pedigree(isolated_pedigree)
-    # Mark the probands for faster access
-    for ID ∈ probandIDs
-        indexed_pedigree[ID].is_proband = true
-    end
-    # Initialize the kinship matrix
-    ϕ = Dict{Int32, Dict{Int32, Float32}}()
-    # Initialize the queue with the probands
-    ranks_to_visit = Set{Int}()
-    sizehint!(ranks_to_visit, length(isolated_pedigree))
-    queue = Deque{IndexedIndividual}()
-    for ID ∈ founder(isolated_pedigree)
-        individual = indexed_pedigree[ID]
-        push!(queue, individual)
-    end
-    rank = 1
-    while !isempty(queue)
-        individualᵢ = popfirst!(queue)
-        rankᵢ = individualᵢ.rank
-        father_rank = isnothing(individualᵢ.father) ? 0 : individualᵢ.father.rank
-        mother_rank = isnothing(individualᵢ.mother) ? 0 : individualᵢ.mother.rank
-        # Initialize the kinship dictionary for the individual
-        ϕ[rankᵢ] = Dict{Int32, Float32}()
-        # Kinship with self
-        coefficient = 0.5
-        if father_rank != 0 && mother_rank != 0
-            if father_rank < mother_rank
-                if haskey(ϕ[father_rank], mother_rank)
-                    coefficient += ϕ[father_rank][mother_rank] / 2
-                end
-            else
-                if haskey(ϕ[mother_rank], father_rank)
-                    coefficient += ϕ[mother_rank][father_rank] / 2
-                end
-            end
-        end
-        ϕ[rankᵢ][rankᵢ] = coefficient
-        # Kinship with previous individuals
-        for rankⱼ ∈ ranks_to_visit
-            coefficient = 0.
-            if father_rank != 0
-                # In order to make the kinships as sparse as possible,
-                # we only store the kinship with the lowest ranked founder
-                # and the kinship is inserted in rank order for faster lookup
-                if rankⱼ < father_rank
-                    if haskey(ϕ[rankⱼ], father_rank)
-                        coefficient += ϕ[rankⱼ][father_rank] / 2
-                    end
-                else
-                    if haskey(ϕ[father_rank], rankⱼ)
-                        coefficient += ϕ[father_rank][rankⱼ] / 2
-                    end
-                end
-            end
-            if mother_rank != 0
-                # Same thing but on the mother's side
-                if rankⱼ < mother_rank
-                    if haskey(ϕ[rankⱼ], mother_rank)
-                        coefficient += ϕ[rankⱼ][mother_rank] / 2
-                    end
-                else
-                    if haskey(ϕ[mother_rank], rankⱼ)
-                        coefficient += ϕ[mother_rank][rankⱼ] / 2
-                    end
-                end
-            end
-            if coefficient > 0.
-                # Store the non-zero kinship with the lowest ID
-                ϕ[rankⱼ][rankᵢ] = coefficient
-            end
-        end
-        # Mark the individual as processed
-        push!(ranks_to_visit, rankᵢ)
-        individualᵢ.founder_index = 1
-        individualᵢ.children_to_process = length(individualᵢ.children)
-        # If all of a parent's children are processed, we can remove the parent
-        if father_rank != 0
-            if !individualᵢ.father.is_proband
-                individualᵢ.father.children_to_process -= 1
-                if individualᵢ.father.children_to_process == 0
-                    delete!(ranks_to_visit, father_rank)
-                    empty!(ϕ[father_rank])
-                    delete!(ϕ, father_rank)
-                    for rankⱼ ∈ ranks_to_visit
-                        if rankⱼ < father_rank
-                            delete!(ϕ[rankⱼ], father_rank)
-                        end
-                    end
-                end
-            end
-        end
-        if mother_rank != 0
-            if !individualᵢ.mother.is_proband
-                individualᵢ.mother.children_to_process -= 1
-                if individualᵢ.mother.children_to_process == 0
-                    delete!(ranks_to_visit, mother_rank)
-                    empty!(ϕ[mother_rank])
-                    delete!(ϕ, mother_rank)
-                    for rankⱼ ∈ ranks_to_visit
-                        if rankⱼ < mother_rank
-                            delete!(ϕ[rankⱼ], mother_rank)
-                        end
-                    end
-                end
-            end
-        end
-        for child ∈ individualᵢ.children
-            if !isnothing(child.father) && !isnothing(child.mother)
-                if child.father.founder_index != 0 && child.mother.founder_index != 0
-                    push!(queue, child)
-                end
-            else
-                push!(queue, child)
-            end
-        end
-        rank += 1
-    end
-    ID_to_rank = Dict{Int32, Int}()
-    for ID ∈ probandIDs
-        ID_to_rank[ID] = indexed_pedigree[ID].rank
-    end
-    KinshipMatrix(ϕ, ID_to_rank)
-end
-
-"""
-    function phiMean(ϕ::Matrix{Float32})
+    function phiMean(ϕ::Matrix{Float64})
 
 Return the mean kinship from a given kinship matrix.
 """
-function phiMean(ϕ::Matrix{Float32})::Float32
+function phiMean(ϕ::Matrix{Float64})
     total = sum(ϕ)
     diagonal = sum([ϕ[i, i] for i ∈ axes(ϕ, 1)])
     total -= diagonal
     total / (length(ϕ) - size(ϕ, 1))
-end
-
-"""
-    function phiMean(ϕ::KinshipMatrix)
-
-Return the mean kinship from a given sparse kinship matrix.
-"""
-function phiMean(ϕ::KinshipMatrix)::Float32
-    total = sum(sum(values(kinships)) for kinships ∈ values(ϕ.dict))
-    diagonal = sum([ϕ.dict[ID][ID] for ID ∈ keys(ϕ.dict)])
-    total -= diagonal
-    count = length(ϕ.dict) * (length(ϕ.dict) - 1) / 2
-    total / count
 end
 
 """
@@ -498,7 +320,7 @@ end
 Return the coefficients of inbreeding of a vector of individuals.
 """
 function f(pedigree::Pedigree, IDs::Vector{Int})
-    coefficients = Float32[]
+    coefficients = Float64[]
     for ID ∈ IDs
         individual = pedigree[ID]
         if isnothing(individual.father) || isnothing(individual.mother)
@@ -520,7 +342,7 @@ mutable struct PossibleDescendant <: AbstractIndividual
     father::Union{Nothing, PossibleDescendant}
     mother::Union{Nothing, PossibleDescendant}
     children::Vector{PossibleDescendant}
-    contribution::Float32
+    contribution::Float64
 end
 
 """
@@ -561,7 +383,7 @@ function gc(
     ancestors::Vector{Int} = founder(pedigree))
     
     # Ported from GENLIB's Congen
-    matrix = zeros(Float32, length(pro), length(ancestors))
+    matrix = zeros(Float64, length(pro), length(ancestors))
     contribution_pedigree = Pedigree{PossibleDescendant}()
     for individual ∈ collect(values(pedigree))
         father = individual.father
